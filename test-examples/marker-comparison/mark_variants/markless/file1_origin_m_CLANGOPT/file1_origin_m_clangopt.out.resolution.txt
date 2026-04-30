@@ -1,0 +1,4 @@
+/tmp/file1_origin-857b45.o
+-r=/tmp/file1_origin-857b45.o,identity,pl
+-r=/tmp/file1_origin-857b45.o,main,plx
+-r=/tmp/file1_origin-857b45.o,printf,

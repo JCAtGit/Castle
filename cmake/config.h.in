@@ -1,0 +1,2 @@
+#define ClangASTTutorial_VERSION_MAJOR @ClangASTTutorial_VERSION_MAJOR@
+#define ClangASTTutorial_VERSION_MINOR @ClangASTTutorial_VERSION_MINOR@

@@ -1,0 +1,17 @@
+
+{
+	"comment":"example: some/path/to/file.c",
+	
+	"rootDir":"some",
+	"filemap":{
+		"some":{
+			"path":{
+				"to":{
+					"file.c":{
+						
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,12 @@
+add_executable(MarkerSurgeon src/marker-surgeon/main.cpp)
+
+#add_executable(JSONCPP src/prototype/jsoncpp.cpp)
+#add_executable(DirTraversal src/prototype/DirTraverser/DirTraversal.cpp)
+#add_executable(CrossASTExample src/prototype/CrossASTTraverser/CrossASTExample.cpp)
+#add_executable(TraversalChecker src/prototype/ASTTraversalChecker/TraversalChecker.cpp)
+#add_executable(ClangASTPreprocessor src/prototype/ClangASTPreprocessor/ClangPreprocessorExample.cpp)
+add_executable(ClangPPTokenAnalyser src/prototype/ClangPPTokenAnalyser/ClangPPTokenAnalyser.cpp)
+add_executable(SrcMacroExpander src/prototype/SrcMacroExpander/main.cpp)
+add_executable(PPDetector src/prototype/PPDetector/main.cpp)
+add_executable(PathTransformer src/prototype/PathTransformer/main.cpp)
+add_executable(CmdParser src/prototype/CmdParser/main.cpp)

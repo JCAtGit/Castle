@@ -1,0 +1,11 @@
+{
+	"path": "/usr/bin/csmith",
+	"flags":[
+		"flag"
+	],
+	"options":[
+		["flag","argument"],
+	],
+	"increment": "--seed"
+	
+}

@@ -1,0 +1,91 @@
+TranslationUnitDecl 0x55af3af52218 <<invalid sloc>> <invalid sloc>
+|-TypedefDecl 0x55af3af52df0 <<invalid sloc>> <invalid sloc> implicit __int128_t '__int128'
+| `-BuiltinType 0x55af3af527e0 '__int128'
+|-TypedefDecl 0x55af3af52e60 <<invalid sloc>> <invalid sloc> implicit __uint128_t 'unsigned __int128'
+| `-BuiltinType 0x55af3af52800 'unsigned __int128'
+|-TypedefDecl 0x55af3af53170 <<invalid sloc>> <invalid sloc> implicit __NSConstantString 'struct __NSConstantString_tag'
+| `-RecordType 0x55af3af52f40 'struct __NSConstantString_tag'
+|   `-Record 0x55af3af52eb8 '__NSConstantString_tag'
+|-TypedefDecl 0x55af3af52a98 <<invalid sloc>> <invalid sloc> implicit __builtin_ms_va_list 'char *'
+| `-PointerType 0x55af3af52a50 'char *'
+|   `-BuiltinType 0x55af3af522c0 'char'
+|-TypedefDecl 0x55af3af52d80 <<invalid sloc>> <invalid sloc> implicit referenced __builtin_va_list 'struct __va_list_tag[1]'
+| `-ConstantArrayType 0x55af3af52d30 'struct __va_list_tag[1]' 1 
+|   `-RecordType 0x55af3af52b70 'struct __va_list_tag'
+|     `-Record 0x55af3af52af0 '__va_list_tag'
+|-TypedefDecl 0x55af3afbbb00 </usr/bin/../lib/clang/21/include/__stdarg___gnuc_va_list.h:12:1, col:27> col:27 __gnuc_va_list '__builtin_va_list':'struct __va_list_tag[1]'
+| `-ElaboratedType 0x55af3afbbac0 '__builtin_va_list' sugar
+|   `-TypedefType 0x55af3af531d0 '__builtin_va_list' sugar
+|     |-Typedef 0x55af3af52d80 '__builtin_va_list'
+|     `-ConstantArrayType 0x55af3af52d30 'struct __va_list_tag[1]' 1 
+|       `-RecordType 0x55af3af52b70 'struct __va_list_tag'
+|         `-Record 0x55af3af52af0 '__va_list_tag'
+|-TypedefDecl 0x55af3afbbb68 </usr/bin/../lib/clang/21/include/__stdarg_va_list.h:12:1, col:27> col:27 referenced va_list '__builtin_va_list':'struct __va_list_tag[1]'
+| `-ElaboratedType 0x55af3afbbac0 '__builtin_va_list' sugar
+|   `-TypedefType 0x55af3af531d0 '__builtin_va_list' sugar
+|     |-Typedef 0x55af3af52d80 '__builtin_va_list'
+|     `-ConstantArrayType 0x55af3af52d30 'struct __va_list_tag[1]' 1 
+|       `-RecordType 0x55af3af52b70 'struct __va_list_tag'
+|         `-Record 0x55af3af52af0 '__va_list_tag'
+|-FunctionDecl 0x55af3afbbcb0 <variadic_example.c:3:1, line:12:1> line:3:5 used sum 'int (int, ...)'
+| |-ParmVarDecl 0x55af3afbbbd8 <col:9, col:13> col:13 used count 'int'
+| `-CompoundStmt 0x55af3afbc898 <col:25, line:12:1>
+|   |-DeclStmt 0x55af3afbbe88 <line:4:5, col:17>
+|   | `-VarDecl 0x55af3afbbe20 <col:5, col:13> col:13 used args 'va_list':'struct __va_list_tag[1]'
+|   |-CallExpr 0x55af3afbc158 </usr/bin/../lib/clang/21/include/__stdarg_va_arg.h:17:29, col:57> 'void'
+|   | |-ImplicitCastExpr 0x55af3afbc140 <col:29> 'void (*)(struct __va_list_tag *, ...)' <BuiltinFnToFnPtr>
+|   | | `-DeclRefExpr 0x55af3afbc0b0 <col:29> '<builtin fn type>' Function 0x55af3afbbf10 '__builtin_va_start' 'void (struct __va_list_tag *, ...)'
+|   | |-ImplicitCastExpr 0x55af3afbc190 <variadic_example.c:5:14> 'struct __va_list_tag *' <ArrayToPointerDecay>
+|   | | `-DeclRefExpr 0x55af3afbc0d0 <col:14> 'va_list':'struct __va_list_tag[1]' lvalue Var 0x55af3afbbe20 'args' 'va_list':'struct __va_list_tag[1]'
+|   | `-DeclRefExpr 0x55af3afbc0f0 <col:20> 'int' lvalue ParmVar 0x55af3afbbbd8 'count' 'int'
+|   |-DeclStmt 0x55af3afbc248 <line:6:5, col:18>
+|   | `-VarDecl 0x55af3afbc1c0 <col:5, col:17> col:9 used total 'int' cinit
+|   |   `-IntegerLiteral 0x55af3afbc228 <col:17> 'int' 0
+|   |-ForStmt 0x55af3afbc4f8 <line:7:5, line:9:5>
+|   | |-DeclStmt 0x55af3afbc300 <line:7:10, col:19>
+|   | | `-VarDecl 0x55af3afbc278 <col:10, col:18> col:14 used i 'int' cinit
+|   | |   `-IntegerLiteral 0x55af3afbc2e0 <col:18> 'int' 0
+|   | |-<<<NULL>>>
+|   | |-BinaryOperator 0x55af3afbc388 <col:21, col:25> 'int' '<'
+|   | | |-ImplicitCastExpr 0x55af3afbc358 <col:21> 'int' <LValueToRValue>
+|   | | | `-DeclRefExpr 0x55af3afbc318 <col:21> 'int' lvalue Var 0x55af3afbc278 'i' 'int'
+|   | | `-ImplicitCastExpr 0x55af3afbc370 <col:25> 'int' <LValueToRValue>
+|   | |   `-DeclRefExpr 0x55af3afbc338 <col:25> 'int' lvalue ParmVar 0x55af3afbbbd8 'count' 'int'
+|   | |-UnaryOperator 0x55af3afbc3c8 <col:32, col:33> 'int' postfix '++'
+|   | | `-DeclRefExpr 0x55af3afbc3a8 <col:32> 'int' lvalue Var 0x55af3afbc278 'i' 'int'
+|   | `-CompoundStmt 0x55af3afbc4e0 <col:37, line:9:5>
+|   |   `-CompoundAssignOperator 0x55af3afbc4b0 <line:8:9, /usr/bin/../lib/clang/21/include/__stdarg_va_arg.h:20:51> 'int' '+=' ComputeLHSTy='int' ComputeResultTy='int'
+|   |     |-DeclRefExpr 0x55af3afbc3e0 <variadic_example.c:8:9> 'int' lvalue Var 0x55af3afbc1c0 'total' 'int'
+|   |     `-VAArgExpr 0x55af3afbc488 </usr/bin/../lib/clang/21/include/__stdarg_va_arg.h:20:26, col:51> 'int'
+|   |       `-ImplicitCastExpr 0x55af3afbc470 <variadic_example.c:8:25> 'struct __va_list_tag *' <ArrayToPointerDecay>
+|   |         `-DeclRefExpr 0x55af3afbc400 <col:25> 'va_list':'struct __va_list_tag[1]' lvalue Var 0x55af3afbbe20 'args' 'va_list':'struct __va_list_tag[1]'
+|   |-CallExpr 0x55af3afbc798 </usr/bin/../lib/clang/21/include/__stdarg_va_arg.h:19:20, col:39> 'void'
+|   | |-ImplicitCastExpr 0x55af3afbc780 <col:20> 'void (*)(struct __va_list_tag *)' <BuiltinFnToFnPtr>
+|   | | `-DeclRefExpr 0x55af3afbc708 <col:20> '<builtin fn type>' Function 0x55af3afbc568 '__builtin_va_end' 'void (struct __va_list_tag *)'
+|   | `-ImplicitCastExpr 0x55af3afbc7c8 <variadic_example.c:10:12> 'struct __va_list_tag *' <ArrayToPointerDecay>
+|   |   `-DeclRefExpr 0x55af3afbc728 <col:12> 'va_list':'struct __va_list_tag[1]' lvalue Var 0x55af3afbbe20 'args' 'va_list':'struct __va_list_tag[1]'
+|   `-ReturnStmt 0x55af3afbc888 <line:11:5, col:12>
+|     `-ImplicitCastExpr 0x55af3afbc870 <col:12> 'int' <LValueToRValue>
+|       `-DeclRefExpr 0x55af3afbc850 <col:12> 'int' lvalue Var 0x55af3afbc1c0 'total' 'int'
+|-FunctionDecl 0x55af3afbbf10 </usr/bin/../lib/clang/21/include/__stdarg_va_arg.h:17:29> col:29 implicit used __builtin_va_start 'void (struct __va_list_tag *, ...)' extern
+| |-ParmVarDecl 0x55af3afbc018 <<invalid sloc>> <invalid sloc> 'struct __va_list_tag *'
+| |-BuiltinAttr 0x55af3afbbfb8 <<invalid sloc>> Implicit 237
+| `-NoThrowAttr 0x55af3afbc088 <col:29> Implicit
+|-FunctionDecl 0x55af3afbc568 <line:19:20> col:20 implicit used __builtin_va_end 'void (struct __va_list_tag *)' extern
+| |-ParmVarDecl 0x55af3afbc670 <<invalid sloc>> <invalid sloc> 'struct __va_list_tag *'
+| |-BuiltinAttr 0x55af3afbc610 <<invalid sloc>> Implicit 1464
+| `-NoThrowAttr 0x55af3afbc6e0 <col:20> Implicit
+`-FunctionDecl 0x55af3afbc938 <variadic_example.c:14:1, line:17:1> line:14:5 main 'int ()'
+  `-CompoundStmt 0x55af3afc18c0 <col:12, line:17:1>
+    |-DeclStmt 0x55af3afc1860 <line:15:5, col:36>
+    | `-VarDecl 0x55af3afbc9f8 <col:5, col:35> col:9 used result 'int' cinit
+    |   `-CallExpr 0x55af3afc1818 <col:18, col:35> 'int'
+    |     |-ImplicitCastExpr 0x55af3afc1800 <col:18> 'int (*)(int, ...)' <FunctionToPointerDecay>
+    |     | `-DeclRefExpr 0x55af3afbca60 <col:18> 'int (int, ...)' Function 0x55af3afbbcb0 'sum' 'int (int, ...)'
+    |     |-IntegerLiteral 0x55af3afbca80 <col:22> 'int' 3
+    |     |-IntegerLiteral 0x55af3afbcaa0 <col:25> 'int' 10
+    |     |-IntegerLiteral 0x55af3afc1790 <col:29> 'int' 20
+    |     `-IntegerLiteral 0x55af3afc17b0 <col:33> 'int' 30
+    `-ReturnStmt 0x55af3afc18b0 <line:16:5, col:12>
+      `-ImplicitCastExpr 0x55af3afc1898 <col:12> 'int' <LValueToRValue>
+        `-DeclRefExpr 0x55af3afc1878 <col:12> 'int' lvalue Var 0x55af3afbc9f8 'result' 'int'

@@ -1,0 +1,3 @@
+/tmp/file3_origin-74eabc.o
+-r=/tmp/file3_origin-74eabc.o,main,plx
+-r=/tmp/file3_origin-74eabc.o,printf,

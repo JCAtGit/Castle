@@ -1,0 +1,18 @@
+{
+	"someMarker0":{
+		"src":{
+			"readme": "is provided/built by inserter",
+			"path":"...",
+			
+		},
+		"tgt":{
+			"readme": "is provided/built by evaluator"
+		}
+	},
+	"someMarker1":"...",
+	
+	
+	"...":"...",
+	
+	
+}
