@@ -7,21 +7,19 @@
 /**
  * Is part of pipeline composition:
  * 1. Marker-inserter: Main for marker inserter. TODO: MACROS!!!!!!!!!!!!!!!
- * 2. Marked Source Package
- * 3. Evaluator: TODO
  *
- * Wat zijn de mogelijke args? We kiezen voor de volgende:
+ * Wat zijn de mogelijke args? We kiezen voor de volgende: TODO Naar CLI11 ombouwen
  * 1. filePath.ext 	fileDir(optional)			- uses current dir to output marked file, include flag for srcname extension?
  * 2. fileDir		fileDir(required)			- ...
  * 
- * Met de bijhorende flags. TODO
+ * Niet alleen markers toevoegen maar ook inline attribute toevoegen aan methoden/functies
  */
 
 int main(int argc, char **argv) {
 	// load config or use new one
 	auto cfg = std::make_shared<config>();
 	
-	CmdManager cmdMgr(cfg.get());
+	CmdTasker cmdMgr(cfg.get());
 	TaskManager tskMgr(cfg.get());
 	cmdMgr.processConfig(argc, argv);
 	

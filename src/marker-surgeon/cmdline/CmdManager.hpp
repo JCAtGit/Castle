@@ -25,7 +25,7 @@ namespace fs = std::filesystem;
  *  -a								Alternative format, uses experimental markers
  */
 
-class CmdManager{
+class CmdTasker{
 private:
 	struct config* cfg;	
 	
@@ -34,7 +34,7 @@ private:
 	}
 	
 public:
-	CmdManager(struct config* cfg){
+	CmdTasker(struct config* cfg){
 		this->cfg = cfg;
 	}
 	

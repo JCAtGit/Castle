@@ -20,7 +20,7 @@ enum SYNTHETIC_CODE_GENS {
 	CSMITH
 };
 
-// serves as boot and base config
+// serves as boot and default base config
 struct config {
 	unsigned long long timestamp;
 	CODE_ORIGIN_TYPE mode = CODE_ORIGIN_TYPE::SYNTHETIC;

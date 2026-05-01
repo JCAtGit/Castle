@@ -1,0 +1,11 @@
+{
+	"buildTargets":[
+		{
+			"dir":"",
+			"mode": "single/folder/mixed",
+			"details":{},
+			"binPath":{}
+		},
+		{}
+	]
+}

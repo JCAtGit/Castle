@@ -1,0 +1,13 @@
+{
+	"code_generators":[
+		{
+			"name": "csmith",
+			"binPath":"/usr/bin/csmith",
+			"seedFlag":"--seed",
+			"outputFlag":"--output",
+			"timestamp":0,
+			"it_begin":0,
+			"it_end":10
+		}
+	]
+}
