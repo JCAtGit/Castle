@@ -1,98 +1,86 @@
-#include <CLI/CLI.hpp>
 #include <filesystem>
-#include "../config/config_ds.hpp"
 #include "nlohmann/json.hpp"
+#include <fstream>
+#include <iostream>
 
 using namespace nlohmann;
+using namespace std;
 
 class CmdManager{
 	private:
-		struct config* cfg;	
-		// TODO: misschien samenvoegen met config
+		const string bt_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/marker-build-scaffolder/config/bt_config.json";
+		const string bs_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/marker-build-scaffolder/config/bs_config.json";
+		json bt_config_data, bs_config_data;
 		
-		bool use_config;
-		BUILD_MODE build_mode;
-		std::vector<std::filesystem::path> buildTargets;
-		CODE_ORIGIN_TYPE cot;
-		unsigned int it_cycles;		
-
+		void loadConfigs(){
+			cout << "Importing JSON configs.\n";
+		   	ifstream bt_config_file(bt_configPath);
+			ifstream bs_config_file(bs_configPath);
+		   	if (!(bt_config_file.is_open() && bs_config_file.is_open())) {
+		    	cerr << "Error: Could not open required config files, see the source json folder for details." << endl;
+		   		return;
+		   	}
+		   	try {
+		    	bt_config_data = json::parse(bt_config_file);
+				bs_config_data = json::parse(bs_config_file);
+		   	} catch (const json::parse_error& e) {
+		    	cerr << "Parse error: " << e.what() << endl;
+		    	return;
+		  	}
+		}
+		
 	public:
+	CmdManager(){
+		loadConfigs();
+	}
 	
+	using voidFn = std::function<void()>;
+	void processFile(){}
+	void processFolder(){}
+	void processMixed(){}
+	void processCustom(){}
+	voidFn selectProcessor(const std::string& choice) {
+        if (choice == "file")   return [this]() { processFile(); };
+        if (choice == "folder") return [this]() { processFolder(); };
+        if (choice == "mixed")  return [this]() { processMixed(); };
+        if (choice == "custom") return [this]() { processCustom(); };
+        return nullptr;
+    }
 	
-	CmdManager(int argc, char **argv){
-		CLI::App app{"MarkerBuilder"};
-
-		// use config or cmd options
-		app.add_option("-uc,--use_config", use_config, "Use config to run tool")
-			->default_val(true);
-			
-		// initial selectors
-		app.add_option("-tm,--tool_mode", build_mode, "Select a tool mode: generate or build")
-			->transform(CLI::CheckedTransformer(mode_map, CLI::ignore_case))
-			->default_val(CODE_ORIGIN_TYPE::SYNTHETIC);
-			
-		// code build conditional options
-		app.add_option("-bt,--build_targets", buildTargets, "Directories to build")
-			->required(false);
-		
-		// code compilation options
-		app.add_option("-cot,--code_origin_type", cot, "Code origin type: synthetic or organic");
-			
-		// code gen conditional options
-		app.add_option("-ic,--it_cycles", it_cycles, "Amount of gen cycles to actuate");
-
-		CLI11_PARSE(app, argc, argv);
-		
-		if(use_config){
-			loadConfig();
-			switch (build_mode) {
-				case BUILD_MODE::GENERATE:
-				
-				break;
-				case BUILD_MODE::BUILD:
-				
-				break;
-				case BUILD_MODE::GENERATE_AND_BUILD:
-				break;
+	void startBuildProcesses(){
+		cout << "Starting build processes and outputting to " << bs_config_data["outputDir"] << "\n";
+		string command;
+		voidFn processor;
+		for(auto& toolcfg:bt_config_data["buildTargets"]){
+			if(!toolcfg["active"].get<bool>()){continue;}
+			filesystem::create_directories((bs_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
+			processor = selectProcessor(toolcfg["mode"].get<string>());
+			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
+				// ...
 			}
-
-			// exec de eerste cmd 
-			//		status = std::system(command.c_str());
-
-		} else {
-			
 		}
 	}
 	
-	void loadConfig(){
-		// 1. Open the file, looks for config in local dir.
-	   std::ifstream file("config.json");
-	   if (!file.is_open()) {
-	       std::cerr << "Error: Could not open file 'config.json'" << std::endl;
-	       return;
-	   }
-
-	   // 2. Parse the file stream
-	   json data;
-	   try {
-	       data = json::parse(file);
-	   } catch (const json::parse_error& e) {
-	       std::cerr << "Parse error: " << e.what() << std::endl;
-	       return;
-	   }
-
-	   // 3. Access the data (example: reading values from a config file)
-	   std::string name = data.value("name", "DefaultName");
-	   int version = data.value("version", 0);
-	   bool debug = data.value("debug", false);
-
-	   std::cout << "Name: " << name << std::endl;
-	   std::cout << "Version: " << version << std::endl;
-	   std::cout << "Debug mode: " << std::boolalpha << debug << std::endl;
-
-	   return;
+	void startCodeGeneration(){
+		cout << "Starting code generation and outputting to " << cs_config_data["outputDir"] << "\n";
+		string command;
+		for(auto& toolcfg:cg_config_data["code_generators"]){
+			cout << toolcfg["name"] << " [" << toolcfg["it_begin"]  << "," << toolcfg["it_end"] << ")\n";
+			filesystem::create_directories((cs_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
+			for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
+				command = 
+					toolcfg["binPath"].get<string>() 	+ " " 	+ 
+					toolcfg["seedFlag"].get<string>() 	+ " " 	+ std::to_string(toolcfg["it_begin"].get<int>()) 	+ " " +
+					toolcfg["outputFlag"].get<string>() + " \"" + cs_config_data["outputDir"].get<string>() 			+ 
+					toolcfg["name"].get<string>() 		+ "/" 	+ std::to_string(toolcfg["it_begin"].get<int>())	+ 
+					".c\"";
+				std::cout << command << "\n";
+				auto status = std::system(command.c_str());
+				command.clear();
+			}
+			toolcfg["timestamp"] = time(NULL);
+		}
 	}
-	
-	
+
 };
 	

@@ -5,14 +5,11 @@
 //using namespace clang;
 
 /**
- * Is part of pipeline composition:
- * 1. Marker-inserter: Main for marker inserter. TODO: MACROS!!!!!!!!!!!!!!!
- *
- * Wat zijn de mogelijke args? We kiezen voor de volgende: TODO Naar CLI11 ombouwen
- * 1. filePath.ext 	fileDir(optional)			- uses current dir to output marked file, include flag for srcname extension?
- * 2. fileDir		fileDir(required)			- ...
- * 
- * Niet alleen markers toevoegen maar ook inline attribute toevoegen aan methoden/functies
+ * 	TODO:
+ * 		Rekening houden met macros
+ * 		Naar CLI11 ombouwen
+ * 		Niet alleen markers toevoegen maar ook inline attribute toevoegen aan methoden/functies
+ * 		Rework EVERYTHING SE-wise
  */
 
 int main(int argc, char **argv) {

@@ -1,0 +1,21 @@
+{
+	"buildTargets":[
+		{
+			"name":"example",
+			"tgtDir":"example",
+			"mode": "file/folder/mixed/custom",
+			"optional":{},
+			"binPath":"/usr/bin/clang",
+			"outputFlag":"-o",
+			"active":false
+		},
+		{
+			"tgtDir":"/home/user/Desktop/DeCom/MarkerCodeScaffolder/csmith",
+			"mode": "file",
+			"optional":{},
+			"binPath":"/usr/bin/clang",
+			"outputFlag":"-o",
+			"active":true
+		}
+	]
+}

@@ -1,4 +1,4 @@
-
+#include <CLI/CLI.hpp>
 #include "cmdline/CmdTasker.hpp"
 
 int main(int argc, char **argv) {
