@@ -2,5 +2,7 @@
 	"timestamp":0,
 	"version":0,
 	"outputDir":"/home/user/Desktop/DeCom/MarkerBuildScaffolder/",
-	"update_metadata": false
+	"update_metadata": false,
+	"save_on_exit":"",
+	"dry_run":false
 }

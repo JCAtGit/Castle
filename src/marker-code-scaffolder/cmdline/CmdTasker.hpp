@@ -30,7 +30,17 @@ class CmdTasker{
 		    	return;
 		  	}
 		}
-			
+		
+		// misschien naar helper?
+		void saveJsonToFile(const std::string& path, const json& data) {
+		    std::ofstream file(path);
+		    if (!file.is_open()) {
+		        std::cerr << "Error: Could not open file for writing: " << path << std::endl;
+		        return;
+		    }
+		    file << data.dump(4);  // pretty print with 4 spaces indentation
+		    std::cout << "Saved config to " << path << std::endl;
+		}
 	public:
 	CmdTasker(){
 		cout << "Setup CmdTasker.\n";
@@ -49,25 +59,14 @@ class CmdTasker{
 					toolcfg["binPath"].get<string>() 	+ " " 	+ 
 					toolcfg["seedFlag"].get<string>() 	+ " " 	+ std::to_string(toolcfg["it_begin"].get<int>()) 	+ " " +
 					toolcfg["outputFlag"].get<string>() + " \"" + cs_config_data["outputDir"].get<string>() 			+ 
-					toolcfg["name"].get<string>() 		+ "/" 	+ std::to_string(toolcfg["it_begin"].get<int>())	+ 
-					".c\"";
+					toolcfg["name"].get<string>() 		+ "/" 	+ std::to_string(toolcfg["it_begin"].get<int>())	+ ".c\"" + 					
+					"> /dev/null 2>&1";
 				std::cout << command << "\n";
 				auto status = std::system(command.c_str());
 				command.clear();
 			}
 			toolcfg["timestamp"] = time(NULL);
 		}
-	}
-	
-	// misschien naar helper?
-	void saveJsonToFile(const std::string& path, const json& data) {
-	    std::ofstream file(path);
-	    if (!file.is_open()) {
-	        std::cerr << "Error: Could not open file for writing: " << path << std::endl;
-	        return;
-	    }
-	    file << data.dump(4);  // pretty print with 4 spaces indentation
-	    std::cout << "Saved config to " << path << std::endl;
 	}
 	
 	void persistChanges(){

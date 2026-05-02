@@ -1,0 +1,24 @@
+{
+	"decomTargets":[
+		{
+			"name":"example",
+			"tgtDir":"example",
+			"mode": "file/folder/mixed/custom",
+			"optional":{},
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":"false",
+			"outputFlag":"-o",
+			"active":false
+		},
+		{
+			"name":"csmith_TODO",
+			"tgtDir":"/home/user/Desktop/DeCom/MarkerBuildScaffolder/csmith",
+			"mode": "file",
+			"optional":{},
+			"binPath":"TODO",
+			"run_bin_as_shell":"false",
+			"outputFlag":"-o",
+			"active":true
+		}
+	]
+}

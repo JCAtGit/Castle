@@ -1,5 +1,7 @@
 add_executable(MarkerSurgeon src/marker-surgeon/main.cpp)
 add_executable(MarkerCodeScaffolder src/marker-code-scaffolder/main.cpp)
+add_executable(MarkerBuildScaffolder src/marker-build-scaffolder/main.cpp)
+add_executable(MarkerDecomScaffolder src/marker-build-scaffolder/main.cpp)
 
 #add_executable(JSONCPP src/prototype/jsoncpp.cpp)
 #add_executable(DirTraversal src/prototype/DirTraverser/DirTraversal.cpp)

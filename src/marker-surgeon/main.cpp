@@ -2,8 +2,6 @@
 #include "config/config_ds.hpp"
 #include "task-manager/TaskManager.hpp"
 
-//using namespace clang;
-
 /**
  * 	TODO:
  * 		Rekening houden met macros

@@ -2,6 +2,7 @@
     "code_generators": [
         {
             "binPath": "/usr/bin/csmith",
+			"run_bin_as_shell":"false",
             "details": {},
             "it_begin": 0,
             "it_end": 10,
