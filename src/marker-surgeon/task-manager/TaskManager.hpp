@@ -166,9 +166,8 @@ class TaskManager {
 				CodeMarkerInserter::createDependencyFiles(*cfg);
 				break;
 			case TASKMODE::REMOVE:
-				// TODO: Implement
+				// TODO: Change to toggle mechanism
 				CodeMarkerRemover::removeDependencyFiles(*cfg);
-				// TODO: remove		
 				break;
 			default:
 				llvm::outs() << "Taskmode undefined. \n";

@@ -50,7 +50,7 @@ class CmdTasker{
 	void startCodeGeneration(){
 		cout << "Starting code generation and outputting to " << cs_config_data["outputDir"] << "\n";
 		string command;
-		for(auto& toolcfg:cg_config_data["code_generators"]){
+		for(auto& toolcfg:cg_config_data["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << " [" << toolcfg["it_begin"]  << "," << toolcfg["it_end"] << ")\n";
 			filesystem::create_directories((cs_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
@@ -60,7 +60,8 @@ class CmdTasker{
 					toolcfg["seedFlag"].get<string>() 	+ " " 	+ std::to_string(toolcfg["it_begin"].get<int>()) 	+ " " +
 					toolcfg["outputFlag"].get<string>() + " \"" + cs_config_data["outputDir"].get<string>() 			+ 
 					toolcfg["name"].get<string>() 		+ "/" 	+ std::to_string(toolcfg["it_begin"].get<int>())	+ ".c\"" + 					
-					"> /dev/null 2>&1";
+					" > /dev/null 2>&1";
+				if(toolcfg["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 				std::cout << command << "\n";
 				auto status = std::system(command.c_str());
 				command.clear();
@@ -71,9 +72,9 @@ class CmdTasker{
 	
 	void persistChanges(){
 		if(cs_config_data["save_on_exit"].get<bool>()){
-			saveJsonToFile(cg_configPath,cg_config_data);
 			cs_config_data["timestamp"] = time(NULL);
 			saveJsonToFile(cs_configPath,cs_config_data);
+			saveJsonToFile(cg_configPath,cg_config_data);
 		}
 	}
 };

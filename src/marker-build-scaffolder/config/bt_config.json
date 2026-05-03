@@ -1,14 +1,14 @@
 {
-	"buildTargets":[
+	"targets":[
 		{
 			"name":"example",
 			"tgtDir":"example",
 			"mode": "file/folder/mixed/custom",
 			"optional":{},
 			"binPath":"/usr/bin/clang",
-			"run_bin_as_shell":"false",
+			"run_bin_as_shell":false,
 			"outputFlag":"-o",
-			"active":false,
+			"active":false
 		},
 		{
 			"name":"csmith",
@@ -16,7 +16,7 @@
 			"mode": "file",
 			"optional":{},
 			"binPath":"/usr/bin/clang",
-			"run_bin_as_shell":"false",
+			"run_bin_as_shell":false,
 			"outputFlag":"-o",
 			"active":true
 		}

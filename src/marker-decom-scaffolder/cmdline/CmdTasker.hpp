@@ -8,36 +8,54 @@ using namespace std;
 
 class CmdTasker{
 	private:
-		const string bt_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/marker-build-scaffolder/config/bt_config.json";
-		const string bs_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/marker-build-scaffolder/config/bs_config.json";
-		json bt_config_data, bs_config_data;
+		const string dt_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/marker-decom-scaffolder/config/dt_config.json";
+		const string ds_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/marker-decom-scaffolder/config/ds_config.json";
+		json dt_config_data, ds_config_data;
+		std::string cmd_precursor;
 		
 		void loadConfigs(){
 			cout << "Importing JSON configs.\n";
-		   	ifstream bt_config_file(bt_configPath);
-			ifstream bs_config_file(bs_configPath);
-		   	if (!(bt_config_file.is_open() && bs_config_file.is_open())) {
+		   	ifstream dt_config_file(dt_configPath);
+			ifstream ds_config_file(ds_configPath);
+		   	if (!(dt_config_file.is_open() && ds_config_file.is_open())) {
 		    	cerr << "Error: Could not open required config files, see the source json folder for details." << endl;
 		   		return;
 		   	}
 		   	try {
-		    	bt_config_data = json::parse(bt_config_file);
-				bs_config_data = json::parse(bs_config_file);
+		    	dt_config_data = json::parse(dt_config_file);
+				ds_config_data = json::parse(ds_config_file);
 		   	} catch (const json::parse_error& e) {
 		    	cerr << "Parse error: " << e.what() << endl;
 		    	return;
 		  	}
 		}
 		
-		using voidFn = std::function<void(filesystem::path, json&)>;
-		void processFile(filesystem::path filepath, json& bt_config_data){
-			if(filesystem::is_regular_file(filepath) && (filepath.extension() == ".c")){
+		/**
+		 * Volgorde options maakt soms uit, dus let hierop bij de config.
+		 */
+		void addFlags(std::string& command, json& dt_config_data){
+			for(auto option:dt_config_data["static_options"]){
+				for (auto& [flag, value] : option.items()) {
+	                command = command + " " + flag;
+	                // If the value is a non‑empty string, append it as an argument
+	                if (value.is_string() && !value.get<std::string>().empty()) {
+	                    command = command + " " + value.get<std::string>();
+	                } // Handle other types (numbers, bool)
+	            }
+			}
+		}
+		
+		using fn = std::function<void(filesystem::path, json&)>;
+		void processFile(filesystem::path filepath, json& dt_config_data){
+			if(filesystem::is_regular_file(filepath)){
 				string command = 
-					bt_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 
-					bt_config_data["outputFlag"].get<string>() 	+ " " + bs_config_data["outputDir"].get<string>() + 
-																		bt_config_data["name"].get<string>() + "/" +
-																		filepath.stem().c_str() + ".o" +
-					"> /dev/null 2>&1";
+					dt_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 
+					dt_config_data["outputFlag"].get<string>() 	+ " " + ds_config_data["outputDir"].get<string>() + 
+																		dt_config_data["name"].get<string>() + "/" +
+																		filepath.stem().c_str() + ".c";
+				addFlags(command, dt_config_data);
+				if(dt_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
+				command = command + " > /dev/null 2>&1";
 				std::cout << command << "\n";
 				auto status = std::system(command.c_str());
 			}
@@ -46,11 +64,11 @@ class CmdTasker{
 		void processMixed(filesystem::path filepath, json& bt_config_data){}
 		void processCustom(filesystem::path filepath, json& bt_config_data){}
 		
-		voidFn selectProcessor(const std::string& choice) {
-	        if (choice == "file")   return [this](filesystem::path p, json j) { processFile(p, j); };
-	        if (choice == "folder") return [this](filesystem::path p, json j) { processFolder(p, j); };
-	        if (choice == "mixed")  return [this](filesystem::path p, json j) { processMixed(p, j); };
-	        if (choice == "custom") return [this](filesystem::path p, json j) { processCustom(p, j); };
+		fn selectProcessor(const std::string& choice) {
+	        if (choice == "file")   return [this](filesystem::path p, json j) -> void { processFile(p, j); };
+	        if (choice == "folder") return [this](filesystem::path p, json j) -> void { processFolder(p, j); };
+	        if (choice == "mixed")  return [this](filesystem::path p, json j) -> void { processMixed(p, j); };
+	        if (choice == "custom") return [this](filesystem::path p, json j) -> void { processCustom(p, j); };
 			cout << "invalid choice for processor";
 	        return nullptr;
 	    }
@@ -70,12 +88,12 @@ class CmdTasker{
 	}
 	
 	void startDecompilationProcesses(){
-		cout << "Starting build processes and outputting to " << bs_config_data["outputDir"] << "\n";
-		voidFn processor;
-		for(auto& toolcfg:bt_config_data["buildTargets"]){
+		cout << "Starting decompilation processes and outputting to " << ds_config_data["outputDir"] << "\n";
+		fn processor;
+		for(auto& toolcfg:dt_config_data["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << "\n";
-			filesystem::create_directories((bs_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
+			filesystem::create_directories((ds_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			processor = selectProcessor(toolcfg["mode"].get<string>());
 			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
 				processor(entry, toolcfg);
@@ -85,10 +103,10 @@ class CmdTasker{
 	}
 	
 	void persistChanges(){
-		if(bt_config_data["save_on_exit"].get<bool>()){
-			saveJsonToFile(bs_configPath, bs_config_data);
-			bt_config_data["timestamp"] = time(NULL);
-			saveJsonToFile(bt_configPath, bt_config_data);
+		if(ds_config_data["save_on_exit"].get<bool>()){
+			dt_config_data["timestamp"] = time(NULL);
+			saveJsonToFile(ds_configPath, ds_config_data);
+			saveJsonToFile(dt_configPath, dt_config_data);
 		}
 	}
 };

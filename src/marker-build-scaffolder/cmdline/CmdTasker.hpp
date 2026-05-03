@@ -37,7 +37,8 @@ class CmdTasker{
 					bt_config_data["outputFlag"].get<string>() 	+ " " + bs_config_data["outputDir"].get<string>() + 
 																		bt_config_data["name"].get<string>() + "/" +
 																		filepath.stem().c_str() + ".o" +
-					"> /dev/null 2>&1";
+					" > /dev/null 2>&1";
+				if(bt_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 				std::cout << command << "\n";
 				auto status = std::system(command.c_str());
 			}
@@ -72,7 +73,7 @@ class CmdTasker{
 	void startBuildProcesses(){
 		cout << "Starting build processes and outputting to " << bs_config_data["outputDir"] << "\n";
 		voidFn processor;
-		for(auto& toolcfg:bt_config_data["buildTargets"]){
+		for(auto& toolcfg:bt_config_data["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << "\n";
 			filesystem::create_directories((bs_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
@@ -85,9 +86,10 @@ class CmdTasker{
 	}
 	
 	void persistChanges(){
-		if(bt_config_data["save_on_exit"].get<bool>()){
-			saveJsonToFile(bs_configPath,bs_config_data);
+		if(bs_config_data["save_on_exit"].get<bool>()){
+			cout << "Persist changes." << "\n";
 			bt_config_data["timestamp"] = time(NULL);
+			saveJsonToFile(bs_configPath,bs_config_data);
 			saveJsonToFile(bt_configPath, bt_config_data);
 		}
 	}

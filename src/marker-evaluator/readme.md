@@ -14,3 +14,6 @@ Evaluate recovery of:
 	switch statements
 	
 2. 	malloc?
+
+Voor incomplete of pseudo c, gebruik mogelijk:
+clang -Xclang -ast-dump -Xclang -frecovery-ast your_source.cpp

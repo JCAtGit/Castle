@@ -1,8 +1,8 @@
 {
-    "code_generators": [
+    "targets": [
         {
             "binPath": "/usr/bin/csmith",
-			"run_bin_as_shell":"false",
+			"run_bin_as_shell":false,
             "details": {},
             "it_begin": 0,
             "it_end": 10,
