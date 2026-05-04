@@ -1,0 +1,28 @@
+{
+	"targets":[
+		{
+			"name":"example",
+			"oracleDir":"example",
+			"tgtDir":"example",
+			"mode": 	"file <- looks for matching stem / 
+						folder <- looks for matching stem / 
+						custom <- uses provided mapping?",
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"static_options":[],
+			"outputFlag":"-o",
+			"active":false
+		},
+		{
+			"name":"format0_eval",
+			"oracleDir":"example",
+			"tgtDir":"example",
+			"mode": "file/folder/custom",
+			"binPath":"TODO",
+			"run_bin_as_shell":false,
+			"static_options":[],
+			"outputFlag":"-o",
+			"active":false
+		}
+	]
+}

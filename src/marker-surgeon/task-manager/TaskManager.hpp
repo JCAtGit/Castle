@@ -12,7 +12,6 @@
 #include "task-predicates.hpp"
 
 namespace fs = std::filesystem;
-
 using namespace clang;
 
 /**
@@ -87,9 +86,8 @@ class TaskManager {
 		int status;
 		switch (cfg->taskmode) {
 			case TASKMODE::PREPROCESS:
-				command = 
-				//"clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + "example0.c" + ">" + "example0_formatted.c";
-				"clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + path2process.string();
+						//"clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + "example0.c" + ">" + "example0_formatted.c";
+				command = "clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + path2process.string();
 			    status = std::system(command.c_str());
 			    if (status == 0) {
 					llvm::outs() << "clang-format performed for:" + path2process.string() + "\n";
@@ -98,8 +96,6 @@ class TaskManager {
 			    }
 //				runMacroExpander(path2process, cfg);
 				break;
-				
-				break;			
 			case TASKMODE::INSERT:
 				command = 
 				//"clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + "example0.c" + ">" + "example0_formatted.c";
@@ -121,11 +117,11 @@ class TaskManager {
 	}
 	
 	void processQueue(){
-		llvm::outs() << "Process Queue Start. \n";					
-		llvm::outs() << "pathQueue items: " << pathQueue.size() << "\n";
-		llvm::outs() << "inputFile: " << cfg->inputFile.string() << "\n";
-		llvm::outs() << "inputDir: " << cfg->inputDir.string() << "\n";
-		llvm::outs() << "outputDIr: " << cfg->outputDir.string() << "\n";
+		llvm::outs() 	<< "Process Queue Start. \n"				
+						<< "pathQueue items: " << pathQueue.size() << "\n"
+						<< "inputFile: " << cfg->inputFile.string() << "\n"
+						<< "inputDir: " << cfg->inputDir.string() << "\n"
+						<< "outputDIr: " << cfg->outputDir.string() << "\n";
 
 		// TODO: Each iteration is independent from each other, if required we can process this concurrently.
 		for(const auto& path2process : pathQueue){
@@ -133,7 +129,6 @@ class TaskManager {
 			// Path where the result will get stored later.
 			fs::path outPath = cfg->outputDir / rel_outputPath(cfg->inputDir, path2process);
 			//Doe dit voordat AST unit ptr is aangemaakt. Prepare file for marking, this includes fixing dangling statements
-			
 			preprocessQueueItem(path2process);
 			
 			auto codeString = file2string(path2process);

@@ -3,7 +3,7 @@
 		{
 			"name":"example",
 			"tgtDir":"example",
-			"mode": "file/folder/mixed/custom",
+			"mode": "file/folder/custom",
 			"optional":{},
 			"binPath":"/usr/bin/clang",
 			"run_bin_as_shell":false,

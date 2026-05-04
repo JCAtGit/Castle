@@ -11,7 +11,6 @@ class CmdTasker{
 		const string dt_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/marker-decom-scaffolder/config/dt_config.json";
 		const string ds_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/marker-decom-scaffolder/config/ds_config.json";
 		json dt_config_data, ds_config_data;
-		std::string cmd_precursor;
 		
 		void loadConfigs(){
 			cout << "Importing JSON configs.\n";
