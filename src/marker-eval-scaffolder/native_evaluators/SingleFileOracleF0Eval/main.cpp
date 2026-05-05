@@ -16,10 +16,6 @@ int main(int argc, char **argv) {
 	std::string outputPath;
 	app.add_option("-o,--output", outputPath, "file to process")
 		->required();
-	
-	std::string mode;
-	app.add_option("-m,--mode", mode, "oracle mode")
-		->required();
 		
 	std::string mrkrCfgDirDir;
 	app.add_option("--mrkr_cfg_dir", mrkrCfgDirDir, "Marker details used for heuristics")
@@ -27,6 +23,6 @@ int main(int argc, char **argv) {
 
 	CLI11_PARSE(app, argc, argv);
 
-	CmdTasker cmdTskr(inputPath, oraclePath, outputPath, mode, mrkrCfgDirDir);
+	CmdTasker cmdTskr(inputPath, oraclePath, outputPath, mrkrCfgDirDir);
 	cmdTskr.startEvaluationProcesses();
 }

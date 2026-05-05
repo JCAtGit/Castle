@@ -61,6 +61,8 @@ class CmdTasker{
 					toolcfg["outputFlag"].get<string>() + " \"" + cs_config_data["outputDir"].get<string>() 			+ 
 					toolcfg["name"].get<string>() 		+ "/" 	+ std::to_string(toolcfg["it_begin"].get<int>())	+ ".c\"" + 					
 					" > /dev/null 2>&1";
+				// TODO: add static flags	
+				
 				if(toolcfg["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 				std::cout << command << "\n";
 				auto status = std::system(command.c_str());

@@ -32,7 +32,7 @@ class CmdTasker{
 		/**
 		 * Volgorde options maakt soms uit, dus let hierop bij de config.
 		 */
-		void addFlags(std::string& command, json& dt_config_data){
+		void addStaticFlags(std::string& command, json& dt_config_data){
 			for(auto option:dt_config_data["static_options"]){
 				for (auto& [flag, value] : option.items()) {
 	                command = command + " " + flag;
@@ -47,11 +47,12 @@ class CmdTasker{
 		void processPath(filesystem::path filepath, json& et_config_data){
 			if(filesystem::is_regular_file(filepath)){
 				string command = 
-					et_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 
-					et_config_data["outputFlag"].get<string>() 	+ " " + es_config_data["outputDir"].get<string>() + 
-																		et_config_data["name"].get<string>() + "/" +
+					et_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 						// binPath
+					et_config_data["oraclePath"].get<string>() 	+ " " + 												// oraclePath
+					et_config_data["outputFlag"].get<string>() 	+ " " + es_config_data["outputDir"].get<string>() 	+ 	// outputPath
+																		et_config_data["name"].get<string>() + "/" 	+
 																		filepath.stem().c_str() + ".c";
-				addFlags(command, et_config_data);
+				addStaticFlags(command, et_config_data);
 				if(et_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 				command = command + " > /dev/null 2>&1";
 				std::cout << command << "\n";

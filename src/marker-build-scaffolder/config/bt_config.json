@@ -2,11 +2,11 @@
 	"targets":[
 		{
 			"name":"example",
-			"tgtDir":"example",			// scaffolder will always output/require this flag
+			"tgtDir":"example",
 			"optional":{},
-			"binPath":"/usr/bin/clang",	// scaffolder will always output/require this flag
+			"binPath":"/usr/bin/clang",
 			"run_bin_as_shell":false,
-			"outputFlag":"-o",			// scaffolder will always output/require this flag
+			"outputFlag":"-o",
 			"active":false
 		},
 		{

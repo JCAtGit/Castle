@@ -14,7 +14,7 @@ using fn = std::function<void()>;
 
 class CmdTasker{
 	private:		
-		string inputPath, oraclePath, outputPath, mode, mrkrFormatsPath;
+		string inputPath, oraclePath, outputPath, mrkrFormatsPath;
 		json markerFormats;
 		
 		fn processor;
@@ -49,32 +49,20 @@ class CmdTasker{
 			// TODO: complete, test drive first
 			visitor->TraverseDecl(astEvalUnit->getASTContext().getTranslationUnitDecl());
 		}
-		void processFolder(){}
-		void processCustom(){}
-		
-		fn selectProcessor() {
-	        if (mode == "file")   return [this]() -> void { processFile(); };
-	        if (mode == "folder") return [this]() -> void { processFolder(); };
-	        if (mode == "custom") return [this]() -> void { processCustom(); };
-			cout << "invalid choice for processor";
-	        return nullptr;
-	    }
-		
+	
 	public:
-	CmdTasker(string inputPath, string oraclePath, string outputPath, string  mode, string  mrkrCfgPath): 
+	CmdTasker(string inputPath, string oraclePath, string outputPath, string  mrkrCfgPath): 
 			inputPath(inputPath), 
 			oraclePath(oraclePath),
 			outputPath(outputPath),
-			mode(mode),
 			mrkrFormatsPath(mrkrCfgPath)
 	{
-		processor = selectProcessor();
 		loadMarkerFormats();
 		format = markerFormats["0"];
 	}
 		
 	void startEvaluationProcesses(){
-		cout << "Evaluation (mode, path): " << "(" << inputPath << ", " << inputPath << ")";
+		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oraclePath << ")";
 		processor();
 	}
 };

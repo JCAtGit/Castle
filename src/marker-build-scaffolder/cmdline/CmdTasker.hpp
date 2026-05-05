@@ -37,6 +37,7 @@ class CmdTasker{
 																		bt_config_data["name"].get<string>() + "/" +
 																		filepath.stem().c_str() + ".o" +
 					" > /dev/null 2>&1";
+				// TODO: add static flags
 				if(bt_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 				std::cout << command << "\n";
 				auto status = std::system(command.c_str());
