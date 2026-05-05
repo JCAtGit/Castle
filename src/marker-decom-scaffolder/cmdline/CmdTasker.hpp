@@ -32,7 +32,7 @@ class CmdTasker{
 		/**
 		 * Volgorde options maakt soms uit, dus let hierop bij de config.
 		 */
-		void addFlags(std::string& command, json& dt_config_data){
+		void addStaticFlags(std::string& command, json& dt_config_data){
 			for(auto option:dt_config_data["static_options"]){
 				for (auto& [flag, value] : option.items()) {
 	                command = command + " " + flag;
@@ -45,18 +45,16 @@ class CmdTasker{
 		}
 		
 		void processPath(filesystem::path filepath, json& dt_config_data){
-			if(filesystem::is_regular_file(filepath)){
-				string command = 
-					dt_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 
-					dt_config_data["outputFlag"].get<string>() 	+ " " + ds_config_data["outputDir"].get<string>() + 
-																		dt_config_data["name"].get<string>() + "/" +
-																		filepath.stem().c_str() + ".c";
-				addFlags(command, dt_config_data);
-				if(dt_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
-				command = command + " > /dev/null 2>&1";
-				std::cout << command << "\n";
-				auto status = std::system(command.c_str());
-			}
+			string command = 
+				dt_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 
+				dt_config_data["outputFlag"].get<string>() 	+ " " + ds_config_data["outputDir"].get<string>() + 
+																	dt_config_data["name"].get<string>() + "/" +
+																	filepath.stem().c_str() + ".c";
+			addStaticFlags(command, dt_config_data);
+			if(dt_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
+			command = command + " > /dev/null 2>&1";
+			std::cout << command << "\n";
+			auto status = std::system(command.c_str());
 		}
 		
 		void saveJsonToFile(const std::string& path, const json& data) {

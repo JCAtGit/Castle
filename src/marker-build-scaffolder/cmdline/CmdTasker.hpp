@@ -30,18 +30,16 @@ class CmdTasker{
 		}
 		
 		void processPath(filesystem::path filepath, json& bt_config_data){
-			if(filesystem::is_regular_file(filepath) && (filepath.extension() == ".c")){
-				string command = 
-					bt_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 
-					bt_config_data["outputFlag"].get<string>() 	+ " " + bs_config_data["outputDir"].get<string>() + 
-																		bt_config_data["name"].get<string>() + "/" +
-																		filepath.stem().c_str() + ".o" +
-					" > /dev/null 2>&1";
-				// TODO: add static flags
-				if(bt_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
-				std::cout << command << "\n";
-				auto status = std::system(command.c_str());
-			}
+			string command = 
+				bt_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 
+				bt_config_data["outputFlag"].get<string>() 	+ " " + bs_config_data["outputDir"].get<string>() + 
+																	bt_config_data["name"].get<string>() + "/" +
+																	filepath.stem().c_str() + ".o" +
+				" > /dev/null 2>&1";
+			// TODO: add static flags
+			if(bt_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
+			std::cout << command << "\n";
+			auto status = std::system(command.c_str());
 		}
 
 		void saveJsonToFile(const std::string& path, const json& data) {

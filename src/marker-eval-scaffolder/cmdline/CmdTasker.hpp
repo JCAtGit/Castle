@@ -45,19 +45,17 @@ class CmdTasker{
 		}
 		
 		void processPath(filesystem::path filepath, json& et_config_data){
-			if(filesystem::is_regular_file(filepath)){
-				string command = 
-					et_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 						// binPath
-					et_config_data["oraclePath"].get<string>() 	+ " " + 												// oraclePath
-					et_config_data["outputFlag"].get<string>() 	+ " " + es_config_data["outputDir"].get<string>() 	+ 	// outputPath
-																		et_config_data["name"].get<string>() + "/" 	+
-																		filepath.stem().c_str() + ".c";
-				addStaticFlags(command, et_config_data);
-				if(et_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
-				command = command + " > /dev/null 2>&1";
-				std::cout << command << "\n";
-				auto status = std::system(command.c_str());
-			}
+			string command = 
+				et_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 						// binPath
+				et_config_data["oraclePath"].get<string>() 	+ " " + 												// oraclePath
+				et_config_data["outputFlag"].get<string>() 	+ " " + es_config_data["outputDir"].get<string>() 	+ 	// outputPath
+																	et_config_data["name"].get<string>() + "/" 	+
+																	filepath.stem().c_str() + ".c";
+			addStaticFlags(command, et_config_data);
+			if(et_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
+			command = command + " > /dev/null 2>&1";
+			std::cout << command << "\n";
+			auto status = std::system(command.c_str());
 		}
 		
 		void saveJsonToFile(const std::string& path, const json& data) {
@@ -76,7 +74,7 @@ class CmdTasker{
 	
 	// TODO
 	void startEvaluationProcesses(){
-		cout << "Starting decompilation processes and outputting to " << es_config_data["outputDir"] << "\n";
+		cout << "Starting evaluation processes and outputting to " << es_config_data["outputDir"] << "\n";
 		for(auto& toolcfg:et_config_data["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << "\n";

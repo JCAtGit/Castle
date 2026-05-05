@@ -2,7 +2,7 @@
 #include "cmdline/CmdTasker.hpp"
 
 int main(int argc, char **argv) {
-	CLI::App app{"MarkerEvaluator0"};
+	CLI::App app{"SingleFileOracleF0Eval"};
 	
 	std::string inputPath;
 	app.add_option("inputPath", inputPath, "input path to evaluate")
@@ -12,9 +12,8 @@ int main(int argc, char **argv) {
 	app.add_option("oraclePath", oraclePath, "input path to use as oracle")
 		->required();
 
-		
 	std::string outputPath;
-	app.add_option("-o,--output", outputPath, "file to process")
+	app.add_option("-o,--output", outputPath, "output path for results")
 		->required();
 		
 	std::string mrkrCfgDirDir;

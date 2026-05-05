@@ -6,5 +6,5 @@
 	"save_on_exit":false,
 	"dry_run":false,
 	"backup_before_save":false,
-	"markerFormatsPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/marker-pipeline/marker-config/marker-formats.json",
+	"markerFormatsPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/marker-pipeline/marker-config/marker-formats.json"
 }
