@@ -1,0 +1,18 @@
+{
+	"0":{
+		"name": "codemarker_alpha", // do not add spaces before or after.
+		"keyword": "extern ",
+		"functionType": "void ",
+		"definitionFileName": "MarkerDefinition",
+		"paramSignature": "(int markerID)",
+		"definition": "{volatile int dummy = markerID;}",
+	},
+	"1":{
+		"name": "codemarker_alpha",
+		"keyword": "extern ",
+		"functionType": "void ",
+		"definitionFileName": "MarkerDefinition",
+		"paramSignature": "(int markerID)",
+		"definition": "{volatile int dummy = markerID;}",
+	}
+}

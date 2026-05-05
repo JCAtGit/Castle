@@ -44,9 +44,7 @@ class CmdTasker{
 			}
 		}
 		
-		using fn = std::function<void(filesystem::path, json&)>;
-		// TODO
-		void processFile(filesystem::path filepath, json& et_config_data){
+		void processPath(filesystem::path filepath, json& et_config_data){
 			if(filesystem::is_regular_file(filepath)){
 				string command = 
 					et_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 
@@ -60,18 +58,6 @@ class CmdTasker{
 				auto status = std::system(command.c_str());
 			}
 		}
-		void processFolder(filesystem::path filepath, json& et_config_data){}
-		void processMixed(filesystem::path filepath, json& et_config_data){}
-		void processCustom(filesystem::path filepath, json& et_config_data){}
-		
-		fn selectProcessor(const std::string& choice) {
-	        if (choice == "file")   return [this](filesystem::path p, json j) -> void { processFile(p, j); };
-	        if (choice == "folder") return [this](filesystem::path p, json j) -> void { processFolder(p, j); };
-	        if (choice == "mixed")  return [this](filesystem::path p, json j) -> void { processMixed(p, j); };
-	        if (choice == "custom") return [this](filesystem::path p, json j) -> void { processCustom(p, j); };
-			cout << "invalid choice for processor";
-	        return nullptr;
-	    }
 		
 		void saveJsonToFile(const std::string& path, const json& data) {
 		    std::ofstream file(path);
@@ -90,14 +76,12 @@ class CmdTasker{
 	// TODO
 	void startEvaluationProcesses(){
 		cout << "Starting decompilation processes and outputting to " << es_config_data["outputDir"] << "\n";
-		fn processor;
 		for(auto& toolcfg:et_config_data["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << "\n";
 			filesystem::create_directories((es_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
-			processor = selectProcessor(toolcfg["mode"].get<string>());
 			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
-				processor(entry, toolcfg);
+				processPath(entry, toolcfg);
 			}
 			toolcfg["timestamp"] = time(NULL);
 		}

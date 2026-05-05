@@ -2,18 +2,16 @@
 	"targets":[
 		{
 			"name":"example",
-			"tgtDir":"example",
-			"mode": "file/folder/custom",
+			"tgtDir":"example",			// scaffolder will always output/require this flag
 			"optional":{},
-			"binPath":"/usr/bin/clang",
+			"binPath":"/usr/bin/clang",	// scaffolder will always output/require this flag
 			"run_bin_as_shell":false,
-			"outputFlag":"-o",
+			"outputFlag":"-o",			// scaffolder will always output/require this flag
 			"active":false
 		},
 		{
 			"name":"csmith",
 			"tgtDir":"/home/user/Desktop/DeCom/MarkerCodeScaffolder/csmith",
-			"mode": "file",
 			"optional":{},
 			"binPath":"/usr/bin/clang",
 			"run_bin_as_shell":false,

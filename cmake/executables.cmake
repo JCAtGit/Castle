@@ -2,6 +2,8 @@ add_executable(MarkerSurgeon src/marker-surgeon/main.cpp)
 add_executable(MarkerCodeScaffolder src/marker-code-scaffolder/main.cpp)
 add_executable(MarkerBuildScaffolder src/marker-build-scaffolder/main.cpp)
 add_executable(MarkerDecomScaffolder src/marker-decom-scaffolder/main.cpp)
+add_executable(MarkerEvalScaffolder src/marker-eval-scaffolder/main.cpp)
+add_executable(MarkerNativeEval0 src/marker-eval-scaffolder/native_evaluators/0/main.cpp)
 
 #add_executable(JSONCPP src/prototype/jsoncpp.cpp)
 #add_executable(DirTraversal src/prototype/DirTraverser/DirTraversal.cpp)

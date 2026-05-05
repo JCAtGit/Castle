@@ -3,17 +3,15 @@
 		{
 			"name":"example",
 			"tgtDir":"example",
-			"mode": "file/folder/custom",
 			"binPath":"/usr/bin/clang",
 			"run_bin_as_shell":false,
 			"static_options":[],
-			"outputFlag":"-o",
+			"outputFlag":"-o", 
 			"active":false
 		},
 		{
 			"name":"ghidra_csmith",
 			"tgtDir":"/home/user/Desktop/DeCom/MarkerBuildScaffolder/csmith/",
-			"mode": "file",
 			"binPath":"/home/user/Desktop/DeCom/MarkerDeComScaffolder/scripts/ghidra_decompile.sh",
 			"static_options":[],
 			"run_bin_as_shell":true,
@@ -23,7 +21,6 @@
 		{
 			"name":"retdec_csmith",
 			"tgtDir":"/home/user/Desktop/DeCom/MarkerBuildScaffolder/csmith/",
-			"mode": "file",
 			"binPath":"/home/user/Desktop/DeCom/MarkerDeComScaffolder/Decompilers/RetDec-v5.0-Linux-Release/bin/retdec-decompiler",
 			"static_options":[{"--cleanup":""}, {"--silent":""}],
 			"run_bin_as_shell":false,

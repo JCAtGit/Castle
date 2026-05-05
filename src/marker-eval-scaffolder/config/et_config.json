@@ -4,25 +4,21 @@
 			"name":"example",
 			"oracleDir":"example",
 			"tgtDir":"example",
-			"mode": 	"file <- looks for matching stem / 
-						folder <- looks for matching stem / 
-						custom <- uses provided mapping?",
 			"binPath":"/usr/bin/clang",
 			"run_bin_as_shell":false,
 			"static_options":[],
 			"outputFlag":"-o",
-			"active":false
+			"active":false,
 		},
 		{
-			"name":"format0_eval",
-			"oracleDir":"example",
-			"tgtDir":"example",
-			"mode": "file/folder/custom",
-			"binPath":"TODO",
+			"name":"ghidra_csmith_f0_eval",
+			"oracleDir":"/home/user/Desktop/DeCom/MarkerSurgeon/csmith_f0/",
+			"tgtDir":"/home/user/Desktop/DeCom/MarkerDeComScaffolder/ghidra_csmith_f0/",
+			"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/MarkerNativeEval0",
 			"run_bin_as_shell":false,
-			"static_options":[],
+			"static_options":[{"--mode":"file"}],
 			"outputFlag":"-o",
-			"active":false
+			"active":false,
 		}
 	]
 }

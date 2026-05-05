@@ -5,9 +5,14 @@ int main(int argc, char **argv) {
 	CLI::App app{"MarkerEvaluator0"};
 	
 	std::string inputPath;
-	app.add_option("input", inputPath, "input file to evaluate")
-		->required();   // the user must provide it as a standalone argument
+	app.add_option("inputPath", inputPath, "input path to evaluate")
+		->required();
 	
+	std::string oraclePath;
+	app.add_option("oraclePath", oraclePath, "input path to use as oracle")
+		->required();
+
+		
 	std::string outputPath;
 	app.add_option("-o,--output", outputPath, "file to process")
 		->required();
@@ -16,12 +21,12 @@ int main(int argc, char **argv) {
 	app.add_option("-m,--mode", mode, "oracle mode")
 		->required();
 		
-	std::string mrkrCfgPath;
-	app.add_option("--mrkr_cfg", mrkrCfgPath, "Marker details used for heuristics")
+	std::string mrkrCfgDirDir;
+	app.add_option("--mrkr_cfg_dir", mrkrCfgDirDir, "Marker details used for heuristics")
 		->required();
 
 	CLI11_PARSE(app, argc, argv);
 
-	CmdTasker cmdTskr(inputPath, outputPath, mode, mrkrCfgPath);
+	CmdTasker cmdTskr(inputPath, oraclePath, outputPath, mode, mrkrCfgDirDir);
 	cmdTskr.startEvaluationProcesses();
 }
