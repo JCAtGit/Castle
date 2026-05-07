@@ -1,6 +1,7 @@
+#include <CLI/CLI.hpp>
 #include "cmdline/CmdTasker.hpp"
 #include "config/config_ds.hpp"
-#include "cmdline/Preparer.hpp"
+#include "cmdline/Setup.hpp"
 
 /**
  * 	TODO:
@@ -21,26 +22,37 @@ int main(int argc, char **argv) {
 	auto option_outputPath = app.add_option("-o,--output", outputPath, "output path for results");
 	
 	bool onCopy;
-	app.add_flag("--on-copy",onCopy, "output path for results")
+	app.add_flag("--on-copy",onCopy, "copy inputdir to outputdir and then perform enhancements on copy.")
 		->needs(option_outputPath)
 		->required();
 	
+	int taskQuantifier;
+	app.add_option("--task-quantifier", taskQuantifier, "Determines if files will be queued 0=recursively or 1=locally");
+		
 	std::string mrkrFormatsPath;
 	app.add_option("--mrkr_cfg_dir", mrkrFormatsPath, "Marker config used for heuristics")
 		->required();
-		
+	
+	bool toggle;
+	app.add_flag("-t, --toggle",toggle,  "Toggles marking and removal");
 	CLI11_PARSE(app, argc, argv);
 	
-	if(onCopy){
-		preparePaths(inputPath, outputPath);
+	string tgtPath = inputPath;
+	
+	// check toggle
+	CmdTasker cmdTskr(tgtPath, outputPath, mrkrFormatsPath);
+
+	if(toggle){
+		// start instrumentation removal TODO
+		
+	} else {
+		CmdTasker cmdTskr(tgtPath, outputPath, mrkrFormatsPath);
+		// start instrumentation insertion TODO
+		if(onCopy){
+			preparePaths(inputPath, outputPath);
+			tgtPath = outputPath;
+		}
 	}
-	CmdTasker cmdTskr(inputPath,outputPath, mrkrFormatsPath);
-//	TaskManager tskMgr(cfg.get());
-//	cmdMgr.processConfig(argc, argv);
-//	
-//	if(cfg->isValid) {
-//		tskMgr.start();
-//	}
-	return 0;
+	
 }
 

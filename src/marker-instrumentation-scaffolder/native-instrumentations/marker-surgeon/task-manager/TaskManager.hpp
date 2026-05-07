@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "../config/config_ds.hpp"
-#include "../../../include/helper.hpp"
+#include "../../../../../include/helper.hpp"
 #include "../marker-mechanism/marker-inserter/ast-mechanism/CodeMarkerAction.h"
 #include "../marker-mechanism/marker-remover/ast-mechanism/CodeRemoverAction.hpp"
 #include "../marker-mechanism/marker-inserter/CodeMarkerInserter.hpp"
@@ -81,7 +81,6 @@ class TaskManager {
 	 * TODO: Pre-expand macros.
 	 */
 	void preprocessQueueItem(fs::path path2process){
-		unique_ptr<ASTFrontendAction> action;
 		std::string command;
 		int status;
 		switch (cfg->taskmode) {

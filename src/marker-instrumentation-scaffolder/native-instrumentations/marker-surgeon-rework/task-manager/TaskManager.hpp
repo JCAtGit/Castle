@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "../config/config_ds.hpp"
-#include "../../../include/helper.hpp"
+#include "../../../../../include/helper.hpp"
 #include "../marker-mechanism/marker-inserter/ast-mechanism/CodeMarkerAction.h"
 #include "../marker-mechanism/marker-remover/ast-mechanism/CodeRemoverAction.hpp"
 #include "../marker-mechanism/marker-inserter/CodeMarkerInserter.hpp"
@@ -26,6 +26,8 @@ class TaskManager {
 	private:
 	std::vector<fs::path> pathQueue; // store paths to files that need processing	
 	struct config* cfg;
+	
+	start
 	
 	/**
 	 *	Traverses dirs and adds files tot an queue for marking.

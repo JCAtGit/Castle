@@ -8,10 +8,9 @@
 #include <vector>
 #include <string>
 
-#include "../../../preprocessor-mechanism/directives/directive-processor.hpp"
+#include "../../preprocessor-mechanism/directives/directive-processor.hpp"
 
 using namespace clang;
-using namespace clang::tooling;
 
 class RecordingPPCallbacks : public PPCallbacks {
     std::vector<RecordedPPConstruct> &Events;
