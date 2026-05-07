@@ -10,14 +10,12 @@
 
 using namespace nlohmann;
 using namespace std;
-using fn = std::function<void()>;
 
 class CmdTasker{
 	private:		
 		string inputPath, oraclePath, outputPath, mrkrFormatsPath;
 		json markerFormats;
 		
-		fn processor;
 		json format;
 		
 		void loadMarkerFormats(){
@@ -63,7 +61,7 @@ class CmdTasker{
 		
 	void startEvaluationProcesses(){
 		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oraclePath << ")";
-		processor();
+		processFile();
 	}
 };
 	

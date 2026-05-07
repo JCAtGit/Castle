@@ -16,12 +16,12 @@ int main(int argc, char **argv) {
 	app.add_option("-o,--output", outputPath, "output path for results")
 		->required();
 		
-	std::string mrkrCfgDirDir;
-	app.add_option("--mrkr_cfg_dir", mrkrCfgDirDir, "Marker details used for heuristics")
+	std::string mrkrCfgDir;
+	app.add_option("--mrkr_cfg_dir", mrkrCfgDir, "Marker config used for heuristics")
 		->required();
 
 	CLI11_PARSE(app, argc, argv);
 
-	CmdTasker cmdTskr(inputPath, oraclePath, outputPath, mrkrCfgDirDir);
+	CmdTasker cmdTskr(inputPath, oraclePath, outputPath, mrkrCfgDir);
 	cmdTskr.startEvaluationProcesses();
 }
