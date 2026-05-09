@@ -4,8 +4,9 @@
 #include <fstream>
 #include <clang/Frontend/FrontendAction.h>
 #include "../../../../../include/helper.hpp"
-#include "../instrumentation-mechanism/marker-inserter/CodeMarkerAction.h"
-#include "../instrumentation-mechanism/marker-remover/ast-mechanism/CodeRemoverAction.hpp"
+#include "../instrumentation-mechanism/code-enchanter/CodeEnchanterAction.h"
+#include "clang/Tooling/Tooling.h"
+//#include "../instrumentation-mechanism/marker-remover/ast-mechanism/CodeRemoverAction.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -13,14 +14,22 @@ using namespace std;
 class CmdTasker{
 	private:
 	filesystem::path inputPath, outputPath, mrkrFormatsPath;
+	bool onCopy = false;
 	json markerFormats; 
 	
+	
 	json markerFormatCfg;
-	filesystem::path inputFile;
 	filesystem::path inputDir;
 	filesystem::path outputDir;
 	std::vector<filesystem::path> pathQueue;
 	int taskQuantifier = 0;
+	std::vector<std::string> toolArgs = {
+		"-xc", 							// Treat the input as C code
+		"-std=c11", 					// Use a specific C standard
+		"-nostdinc",					// Don't search for system headers
+//      "-D__STDC__=1",						//
+		"-Wno-all",						// Suppress all warnings, W-prefix stands for warning.
+	};
 	
 	void loadConfigs(){
 		cout << "Importing JSON configs.\n";
@@ -31,13 +40,13 @@ class CmdTasker{
 	   	}
 	   	try {
 	    	markerFormats = json::parse(markerFormatsFile);
+			cout << "JSON: " << markerFormats.dump(4) << endl;
 			markerFormatCfg = markerFormats["0"];
 	   	} catch (const json::parse_error& e) {
 	    	cerr << "Parse error: " << e.what() << endl;
 	    	return;
 	  	}
 	}
-	
 	
 	
 	void setupFileQueue(){
@@ -48,14 +57,14 @@ class CmdTasker{
 			if(taskQuantifier == 1){
 				for (const auto& entry : filesystem::directory_iterator(inputPath)) {
 					if (entry.path().extension() == ".c") {
-						cout << "Enqueued: " << entry.path() << "\n";
+						cout << "Enqueued: " << entry.path() << endl;
 						pathQueue.push_back(entry.path());
 					}
 			    }
 			} else {
 				for (const auto& entry : filesystem::recursive_directory_iterator(inputPath)) {
 					if (entry.path().extension() == ".c") {
-						cout << "Enqueued: " << entry.path() << "\n";
+						cout << "Enqueued: " << entry.path() << endl;
 						pathQueue.push_back(entry.path());
 					}
 			    }
@@ -72,34 +81,47 @@ class CmdTasker{
 		std::string command;
 		int status;
 		//"clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + "example0.c" + ">" + "example0_formatted.c";
-		command = "clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + path2process.string() + ">" + outputResultPath.string();
+		command = "clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + path2process.string() + " > " + outputResultPath.string();
+		cout << command << "\n";
+//		cout << "outputPath: " <<outputResultPath.string() << "\n";
+
 	    status = std::system(command.c_str());
 	    if (status == 0) {
-			cout << "clang-format performed for:" + path2process.string() + "\n";
+			cout << "clang-format performed for:" + path2process.string() << endl;
 	    } else {
-			cout << "clang-format failed for:" + path2process.string() + "\n";
+			cout << "clang-format failed for:" + path2process.string() << endl;
 	    }
 //				runMacroExpander(path2process, cfg);
 	}
 	
+	void processSingle(){
+		cout 	<< "Process Single Start. \n"				
+				<< "pathQueue items: " << pathQueue.size() << endl;
+				
+		preprocessQueueItem(inputPath, outputPath);
+		auto codeString = file2string(inputPath);
+		cout << "Enhancing " << inputPath.string() << "\n";
+		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
+		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputPath.string());
+	}
+	
 	void processQueue(){
 		cout 	<< "Process Queue Start. \n"				
-				<< "pathQueue items: " << pathQueue.size() << "\n";
+				<< "pathQueue items: " << pathQueue.size() << endl;
+		
 		for(const auto& path2process : pathQueue){
-			cout << "Starting on " << path2process << "\n" ;
+			cout << "Starting on " << path2process << endl;
 			filesystem::path outPath = outputDir / rel_outputPath(inputDir, path2process);
 	
 			//Doe dit voordat AST unit ptr is aangemaakt. Prepare file for marking, this includes fixing dangling statements
 			preprocessQueueItem(path2process, outPath);
-			
 			auto codeString = file2string(path2process);
-			unique_ptr<ASTFrontendAction> action;
 	
 			// TODO?: extract selection of action
-			cout << "Enhancing " << path2process.string() << "\n";
-			action = std::make_unique<CodeMarkerAction>(markerFormatCfg);
+			cout << "Enhancing " << path2process.string() << endl;
+			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
+			clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, path2process.string());
 		}
-		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, cfg->ToolArgs, path2process.string());
 	}
 	
 	/**
@@ -108,52 +130,30 @@ class CmdTasker{
 	 *  Check the preview folder for an example output.
 	 TODO: Change constant extraction mechanism
 	 */
-	void createMarkerDefinitionHeaderFile(struct config& cfg){
-		llvm::outs() << "Start marker header file creation." << "\n";
-		string content = 
-			inclusionDirectiveIFNDEF + " " + inclusionDirectiveInclGuard + "\n" +
-			inclusionDirectiveDEF + " " + inclusionDirectiveInclGuard + "\n" +
-			cfg.markerFunctionSignatureString + '\n' + 
-			inclusionDirectiveENDIF;
+	void createMarkerDefinitionHeaderFile(){
+		cout << "Start marker header file creation." << endl;
+		string content = markerFormatCfg["headerString"].get<string>();
 					
 		// Open the file; if it exists, it will be overwritten.
 	    error_code EC;
-	    llvm::raw_fd_ostream out((cfg.outputDir / (cfg.markerDefinitionFileName + ".h")).string(), EC, llvm::sys::fs::OF_None);
+	    llvm::raw_fd_ostream out((outputDir / (markerFormatCfg["definitionFileName"].get<string>() + ".h")).string(), EC, llvm::sys::fs::OF_None);
 	    if (EC) {llvm::errs() << "Error opening file: " << EC.message() << "\n";}
 
 	    // Write the string to the file and optionally flush (the destructor will close the file automatically).
 	    out << content;
 	    out.flush();
-		llvm::outs() << "Marker header file written. \n";
+		cout << "Marker header file written. \n";
 	}
 	
-	void createMarkerDefinitionSourceFile(struct config& cfg){
-		llvm::outs() << "Start marker source file creation." << "\n";
-		string content = 
-			headerInclusionDirective + "\"" + (cfg.markerDefinitionFileName + ".h") + "\"\n" +
-			cfg.markerDefinitionString;
-		
-		// Open the file; if it exists, it will be overwritten.
-	    error_code EC;
-	    llvm::raw_fd_ostream out((cfg.outputDir / (cfg.markerDefinitionFileName + ".c")).string(), EC, llvm::sys::fs::OF_None);
-	    if (EC) {llvm::errs() << "Error opening file: " << EC.message() << "\n";}
 
-	    // Write the string to the file and optionally flush (the destructor will close the file automatically).
-	    out << content;
-	    out.flush();
-		llvm::outs() << "Marker source file written. \n";
+	void wrapUp(){
+		createMarkerDefinitionHeaderFile();
 	}
-	
-	void wrapUpQueue(){
-		
-	}
-	
-	
-	
 	
 	public:
-	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath): inputPath(inputPath), outputPath(outputPath), mrkrFormatsPath(mrkrFormatsPath) {
-		loadConfigs();
+	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath, bool onCopy): 
+		inputPath(inputPath), outputPath(outputPath), mrkrFormatsPath(mrkrFormatsPath), onCopy(onCopy) {
+		loadConfigs();		
 	}
 	
 	/**
@@ -164,15 +164,17 @@ class CmdTasker{
 	 *		dir			| file		|	false,	throw exception
 	 *		dir			| dir		|	true
 	 */
-	bool preparePaths(bool onCopy){
-		if(onCopy){
-			std::filesystem::remove_all(outputPath);
-			std::filesystem::copy(inputPath, outputPath);
+	bool preparePaths(){
+		cout << "Preparing paths. \n";
+		if(onCopy && (outputPath != inputPath)){
+			cout << "Performing onCopy procedure. \n";
+			filesystem::remove_all(outputPath);
+			filesystem::copy(inputPath, outputPath);
 			inputPath = outputPath;
 		}	
 		if(filesystem::is_regular_file(inputPath) && filesystem::is_regular_file(outputPath)){
-			inputDir = inputPath.parent_path();
-			outputDir = outputPath.parent_path();
+			inputDir = inputPath.has_parent_path() ? inputPath.parent_path() : ".";
+			outputDir = outputPath.has_parent_path() ? inputPath.parent_path() : ".";
 		} else if(filesystem::is_directory(inputPath) && filesystem::is_directory(outputPath)){
 			inputDir = inputPath;
 			outputDir = outputPath;
@@ -181,9 +183,16 @@ class CmdTasker{
 	}
 	
 	void insertInstrumentationEnhancement(){
-		setupFileQueue();
-		processQueue();
-		wrapUpQueue();
+		if(!preparePaths()){
+			return;
+		}
+		if(filesystem::is_regular_file(inputPath)){
+			processSingle();
+		} else {
+			setupFileQueue();
+			processQueue();
+		}
+		wrapUp();
 	}
 	
 	void removeInstrumentationEnhancement(){

@@ -1,4 +1,4 @@
-add_executable(MarkerSurgeon src/marker-surgeon/main.cpp)
+add_executable(MarkerSurgeon src/marker-instrumentation-scaffolder/native-instrumentations/marker-surgeon-rework/main.cpp)
 add_executable(MarkerCodeScaffolder src/marker-code-scaffolder/main.cpp)
 add_executable(MarkerBuildScaffolder src/marker-build-scaffolder/main.cpp)
 add_executable(MarkerDecomScaffolder src/marker-decom-scaffolder/main.cpp)
