@@ -23,63 +23,8 @@ class CodeMarkerAction: public ASTFrontendAction {
 		vector<RecordedPPConstruct> ppEvents; 
 		std::unique_ptr<syntax::TokenCollector> tokenCollector; 
 		
-		
-		// TODO: Generalize and change
-		void insertMarkerDependency(){
-			SourceLocation startLoc = SM.getLocForStartOfFile(SM.getMainFileID());
-			FileID mainFileID = SM.getMainFileID();
-			StringRef filePath = SM.getFilename(startLoc);
-			rewriter.InsertTextBefore(
-				startLoc,
-				icp->synthesizeMarkerDependencyString(filePath.str(), &cfg)
-			);
-		}
-		
-		void commitToFile(){
-			llvm::outs() << "Start commit phase" << "\n";
-			insertMarkerDependency();			
-
-			// returns empty if path is on same dir.
-			FileID MainFileID = SM.getMainFileID();
-			StringRef FilePath = SM.getFilename(SM.getLocForStartOfFile(MainFileID));
-
-			fs::path outPath = cfg.outputDir / rel_outputPath(cfg.inputDir, FilePath.str());
-			if (outPath.empty() || outPath == "." || outPath == "./") {
-			    outPath = FilePath.str();
-			}
-			llvm::outs() << "Committing changes from: " << FilePath << " -> " << outPath << "\n";
-			// committing buffered changes to file
-			if(!std::filesystem::exists(outPath.string())){
-				fs::create_directories(outPath.parent_path());
-			}
-			// write to file and mutate with srcExt.
-			std::error_code EC;
-			llvm::raw_fd_ostream OutFile(
-				fs::path(outPath).replace_filename(outPath.stem().string() + cfg.srcExt + outPath.extension().string()).string(),
-				EC, 
-				llvm::sys::fs::OF_Text
-			);
-
-			if (EC) {
-				llvm::errs() << "Error opening output file: " << EC.message()<< "\n";
-				return;
-			}
-
-			// Write buffered changes to file.
-			rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(OutFile);
-			OutFile.close();	
-		}
-		
-		static void createDependencyFiles(struct config& cfg){
-			switch(cfg.format){
-				default: ICP0::createDependencyFiles(cfg); break;
-				case 1:  ICP1::createDependencyFiles(cfg); break;
-			}
-		}
-		
-		
 	public:
-		CodeMarkerAction(json markerFormatCfg): markerFormatCfg(markerFormatCfg) {}
+		CodeMarkerAction(json& markerFormatCfg): markerFormatCfg(markerFormatCfg) {}
 		
 		/**
 		 * 	Setup van onderdelen:
@@ -108,8 +53,9 @@ class CodeMarkerAction: public ASTFrontendAction {
 	        syntax::TokenBuffer tokenBuffer = std::move(*tokenCollector).consume();
 	        tokenBuffer.indexExpandedTokens();
 			
-			auto visitor = std::make_unique<CodeMarkerVisitor>(tokenBuffer, ppEvents, markerFormatCfg);
+			auto visitor = std::make_unique<CodeMarkerVisitor>(CI.getASTContext(), &rewriter, std::move(tokenBuffer), ppEvents, markerFormatCfg);
+			visitor->insertMarkerDependency();
 			visitor->TraverseDecl(CI.getASTContext().getTranslationUnitDecl());
-			commitToFile();
+			visitor->commitToFile();
 		}
 };

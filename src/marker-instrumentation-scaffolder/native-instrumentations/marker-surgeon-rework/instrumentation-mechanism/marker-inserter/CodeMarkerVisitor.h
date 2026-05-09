@@ -11,6 +11,7 @@
 #include <string>
 #include "../../preprocessor-mechanism/directives/directive-processor.hpp"
 #include "markerPredicates.hpp"
+#include "../../../../../include/helper.hpp"
 
 using namespace clang;
 using namespace std;
@@ -22,6 +23,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		Rewriter* rewriter;
 		syntax::TokenBuffer tokenBuffer;
 		vector<RecordedPPConstruct> ppEvents;
+		
 		json markerFormatCfg;
 		int markerID;
 		string markerName;
@@ -29,9 +31,10 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		string markerType;
 		string markerSignature;
 		string markerDefinition;
-		
-		SourceManager& SM;
+		string markerEndString = "; \n";
 
+		SourceManager& SM;
+		
 		virtual string synthesizeMarkerDeclarationString(){
 			string markerString = markerKeyword + markerType + markerName + markerSignature + markerEndString;
 			return markerString;
@@ -45,187 +48,71 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		}
 
 		virtual string synthesizeMarkerDefinitionString(){
-			string markerString = markerType + markerName + markerSignature + markerDefinition + markerEndString;
-			return markerString;
+			return markerType + markerName + markerSignature + markerDefinition + markerEndString;
 		}
 		
-		//			TODO: Change to extern decl.
-		virtual string synthesizeMarkerDependencyString(string fileIn, struct config *cfg){
-	//			string headerInclusionString = headerInclusionDirective;
-	//			string relativeTrail = getDescend2BaseDirString(rel_outputPath(cfg->inputDir, fs::path(fileIn)));
-	//			return headerInclusionString + "\""+ relativeTrail + cfg->markerDefinitionFileName + ".h" + "\"\n";
-				return markerKeyword + markerType + markerName + markerSignature +";\n";
-			}
-			
-		
-		/**
-		 * 	This file will be used to link separately, so that an optimization barrier can be created.
-		 *  The created file will be placed at the output root.
-		 *  Check the preview folder for an example output.
-		 TODO: Change constant extraction mechanism
-		 */
-		static void createMarkerDefinitionHeaderFile(struct config& cfg){
-			llvm::outs() << "Start marker header file creation." << "\n";
-			string content = 
-				inclusionDirectiveIFNDEF + " " + inclusionDirectiveInclGuard + "\n" +
-				inclusionDirectiveDEF + " " + inclusionDirectiveInclGuard + "\n" +
-				cfg.markerFunctionSignatureString + '\n' + 
-				inclusionDirectiveENDIF;
-						
-			// Open the file; if it exists, it will be overwritten.
-		    error_code EC;
-		    llvm::raw_fd_ostream out((cfg.outputDir / (cfg.markerDefinitionFileName + ".h")).string(), EC, llvm::sys::fs::OF_None);
-		    if (EC) {llvm::errs() << "Error opening file: " << EC.message() << "\n";}
-
-		    // Write the string to the file and optionally flush (the destructor will close the file automatically).
-		    out << content;
-		    out.flush();
-			llvm::outs() << "Marker header file written. \n";
-		}
-		
-		static void createMarkerDefinitionSourceFile(struct config& cfg){
-			llvm::outs() << "Start marker source file creation." << "\n";
-			string content = 
-				headerInclusionDirective + "\"" + (cfg.markerDefinitionFileName + ".h") + "\"\n" +
-				cfg.markerDefinitionString;
-			
-			// Open the file; if it exists, it will be overwritten.
-		    error_code EC;
-		    llvm::raw_fd_ostream out((cfg.outputDir / (cfg.markerDefinitionFileName + ".c")).string(), EC, llvm::sys::fs::OF_None);
-		    if (EC) {llvm::errs() << "Error opening file: " << EC.message() << "\n";}
-
-		    // Write the string to the file and optionally flush (the destructor will close the file automatically).
-		    out << content;
-		    out.flush();
-			llvm::outs() << "Marker source file written. \n";
-		}
-		
-		static void createDependencyFiles(struct config& cfg) {
-			createMarkerDefinitionHeaderFile(cfg);
-			createMarkerDefinitionSourceFile(cfg);
-		}
-
-		
-	//--Declarations--
-		
-		virtual void processDecl(Decl* D) {}
-		
-		// TODO: Mark start and end of function and account for macros?
-		virtual void processFunctionDecl(FunctionDecl* FD){}
-		
-	//--Statements--
-
-		virtual void processDeclStmt(DeclStmt* DS) {
-			DynTypedNodeList Parents = context->getParents(*DS);
-			for (const auto &Parent : Parents) {
-				if (const auto *ParentStmt = Parent.get<Stmt>()) {
-					// If parent node is one of the following, then we skip the marking.
-					// Otherwise we mark the parameters within these constructs, leading to invalid syntax.
-					if(isa<ForStmt>(ParentStmt)){return;} 
-					else if (isa<IfStmt>(ParentStmt)) {return;} 
-					else if (isa<SwitchStmt>(ParentStmt)) {return;} 
-					else if (isa<AttributedStmt>(ParentStmt)) {return;}
-				}
-			}
-			
-			SourceLocation begin = DS->getBeginLoc();
-			R->InsertText(
-			begin,
-			synthesizeCallMarkerString(), 
-			false, 
-			true
-			);
-			
-	//		llvm::outs() << "DeclStmt found at " << DS->getSourceRange().getBegin().printToString(context->getSourceManager()) << "\n";
-	//		if (auto macroName = getMacroNameIfStmtStartsWithMacro(DS, *tokenBuffer, context->getSourceManager(), context->getLangOpts())) {
-	//		        llvm::outs() << "DeclStmt originates from macro: " << *macroName << "\n";
-	//		}
-		}
-		
-		virtual void processForStmt(ForStmt* FS) {
-			R->InsertText(
-			FS->getBeginLoc(),
-			synthesizeCallMarkerString(), 
-			false, 
-			true
-			);
-		}
-		
-		virtual void processWhileStmt(WhileStmt* WS){
-			R->InsertText(
-			WS->getBeginLoc(),
-			synthesizeCallMarkerString(), 
-			false, 
-			true
-			);
-		}
-		
-		virtual void processIfStmt(IfStmt* IS) {
-			R->InsertText(
-			IS->getBeginLoc(),
-			synthesizeCallMarkerString(), 
-			false, 
-			true
-			);
-		}
-		
-		/**
-		 * TODO: Mark cases of niet?
-		 */
-		virtual void processSwitchStmt(SwitchStmt* SS){
-			R->InsertText(
-			SS->getBeginLoc(),
-			synthesizeCallMarkerString(), 
-			false, 
-			true
-			);
-		}
-		
-		/**
-		 * Deze marker statements zijn unreachable, maar de static analyzer geeft verder geen meldingen hierover.
-		 */
-		virtual void processCaseStmt(CaseStmt* CS){
-			R->InsertText(
-			CS->getBeginLoc(),
-			synthesizeCallMarkerString(), 
-			false, 
-			true
-			);
-		}
-		
-		virtual void processCallExpr(CallExpr* CE){
-			DynTypedNodeList Parents = context->getParents(*CE);
-			for (const auto &Parent : Parents) {
-				if (const auto *ParentNode = Parent.get<CompoundStmt>()) {
-					R->InsertText(
-						CE->getBeginLoc(),
-						synthesizeCallMarkerString(), 
-						false, 
-						true
-					);
-					return;
-				}
-			}
-		}
-		
-		virtual void processGotoStmt(GotoStmt* GS){
-			R->InsertText(
-			GS->getBeginLoc(),
-			synthesizeCallMarkerString(), 
-			false, 
-			true
-			);
+		virtual string synthesizeMarkerDependencyString(){
+			return markerKeyword + markerType + markerName + markerSignature +";\n";
 		}
 		
 	public:
 		CodeMarkerVisitor(
 			ASTContext& context, 	Rewriter* rewriter, 	syntax::TokenBuffer tokenBuffer, 		vector<RecordedPPConstruct>& ppEvents, 	json markerFormatCfg):
 			context(context),		rewriter(rewriter),		tokenBuffer(std::move(tokenBuffer)), 	ppEvents(ppEvents), 					markerFormatCfg(markerFormatCfg),
-			
 			SM(context.getSourceManager()){
-				
+				markerName = markerFormatCfg[""].get<string>();
+				markerKeyword = markerFormatCfg[""].get<string>();
+				markerType = markerFormatCfg[""].get<string>();
+				markerSignature = markerFormatCfg[""].get<string>();
+				markerDefinition = markerFormatCfg[""].get<string>();
 			}
 	
+			// TODO: Generalize and change
+			void insertMarkerDependency(){
+				SourceLocation startLoc = SM.getLocForStartOfFile(SM.getMainFileID());
+				FileID mainFileID = SM.getMainFileID();
+				StringRef filePath = SM.getFilename(startLoc);
+				rewriter->InsertTextBefore(
+					startLoc,
+					synthesizeMarkerDependencyString()
+				);
+			}
+			
+			void commitToFile(string inputDir, string outputDir){
+				llvm::outs() << "Start commit phase" << "\n";
+				insertMarkerDependency();			
+
+				// returns empty if path is on same dir.
+				FileID MainFileID = SM.getMainFileID();
+				StringRef FilePath = SM.getFilename(SM.getLocForStartOfFile(MainFileID));
+
+				filesystem::path outPath = outputDir / rel_outputPath(inputDir, FilePath.str());
+				if (outPath.empty() || outPath == "." || outPath == "./") {
+				    outPath = FilePath.str();
+				}
+				llvm::outs() << "Committing changes from: " << FilePath << " -> " << outPath << "\n";
+				// committing buffered changes to file
+				if(!filesystem::exists(outPath.string())){
+					filesystem::create_directories(outPath.parent_path());
+				}
+				// write to file and mutate with srcExt.
+				std::error_code EC;
+				llvm::raw_fd_ostream OutFile(
+					filesystem::path(outPath).replace_filename(outPath.stem().string() + outPath.extension().string()).string(),
+					EC, 
+					llvm::sys::fs::OF_Text
+				);
+
+				if (EC) {
+					llvm::errs() << "Error opening output file: " << EC.message()<< "\n";
+					return;
+				}
+
+				// Write buffered changes to file.
+				rewriter->getEditBuffer(rewriter->getSourceMgr().getMainFileID()).write(OutFile);
+				OutFile.close();	
+			}
+			
 		bool VisitStmt(Stmt *S) {
 			if (SM.isInMainFile(S->getBeginLoc())){
 				//-- Start marker safety checks
@@ -233,7 +120,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 //				if(!stmtHasValidPrevSibling(S, context)){return;}
 				if(!stmtHasValidChildCriteria(S)){return true;}
 				//-- Section: Preprocessor directives check
-				auto ppStmtEvents = detectPPConstructsAroundStatement(S, icp->getTokenBuffer(), SM, ppEvents);
+				auto ppStmtEvents = detectPPConstructsAroundStatement(S, tokenBuffer, SM, ppEvents);
 				if(!isPPSafeStmtMarking(ppStmtEvents)){return true;}
 				//--  Clang Macro expansion id check.
 				DynTypedNodeList Parents = context.getParents(*S);
@@ -245,14 +132,14 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 				if(S->getBeginLoc().isMacroID()){return true;}
 				//-- End marker safety checks;
 				switch (S->getStmtClass()) {
-					case Stmt::IfStmtClass: icp->processIfStmt(cast<IfStmt>(S)); break;
-					case Stmt::WhileStmtClass: icp->processWhileStmt(cast<WhileStmt>(S)); break;
-					case Stmt::DeclStmtClass: icp->processDeclStmt(cast<DeclStmt>(S)); break;
-					case Stmt::ForStmtClass: icp->processForStmt(cast<ForStmt>(S)); break;
-					case Stmt::CallExprClass: icp->processCallExpr(cast<CallExpr>(S)); break;
-					case Stmt::SwitchStmtClass: icp->processSwitchStmt(cast<SwitchStmt>(S)); break;
-					case Stmt::CaseStmtClass: icp->processCaseStmt(cast<CaseStmt>(S)); break;
-					case Stmt::GotoStmtClass: icp->processGotoStmt(cast<GotoStmt>(S)); break;
+					case Stmt::IfStmtClass: processIfStmt(cast<IfStmt>(S)); break;
+					case Stmt::WhileStmtClass: processWhileStmt(cast<WhileStmt>(S)); break;
+					case Stmt::DeclStmtClass: processDeclStmt(cast<DeclStmt>(S)); break;
+					case Stmt::ForStmtClass: processForStmt(cast<ForStmt>(S)); break;
+					case Stmt::CallExprClass: processCallExpr(cast<CallExpr>(S)); break;
+					case Stmt::SwitchStmtClass: processSwitchStmt(cast<SwitchStmt>(S)); break;
+					case Stmt::CaseStmtClass: processCaseStmt(cast<CaseStmt>(S)); break;
+					case Stmt::GotoStmtClass: processGotoStmt(cast<GotoStmt>(S)); break;
 					default: break;
 				}
 			}
@@ -298,4 +185,115 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 							}
 						return true;
 		}
+		
+		//--Declarations--
+				
+			virtual void processDecl(Decl* D) {}
+			
+			// TODO: Mark start and end of function and account for macros?
+			virtual void processFunctionDecl(FunctionDecl* FD){}
+			
+		//--Statements--
+
+			virtual void processDeclStmt(DeclStmt* DS) {
+				DynTypedNodeList Parents = context.getParents(*DS);
+				for (const auto &Parent : Parents) {
+					if (const auto *ParentStmt = Parent.get<Stmt>()) {
+						// If parent node is one of the following, then we skip the marking.
+						// Otherwise we mark the parameters within these constructs, leading to invalid syntax.
+						if(isa<ForStmt>(ParentStmt)){return;} 
+						else if (isa<IfStmt>(ParentStmt)) {return;} 
+						else if (isa<SwitchStmt>(ParentStmt)) {return;} 
+						else if (isa<AttributedStmt>(ParentStmt)) {return;}
+					}
+				}
+				
+				SourceLocation begin = DS->getBeginLoc();
+				rewriter->InsertText(
+				begin,
+				synthesizeCallMarkerString(), 
+				false, 
+				true
+				);
+				
+		//		llvm::outs() << "DeclStmt found at " << DS->getSourceRange().getBegin().printToString(context->getSourceManager()) << "\n";
+		//		if (auto macroName = getMacroNameIfStmtStartsWithMacro(DS, *tokenBuffer, context->getSourceManager(), context->getLangOpts())) {
+		//		        llvm::outs() << "DeclStmt originates from macro: " << *macroName << "\n";
+		//		}
+			}
+			
+			virtual void processForStmt(ForStmt* FS) {
+				rewriter->InsertText(
+				FS->getBeginLoc(),
+				synthesizeCallMarkerString(), 
+				false, 
+				true
+				);
+			}
+			
+			virtual void processWhileStmt(WhileStmt* WS){
+				rewriter->InsertText(
+				WS->getBeginLoc(),
+				synthesizeCallMarkerString(), 
+				false, 
+				true
+				);
+			}
+			
+			virtual void processIfStmt(IfStmt* IS) {
+				rewriter->InsertText(
+				IS->getBeginLoc(),
+				synthesizeCallMarkerString(), 
+				false, 
+				true
+				);
+			}
+			
+			/**
+			 * TODO: Mark cases of niet?
+			 */
+			virtual void processSwitchStmt(SwitchStmt* SS){
+				rewriter->InsertText(
+				SS->getBeginLoc(),
+				synthesizeCallMarkerString(), 
+				false, 
+				true
+				);
+			}
+			
+			/**
+			 * Deze marker statements zijn unreachable, maar de static analyzer geeft verder geen meldingen hierover.
+			 */
+			virtual void processCaseStmt(CaseStmt* CS){
+				rewriter->InsertText(
+				CS->getBeginLoc(),
+				synthesizeCallMarkerString(), 
+				false, 
+				true
+				);
+			}
+			
+			virtual void processCallExpr(CallExpr* CE){
+				DynTypedNodeList Parents = context.getParents(*CE);
+				for (const auto &Parent : Parents) {
+					if (const auto *ParentNode = Parent.get<CompoundStmt>()) {
+						rewriter->InsertText(
+							CE->getBeginLoc(),
+							synthesizeCallMarkerString(), 
+							false, 
+							true
+						);
+						return;
+					}
+				}
+			}
+			
+			virtual void processGotoStmt(GotoStmt* GS){
+				rewriter->InsertText(
+				GS->getBeginLoc(),
+				synthesizeCallMarkerString(), 
+				false, 
+				true
+				);
+			}
 };

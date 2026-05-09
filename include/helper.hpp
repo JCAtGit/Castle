@@ -1,16 +1,11 @@
 #pragma once
-#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Lex/Lexer.h"
 #include "clang/Rewrite/Core/Rewriter.h"
-#include "clang/Rewrite/Core/Rewriter.h"
-
-namespace fs = std::filesystem;
 
 using namespace std;
 using namespace clang;
@@ -21,15 +16,15 @@ using namespace clang;
  * 	Voorbeeld:
  *
  */
-bool substringOnlyAtEndOfBasename(const std::string &filename,
-								  const std::string &sub) {
+bool substringOnlyAtEndOfBasename(const string &filename,
+								  const string &sub) {
 	if (sub.empty())
 		return false; // or handle as you wish
 
 	// Find the last dot (extension separator)
 	size_t dotPos = filename.rfind('.');
-	std::string basename =
-		(dotPos == std::string::npos) ? filename : filename.substr(0, dotPos);
+	string basename =
+		(dotPos == string::npos) ? filename : filename.substr(0, dotPos);
 
 	// Check that basename ends with 'sub' and that 'sub' does not appear
 	// elsewhere
@@ -49,7 +44,7 @@ bool substringOnlyAtEndOfBasename(const std::string &filename,
  *
  */
 string rel_outputPath(string dirIn, string pathIn) {
-	fs::path rel_path = fs::relative(pathIn, dirIn);
+	filesystem::path rel_path = filesystem::relative(pathIn, dirIn);
 	return rel_path;
 }
 
@@ -68,13 +63,10 @@ string getDescend2BaseDirString(string countable){
 // Can use absolute and relative filepath
 string file2string(string filepath) {
 	string filestringdata;
-
-	// Open the file using ifstream
 	ifstream file(filepath);
 
 	// confirm file opening
 	if (!file.is_open()) {
-		// print error message and return
 		cerr << "Failed to open file: " << filepath << endl;
 		return ("file2string error for: " + filepath + "\n");
 	}
@@ -85,7 +77,6 @@ string file2string(string filepath) {
 		filestringdata += line + "\n";
 	}
 
-	// Close the file
 	file.close();
 	return filestringdata;
 }
@@ -112,7 +103,7 @@ void string2file(string data,  string path){
 
 void removeFirstLineIfStringMatches(clang::Rewriter &rewriter,
                                     clang::SourceManager &SM,
-                                    const std::string &matchString) {
+                                    const string &matchString) {
   clang::FileID mainFileID = SM.getMainFileID();
   clang::SourceLocation start = SM.getLocForStartOfFile(mainFileID);
 

@@ -1,7 +1,6 @@
 #include <CLI/CLI.hpp>
 #include "cmdline/CmdTasker.hpp"
 #include "config/config_ds.hpp"
-#include "cmdline/Setup.hpp"
 
 /**
  * 	TODO:
@@ -33,7 +32,7 @@ int main(int argc, char **argv) {
 	app.add_option("--mrkr_cfg_dir", mrkrFormatsPath, "Marker config used for heuristics")
 		->required();
 	
-	bool toggle;
+	bool toggle = false;
 	app.add_flag("-t, --toggle",toggle,  "Toggles marking and removal");
 	CLI11_PARSE(app, argc, argv);
 	
@@ -44,13 +43,12 @@ int main(int argc, char **argv) {
 
 	if(toggle){
 		// start instrumentation removal TODO
-		
+		cmdTskr.removeInstrumentationEnhancement();
 	} else {
 		CmdTasker cmdTskr(tgtPath, outputPath, mrkrFormatsPath);
 		// start instrumentation insertion TODO
-		if(onCopy){
-			preparePaths(inputPath, outputPath);
-			tgtPath = outputPath;
+		if(cmdTskr.preparePaths(onCopy)){
+			cmdTskr.insertInstrumentationEnhancement();
 		}
 	}
 	

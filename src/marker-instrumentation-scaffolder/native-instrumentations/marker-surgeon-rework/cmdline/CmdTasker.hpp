@@ -4,7 +4,7 @@
 #include <fstream>
 #include <clang/Frontend/FrontendAction.h>
 #include "../../../../../include/helper.hpp"
-#include "../instrumentation-mechanism/marker-inserter/ast-mechanism/CodeMarkerAction.h"
+#include "../instrumentation-mechanism/marker-inserter/CodeMarkerAction.h"
 #include "../instrumentation-mechanism/marker-remover/ast-mechanism/CodeRemoverAction.hpp"
 
 using namespace nlohmann;
@@ -38,25 +38,7 @@ class CmdTasker{
 	  	}
 	}
 	
-	/**
-	 * 	Should accept only the following:
-	 *		inputPath	| outputPath| 	valid:
-	 *		file		| file		|	true, 	convert to virtual dir (dir -> dir) with 1 file.
-	 *		file		| dir		| 	false, 	throw exception
-	 *		dir			| file		|	false,	throw exception
-	 *		dir			| dir		|	true
-	 */
-	void preparePaths(){
-		if(filesystem::is_regular_file(inputPath) && filesystem::is_regular_file(outputPath)){
-			inputDir = inputPath.parent_path();
-			outputDir = outputPath.parent_path();
-		} else if(filesystem::is_directory(inputPath) && filesystem::is_directory(outputPath)){
-			inputDir = inputPath;
-			outputDir = outputPath;
-		} else {return;}
-		std::filesystem::remove_all(outputPath);
-		std::filesystem::copy(inputPath, outputPath);
-	}
+	
 	
 	void setupFileQueue(){
 		cout << "Setup File Queue Start. \n";
@@ -116,19 +98,56 @@ class CmdTasker{
 			// TODO?: extract selection of action
 			cout << "Enhancing " << path2process.string() << "\n";
 			action = std::make_unique<CodeMarkerAction>(markerFormatCfg);
-			}
-			clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, cfg->ToolArgs, path2process.string());
 		}
+		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, cfg->ToolArgs, path2process.string());
 	}
 	
-	void insertInstrumentationEnhancement(){
-		setupFileQueue();
-		processQueue();
+	/**
+	 * 	This file will be used to link separately, so that an optimization barrier can be created.
+	 *  The created file will be placed at the output root.
+	 *  Check the preview folder for an example output.
+	 TODO: Change constant extraction mechanism
+	 */
+	void createMarkerDefinitionHeaderFile(struct config& cfg){
+		llvm::outs() << "Start marker header file creation." << "\n";
+		string content = 
+			inclusionDirectiveIFNDEF + " " + inclusionDirectiveInclGuard + "\n" +
+			inclusionDirectiveDEF + " " + inclusionDirectiveInclGuard + "\n" +
+			cfg.markerFunctionSignatureString + '\n' + 
+			inclusionDirectiveENDIF;
+					
+		// Open the file; if it exists, it will be overwritten.
+	    error_code EC;
+	    llvm::raw_fd_ostream out((cfg.outputDir / (cfg.markerDefinitionFileName + ".h")).string(), EC, llvm::sys::fs::OF_None);
+	    if (EC) {llvm::errs() << "Error opening file: " << EC.message() << "\n";}
+
+	    // Write the string to the file and optionally flush (the destructor will close the file automatically).
+	    out << content;
+	    out.flush();
+		llvm::outs() << "Marker header file written. \n";
 	}
 	
-	void removeInstrumentationEnhancement(){
+	void createMarkerDefinitionSourceFile(struct config& cfg){
+		llvm::outs() << "Start marker source file creation." << "\n";
+		string content = 
+			headerInclusionDirective + "\"" + (cfg.markerDefinitionFileName + ".h") + "\"\n" +
+			cfg.markerDefinitionString;
+		
+		// Open the file; if it exists, it will be overwritten.
+	    error_code EC;
+	    llvm::raw_fd_ostream out((cfg.outputDir / (cfg.markerDefinitionFileName + ".c")).string(), EC, llvm::sys::fs::OF_None);
+	    if (EC) {llvm::errs() << "Error opening file: " << EC.message() << "\n";}
+
+	    // Write the string to the file and optionally flush (the destructor will close the file automatically).
+	    out << content;
+	    out.flush();
+		llvm::outs() << "Marker source file written. \n";
+	}
+	
+	void wrapUpQueue(){
 		
 	}
+	
 	
 	
 	
@@ -136,5 +155,40 @@ class CmdTasker{
 	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath): inputPath(inputPath), outputPath(outputPath), mrkrFormatsPath(mrkrFormatsPath) {
 		loadConfigs();
 	}
+	
+	/**
+	 * 	Should accept only the following:
+	 *		inputPath	| outputPath| 	valid:
+	 *		file		| file		|	true, 	convert to virtual dir (dir -> dir) with 1 file.
+	 *		file		| dir		| 	false, 	throw exception
+	 *		dir			| file		|	false,	throw exception
+	 *		dir			| dir		|	true
+	 */
+	bool preparePaths(bool onCopy){
+		if(onCopy){
+			std::filesystem::remove_all(outputPath);
+			std::filesystem::copy(inputPath, outputPath);
+			inputPath = outputPath;
+		}	
+		if(filesystem::is_regular_file(inputPath) && filesystem::is_regular_file(outputPath)){
+			inputDir = inputPath.parent_path();
+			outputDir = outputPath.parent_path();
+		} else if(filesystem::is_directory(inputPath) && filesystem::is_directory(outputPath)){
+			inputDir = inputPath;
+			outputDir = outputPath;
+		} else return false;
+		return true;
+	}
+	
+	void insertInstrumentationEnhancement(){
+		setupFileQueue();
+		processQueue();
+		wrapUpQueue();
+	}
+	
+	void removeInstrumentationEnhancement(){
+		// create dependency files
+	}
+	
 };
 
