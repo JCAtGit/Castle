@@ -11,7 +11,7 @@
 			"active":false
 		},
 		{
-			"name":"ghidra_csmith_f0_eval",
+			"name":"",
 			"oracleDir":"/home/user/Desktop/CASTLE/Surgeon/csmith_f0/",
 			"tgtDir":"/home/user/Desktop/CASTLE/DeComScaffolder/ghidra_csmith_f0/",
 			"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/SFOF0Eval",

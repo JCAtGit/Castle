@@ -1,0 +1,22 @@
+{
+	"targets":[
+		{
+			"name":"example",
+			"tgtDir":"example",
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"static_options":[],
+			"outputFlag":"-o",
+			"active":false
+		},
+		{
+			"name":"csmith_mage",
+			"tgtDir":"/home/user/Desktop/CASTLE/CodebaseScaffolder/csmith/",
+			"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/Mage",
+			"run_bin_as_shell":false,
+			"static_options":[],
+			"outputFlag":"-o",
+			"active":true
+		}
+	]
+}
