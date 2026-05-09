@@ -1,0 +1,24 @@
+{
+	"targets":[
+		{
+			"name":"example",
+			"oracleDir":"example",
+			"tgtDir":"example",
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"static_options":[],
+			"outputFlag":"-o",
+			"active":false
+		},
+		{
+			"name":"ghidra_csmith_f0_eval",
+			"oracleDir":"/home/user/Desktop/CASTLE/Surgeon/csmith_f0/",
+			"tgtDir":"/home/user/Desktop/CASTLE/DeComScaffolder/ghidra_csmith_f0/",
+			"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/SFOF0Eval",
+			"run_bin_as_shell":false,
+			"static_options":[{"--mode":"file"}],
+			"outputFlag":"-o",
+			"active":true
+		}
+	]
+}

@@ -1,9 +1,11 @@
-add_executable(MarkerSurgeon src/marker-instrumentation-scaffolder/native-instrumentations/marker-surgeon-rework/main.cpp)
-add_executable(MarkerCodeScaffolder src/marker-code-scaffolder/main.cpp)
-add_executable(MarkerBuildScaffolder src/marker-build-scaffolder/main.cpp)
-add_executable(MarkerDecomScaffolder src/marker-decom-scaffolder/main.cpp)
-add_executable(MarkerEvalScaffolder src/marker-eval-scaffolder/main.cpp)
-add_executable(SFOF0Eval src/marker-eval-scaffolder/native_evaluators/SingleFileOracleF0Eval/main.cpp)
+add_executable(Mage src/instrumentation-scaffolder/native-instrumentations/mage/main.cpp)
+add_executable(CodebaseScaffolder src/codebase-scaffolder/main.cpp)
+add_executable(BuildScaffolder src/build-scaffolder/main.cpp)
+add_executable(DecomScaffolder src/decom-scaffolder/main.cpp)
+add_executable(EvalScaffolder src/eval-scaffolder/main.cpp)
+add_executable(SFOF0Eval src/eval-scaffolder/native_evaluators/SingleFileOracleF0Eval/main.cpp)
+add_executable(InstrumentationScaffolder src/instrumentation-scaffolder/main.cpp)
+
 
 #add_executable(JSONCPP src/prototype/jsoncpp.cpp)
 #add_executable(DirTraversal src/prototype/DirTraverser/DirTraversal.cpp)
