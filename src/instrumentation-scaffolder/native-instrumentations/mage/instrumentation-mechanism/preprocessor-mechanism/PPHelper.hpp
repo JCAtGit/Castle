@@ -1,14 +1,19 @@
 #pragma once
 
+#include "clang/AST/Attr.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/Stmt.h"
+#include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Syntax/Tokens.h"
 #include <vector>
 #include <string>
 #include <optional>
 #include <algorithm>
+#include "clang/Lex/Lexer.h"
 #include "PPDatastructures.hpp"
+#include "clang/Basic/LangOptions.h"
 
 // --------------------------------------------------------------
 // Helper: get token indices for a source range
@@ -94,4 +99,56 @@ bool isPPSafeDeclMarking(PPEventVectors ppEV){
 	);	
 }
 
+void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter,
+                              const SourceManager &SM,
+                              const LangOptions &LangOpts) {
+    // Iterate over all attributes attached to the function.
+    for (const auto *Attr : FD->attrs()) {
+        // We are only interested in GNU attributes.
+        if (Attr->getSyntax() != AttributeCommonInfo::AS_GNU) {
+            continue;
+        }
+
+        SourceRange range = Attr->getRange();
+        if (range.isInvalid()) {
+            continue;
+        }
+
+        // Get the exact source code of the attribute as a string.
+        CharSourceRange charRange = Lexer::getAsCharRange(range, SM, LangOpts);
+        StringRef attrText = Lexer::getSourceText(charRange, SM, LangOpts);
+        if (attrText.empty()) {
+            continue;
+        }
+
+        std::string newAttrText;
+
+        // Determine if the attribute list inside the parentheses is empty.
+        // We look for the pattern "(()" for the start of the list and "))" for the end.
+        if (attrText.find("()") != StringRef::npos) {
+            // Case 1: The attribute list is empty: " __attribute__(()) "
+            // We replace the whole attribute with a new one that contains 'optnone'.
+            newAttrText = "__attribute__((optnone))";
+        } else {
+            // Case 2: The attribute list is not empty.
+            // We need to insert 'optnone, ' inside the parentheses.
+            // Find the start of the argument list (the second '(').
+            size_t start = attrText.find('(');
+            if (start == StringRef::npos) continue;
+            start = attrText.find('(', start + 1);
+            if (start == StringRef::npos) continue;
+
+            // Build the new attribute text.
+            newAttrText = attrText.str();
+            newAttrText.insert(start + 1, "optnone, ");
+        }
+
+        // Replace the original attribute's source code with the new one.
+        Rewriter.ReplaceText(range, newAttrText);
+        return; // Assume we only modify the first GNU attribute found.
+    }
+
+    // No GNU attribute found at all: create one from scratch.
+    Rewriter.InsertText(FD->getBeginLoc(), "__attribute__((optnone)) ");
+}
 

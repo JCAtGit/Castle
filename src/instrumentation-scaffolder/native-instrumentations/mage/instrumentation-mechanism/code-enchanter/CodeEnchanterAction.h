@@ -49,7 +49,7 @@ class CodeMarkerAction: public ASTFrontendAction {
 	        syntax::TokenBuffer tokenBuffer = std::move(*tokenCollector).consume();
 	        tokenBuffer.indexExpandedTokens();
 			
-			auto visitor = std::make_unique<CodeMarkerVisitor>(CI.getASTContext(), &rewriter, std::move(tokenBuffer), ppEvents, markerFormatCfg);
+			auto visitor = std::make_unique<CodeMarkerVisitor>(CI, rewriter, std::move(tokenBuffer), ppEvents, markerFormatCfg);
 			visitor->insertMarkerDependency(inputPath, inputDir);
 			visitor->TraverseDecl(CI.getASTContext().getTranslationUnitDecl());
 			if(filesystem::is_regular_file(inputPath)){

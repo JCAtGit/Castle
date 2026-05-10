@@ -12,7 +12,7 @@
 		"inclusionDirectiveIFNDEF":"#ifndef",
 		"inclusionDirectiveDEF":"#define",
 		"inclusionDirectiveENDIF":"#endif",
-		"noinlineAttribute":"\t__attribute__((noinline, used, nothrow, noipa))",
+		"noinlineAttribute":"\t__attribute__((noinline, used, nothrow, noipa, optnone))",
 		"memBarrier": "__asm__ volatile(\"\" ::: \"memory\");\n",
 		"headerString": "#ifndef CODEMARKER_ALPHA\n#define CODEMARKER_ALPHA\n__attribute__((noinline, used, nothrow, nofree, noipa))\nstatic void codemarker_alpha(int markerID) {\n    volatile int dummy = markerID;\n\t__asm__ volatile(\"\" :: \"r\"(markerID) : \"memory\");\n}\n#endif"
 	}

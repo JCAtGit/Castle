@@ -2,14 +2,20 @@
 
 #include "nlohmann/json.hpp"
 #include "clang/AST/ASTContext.h"
+
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Syntax/Tokens.h"
+#include "clang/Sema/Sema.h"
+#include "clang/AST/Attr.h"
+
 #include <vector>
 #include <string>
 #include "../../../../../include/helper.hpp"
 #include "../preprocessor-mechanism/pp-processor-stmt.hpp"
 #include "../preprocessor-mechanism/pp-processor-decl.hpp"
+#include "../preprocessor-mechanism/PPHelper.hpp"
 #include "predicates-stmt.hpp"
 #include "predicates-decl.hpp"
 
@@ -19,11 +25,15 @@ using namespace nlohmann;
 
 class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 	private:
-		ASTContext& context;
-		Rewriter* rewriter;
+		Rewriter& rewriter;
 		syntax::TokenBuffer tokenBuffer;
-		vector<RecordedPPConstruct> ppEvents;
+		vector<RecordedPPConstruct> recordedPPEventsEvents;
+		CompilerInstance& CI;
 		
+		Sema& sema;
+		SourceManager& SM;
+		ASTContext& context;
+
 		json markerFormatCfg;
 		int markerID = 0;
 		string markerName;
@@ -33,7 +43,6 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		string markerEndString = "; \n";
 		string headerInclusion;
 		string definitionFilename;
-		SourceManager& SM;
 		
 		virtual string synthesizeMarkerDeclarationString(){
 			return markerKeyword + markerType + markerName + markerSignature + markerEndString;
@@ -52,9 +61,11 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		
 	public:
 		CodeMarkerVisitor(
-			ASTContext& context, 	Rewriter* rewriter, 	syntax::TokenBuffer tokenBuffer, 		vector<RecordedPPConstruct>& ppEvents, 	json markerFormatCfg):
-			context(context),		rewriter(rewriter),		tokenBuffer(std::move(tokenBuffer)), 	ppEvents(ppEvents), 					markerFormatCfg(markerFormatCfg),
-			SM(context.getSourceManager()){
+			
+			CompilerInstance& ci, 	Rewriter& rewriter, 	syntax::TokenBuffer tokenBuffer, 		vector<RecordedPPConstruct>& recordedPPEventsEvents, 	json markerFormatCfg):
+			CI(ci),					rewriter(rewriter),		tokenBuffer(std::move(tokenBuffer)), 	recordedPPEventsEvents(recordedPPEventsEvents), 		markerFormatCfg(markerFormatCfg),
+			
+			context(ci.getASTContext()), sema(ci.getSema()), SM(context.getSourceManager()){
 				markerName 			= 	markerFormatCfg["name"].get<string>();
 				markerKeyword 		= 	markerFormatCfg["keyword"].get<string>();
 				markerType 			= 	markerFormatCfg["functionType"].get<string>();
@@ -66,7 +77,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 			void insertMarkerDependency(filesystem::path inputPath, filesystem::path inputDir){
 				SourceLocation startLoc = SM.getLocForStartOfFile(SM.getMainFileID());
 				StringRef filePath = SM.getFilename(startLoc);
-				rewriter->InsertTextBefore(startLoc,synthesizeMarkerDependencyString(inputPath, inputDir));
+				rewriter.InsertTextBefore(startLoc,synthesizeMarkerDependencyString(inputPath, inputDir));
 			}
 			
 			void commitToSingleFile(filesystem::path inputPath, filesystem::path outputPath){
@@ -79,10 +90,10 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 				std::error_code EC;
 				llvm::raw_fd_ostream OutFile(outputPath.string(),EC, llvm::sys::fs::OF_Text);
 				if (EC) {
-					llvm::errs() << "Error opening output file: " << EC.message()<< "\n";
+					llvm::errs() << "Error opening output file: " << EC.message() << "\n";
 					return;
 				}
-				rewriter->getEditBuffer(rewriter->getSourceMgr().getMainFileID()).write(OutFile);
+				rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(OutFile);
 				OutFile.close();	
 			}
 			
@@ -103,7 +114,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 					llvm::errs() << "Error opening output file: " << EC.message()<< "\n";
 					return;
 				}
-				rewriter->getEditBuffer(rewriter->getSourceMgr().getMainFileID()).write(OutFile);
+				rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(OutFile);
 				OutFile.close();	
 			}
 			
@@ -114,15 +125,15 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 //				if(!stmtHasValidPrevSibling(S, context)){return;}
 				if(!stmtHasValidChildCriteria(S)){return true;}
 				//-- Section: Preprocessor directives check
-				auto ppStmtEvents = detectPPConstructsAroundStatement(S, tokenBuffer, SM, ppEvents);
-				if(!isPPSafeStmtMarking(ppStmtEvents)){return true;}
+				auto detectedEvents = detectPPConstructsAroundStatement(S, tokenBuffer, SM, recordedPPEventsEvents);
+				if(!isPPSafeStmtMarking(detectedEvents)){return true;}
 				//--  Clang Macro expansion id check.
 				DynTypedNodeList Parents = context.getParents(*S);
 				for (const auto &Parent : Parents) {
 					if (Parent.getSourceRange().getBegin().isMacroID()) {return true;}
 				}
 				if(S->getBeginLoc().isMacroID()){return true;}
-				//-- End marker safety checks;
+				//-- End safety checks;
 				switch (S->getStmtClass()) {
 					case Stmt::IfStmtClass: processIfStmt(cast<IfStmt>(S)); break;
 					case Stmt::WhileStmtClass: processWhileStmt(cast<WhileStmt>(S)); break;
@@ -139,11 +150,10 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		}
 
 		bool visitDecl(Decl *D){
-		// TODO: Implement when necessary, not in use currently.
 			if (SM.isInMainFile(D->getLocation())){
 				//-- Section: Preprocessor directives check
-//				auto ppStmtEvents = detectPPConstructsAroundStatement(S, CP->getTokenBuffer(), SM, ppEvents);
-//				if(!isPPSafeStmtMarking(ppStmtEvents)){return;}
+				auto detectedEvents = detectPPConstructsAroundDeclaration(D, tokenBuffer, SM, recordedPPEventsEvents);
+				if(!isPPSafeStmtMarking(detectedEvents)){return true;}
 //				// Clang Macro expansion id check.
 //				DynTypedNodeList Parents = context.getParents(*S);
 //				for (const auto &Parent : Parents) {
@@ -154,36 +164,38 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 //				if(S->getBeginLoc().isMacroID()){return;}
 				//-- ;	
 				switch (D->getKind()) {
-						case Decl::Function:
-						    processFunctionDecl(cast<FunctionDecl>(D)); break;
-						case Decl::Var:
-//						    ProcessVariable(cast<VarDecl>(D));
-						    break;
-						case Decl::Record: break;
-						case Decl::CXXRecord: //subclass of RecordDecl
-//						    ProcessRecord(cast<RecordDecl>(D));
-						    break;
-						case Decl::Enum:
-//						    ProcessEnum(cast<EnumDecl>(D));
-						    break;
-						case Decl::Typedef:
-//						    ProcessTypedef(cast<TypedefDecl>(D));
-						    break;
-						default: break;
-						}
+					case Decl::Function:
+					    processFunctionDecl(cast<FunctionDecl>(D)); break;
+					case Decl::Var:
+						// ProcessVariable(cast<VarDecl>(D));
+					    break;
+					case Decl::Record: break;
+					case Decl::CXXRecord: //subclass of RecordDecl
+						// ProcessRecord(cast<RecordDecl>(D));
+					    break;
+					case Decl::Enum:
+						// ProcessEnum(cast<EnumDecl>(D));
+					    break;
+					case Decl::Typedef:
+						// ProcessTypedef(cast<TypedefDecl>(D));
+					    break;
+					default: break;
 					}
-				return true;
+				}
+			return true;
 		}
 		
-		//--Declarations--
+		// --Declarations--
 		void processDecl(Decl* D) {}
 		
-		// TODO: Mark start and end of function and account for macros?
+		// https://clang.llvm.org/docs/AttributeReference.html#optnone
 		void processFunctionDecl(FunctionDecl* FD){
-			
+			if(FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<MinSizeAttr>() || FD->hasAttr<OptimizeNoneAttr>()){return;}
+			addOrCreateGNUOptnone(FD, rewriter, SM, CI.getLangOpts());			
+//			CI.getSema().AddOptnoneAttributeIfNoConflicts(FD, FD->getLocation());
 		}
 			
-		//--Statements--
+		// --Statements--
 		void processDeclStmt(DeclStmt* DS) {
 			DynTypedNodeList Parents = context.getParents(*DS);
 			for (const auto &Parent : Parents) {
@@ -198,7 +210,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 			}
 			
 			SourceLocation begin = DS->getBeginLoc();
-			rewriter->InsertText(
+			rewriter.InsertText(
 			begin,
 			synthesizeCallMarkerString(), 
 			false, 
@@ -212,7 +224,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		}
 			
 		void processForStmt(ForStmt* FS) {
-			rewriter->InsertText(
+			rewriter.InsertText(
 			FS->getBeginLoc(),
 			synthesizeCallMarkerString(), 
 			false, 
@@ -221,7 +233,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		}
 		
 		void processWhileStmt(WhileStmt* WS){
-			rewriter->InsertText(
+			rewriter.InsertText(
 			WS->getBeginLoc(),
 			synthesizeCallMarkerString(), 
 			false, 
@@ -230,7 +242,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		}
 		
 		virtual void processIfStmt(IfStmt* IS) {
-			rewriter->InsertText(
+			rewriter.InsertText(
 			IS->getBeginLoc(),
 			synthesizeCallMarkerString(), 
 			false, 
@@ -242,7 +254,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		 * TODO: Mark cases of niet?
 		 */
 		void processSwitchStmt(SwitchStmt* SS){
-			rewriter->InsertText(
+			rewriter.InsertText(
 			SS->getBeginLoc(),
 			synthesizeCallMarkerString(), 
 			false, 
@@ -254,7 +266,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		 * Deze marker statements zijn unreachable, maar de static analyzer geeft verder geen meldingen hierover.
 		 */
 		void processCaseStmt(CaseStmt* CS){
-			rewriter->InsertText(
+			rewriter.InsertText(
 			CS->getBeginLoc(),
 			synthesizeCallMarkerString(), 
 			false, 
@@ -266,7 +278,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 			DynTypedNodeList Parents = context.getParents(*CE);
 			for (const auto &Parent : Parents) {
 				if (const auto *ParentNode = Parent.get<CompoundStmt>()) {
-					rewriter->InsertText(
+					rewriter.InsertText(
 						CE->getBeginLoc(),
 						synthesizeCallMarkerString(), 
 						false, 
@@ -278,7 +290,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		}
 		
 		void processGotoStmt(GotoStmt* GS){
-			rewriter->InsertText(
+			rewriter.InsertText(
 			GS->getBeginLoc(),
 			synthesizeCallMarkerString(), 
 			false, 
