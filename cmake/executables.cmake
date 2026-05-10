@@ -3,7 +3,7 @@ add_executable(CodebaseScaffolder src/codebase-scaffolder/main.cpp)
 add_executable(BuildScaffolder src/build-scaffolder/main.cpp)
 add_executable(DecomScaffolder src/decom-scaffolder/main.cpp)
 add_executable(EvalScaffolder src/eval-scaffolder/main.cpp)
-add_executable(SFOF0Eval src/eval-scaffolder/native_evaluators/SingleFileOracleF0Eval/main.cpp)
+add_executable(SFOracleMageEval src/eval-scaffolder/native_evaluators/SingleFileOracleMageEval/main.cpp)
 add_executable(InstrumentationScaffolder src/instrumentation-scaffolder/main.cpp)
 
 

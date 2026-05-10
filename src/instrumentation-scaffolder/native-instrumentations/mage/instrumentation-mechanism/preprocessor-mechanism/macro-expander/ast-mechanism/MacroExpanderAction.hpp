@@ -15,8 +15,8 @@
 #include <string>
 #include <optional>
 
-#include "../../../../mage/preprocessor-mechanism/macro-expander/ast-mechanism/MacroExpanderPPCallbacks.hpp"
 #include "../../../config/config.hpp"
+#include "../../../instrumentation-mechanism/preprocessor-mechanism/macro-expander/ast-mechanism/MacroExpanderPPCallbacks.hpp"
 using namespace clang;
 using namespace clang::tooling;
 

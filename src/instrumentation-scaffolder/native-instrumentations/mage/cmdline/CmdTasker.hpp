@@ -3,10 +3,9 @@
 #include <iostream>
 #include <fstream>
 #include <clang/Frontend/FrontendAction.h>
-#include "../../../../../include/helper.hpp"
-#include "../../mage/instrumentation-mechanism/code-enchanter/CodeEnchanterAction.h"
 #include "clang/Tooling/Tooling.h"
-//#include "../instrumentation-mechanism/marker-remover/ast-mechanism/CodeRemoverAction.hpp"
+#include "../../../../../include/helper.hpp"
+#include "../instrumentation-mechanism/code-enchanter/CodeEnchanterAction.h"
 
 using namespace nlohmann;
 using namespace std;
@@ -16,7 +15,6 @@ class CmdTasker{
 	filesystem::path inputPath, outputPath, mrkrFormatsPath;
 	bool onCopy = false;
 	json markerFormats; 
-	
 	
 	json markerFormatCfg;
 	filesystem::path inputDir;
@@ -73,14 +71,14 @@ class CmdTasker{
 	}
 	
 	/**
-	 * Preprocesses files before marking, which include:
+	 * Preprocesses files before instrumentation, which include:
 	 * Fixing dangling statements from constructs by adding the compound statement node brackets where necessary.
 	 * TODO: Pre-expand macros?
 	 */
 	void preprocessQueueItem(filesystem::path path2process, filesystem::path outputResultPath){
 		//"clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + "example0.c" + ">" + "example0_formatted.c";
 		std::string command = "clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + path2process.string() + " > " + outputResultPath.string();
-		cout << command << "\n";
+		cout << command << endl;
 //		cout << "outputPath: " <<outputResultPath.string() << "\n";
 
 	    int status = std::system(command.c_str());
@@ -97,8 +95,8 @@ class CmdTasker{
 				<< "pathQueue items: " << pathQueue.size() << endl;
 				
 		preprocessQueueItem(inputPath, outputPath);
-		auto codeString = file2string(inputPath);
-		cout << "Enhancing " << inputPath.string() << "\n";
+		auto codeString = file2string(outputPath); // should take outputPath instead of inputPath after clang formatting to outputPath
+		cout << "Enchanting " << inputPath.string() << endl;
 		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
 		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputPath.string());
 	}
@@ -116,7 +114,7 @@ class CmdTasker{
 			auto codeString = file2string(path2process);
 	
 			// TODO?: extract selection of action
-			cout << "Enhancing " << path2process.string() << endl;
+			cout << "Enchanting " << path2process.string() << endl;
 			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
 			clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, path2process.string());
 		}
@@ -129,7 +127,7 @@ class CmdTasker{
 	 TODO: Change constant extraction mechanism
 	 */
 	void createMarkerDefinitionHeaderFile(){
-		cout << "Start marker header file creation." << endl;
+		cout << "Start instrumentation header file creation." << endl;
 		string content = markerFormatCfg["headerString"].get<string>();
 		string outFile = (outputDir / (markerFormatCfg["definitionFileName"].get<string>() + ".h")).string();
 		// Open the file; if it exists, it will be overwritten.
@@ -140,7 +138,7 @@ class CmdTasker{
 	    // Write the string to the file and optionally flush (the destructor will close the file automatically).
 	    out << content;
 	    out.flush();
-		cout << "Marker header file written to: " << outFile << endl;
+		cout << "Instrumentation header file written to: " << outFile << endl;
 	}
 	
 	public:

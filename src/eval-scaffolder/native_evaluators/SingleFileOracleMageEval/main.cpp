@@ -1,6 +1,6 @@
 #include <CLI/CLI.hpp>
 
-#include "../../../eval-scaffolder/native_evaluators/SingleFileOracleF0Eval/cmdline/CmdTasker.hpp"
+#include "../SingleFileOracleMageEval/cmdline/CmdTasker.hpp"
 
 int main(int argc, char **argv) {
 	CLI::App app{"SingleFileOracleF0Eval"};
@@ -17,12 +17,12 @@ int main(int argc, char **argv) {
 	app.add_option("-o,--output", outputPath, "output path for results")
 		->required();
 		
-	std::string mrkrCfgDir;
-	app.add_option("--mrkr_cfg_dir", mrkrCfgDir, "Marker config used for heuristics")
+	std::string mrkrFormatsPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/castle-pipeline/instrumentation-config/formats.json";
+	app.add_option("--mrkrFormatsPath", mrkrFormatsPath, "Instrumentation config used for heuristics")
 		->required();
 
 	CLI11_PARSE(app, argc, argv);
 
-	CmdTasker cmdTskr(inputPath, oraclePath, outputPath, mrkrCfgDir);
+	CmdTasker cmdTskr(inputPath, oraclePath, outputPath, mrkrFormatsPath);
 	cmdTskr.startEvaluationProcesses();
 }

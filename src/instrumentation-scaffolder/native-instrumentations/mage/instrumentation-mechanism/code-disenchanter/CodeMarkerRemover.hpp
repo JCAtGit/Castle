@@ -8,13 +8,12 @@
 #include <optional>
 #include <string>
 
-//#include "construct-processors/ConstructProcessorInterface.hpp"
 #include "../../../../../include/helper.hpp"
 #include "../../../../../prototype/marker-surgeon/config/config_ds.hpp"
 #include "../../../../../prototype/marker-surgeon/marker-mechanism/MarkerSurgeonInterface.hpp"
-#include "../../../mage/instrumentation-mechanism/code-disenchanter/construct-processors/0/rcp0.hpp"
-#include "../../../mage/instrumentation-mechanism/code-disenchanter/construct-processors/1/rcp1.hpp"
-#include "../code-disenchanter/construct-processors/RemoverConstructProcessorInterface.hpp"
+#include "construct-processors/0/rcp0.hpp"
+#include "construct-processors/1/rcp1.hpp"
+#include "construct-processors/RemoverConstructProcessorInterface.hpp"
 
 using namespace clang;
 //

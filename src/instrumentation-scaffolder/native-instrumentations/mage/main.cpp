@@ -1,5 +1,5 @@
 #include <CLI/CLI.hpp>
-#include "../mage/cmdline/CmdTasker.hpp"
+#include "cmdline/CmdTasker.hpp"
 
 /**
  * 	TODO:

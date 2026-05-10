@@ -4,7 +4,7 @@
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include <vector>
-#include "RecordingPPCallbacks.hpp"
+#include "../preprocessor-mechanism/PPCallbacksRecorder.hpp"
 #include "CodeEnchanterVisitor.h"
 #include "nlohmann/json.hpp"
 
@@ -33,7 +33,7 @@ class CodeMarkerAction: public ASTFrontendAction {
 		std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI, StringRef InFile) override {		
 			CI.getDiagnostics().setClient(new clang::IgnoringDiagConsumer(), true);
 			CI.getPreprocessor().addPPCallbacks(
-				std::make_unique<RecordingPPCallbacks>(ppEvents, CI.getSourceManager())
+				std::make_unique<PPCallbacksRecorder>(ppEvents, CI.getSourceManager())
 			);
 			rewriter.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
 			tokenCollector = std::make_unique<syntax::TokenCollector>(CI.getPreprocessor());						

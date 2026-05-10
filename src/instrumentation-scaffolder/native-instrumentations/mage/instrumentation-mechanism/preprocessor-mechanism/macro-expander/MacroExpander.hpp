@@ -18,8 +18,8 @@
 #include <string>
 #include <optional>
 
-#include "../../../mage/preprocessor-mechanism/macro-expander/ast-mechanism/MacroExpanderAction.hpp"
-#include "../../../mage/preprocessor-mechanism/macro-expander/MacroExpanderFactory.hpp"
+#include "../../instrumentation-mechanism/preprocessor-mechanism/macro-expander/ast-mechanism/MacroExpanderAction.hpp"
+#include "../../instrumentation-mechanism/preprocessor-mechanism/macro-expander/MacroExpanderFactory.hpp"
 
 using namespace clang;
 using namespace clang::tooling;

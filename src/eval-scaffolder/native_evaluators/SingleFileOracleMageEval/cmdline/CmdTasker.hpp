@@ -4,7 +4,7 @@
 #include <iostream>
 #include <memory>
 #include "../../../../../include/helper.hpp"
-#include "../../../../eval-scaffolder/native_evaluators/SingleFileOracleF0Eval/ast-mechanism/EvalVisitor.hpp"
+#include "../../SingleFileOracleMageEval/ast-mechanism/EvalVisitor.hpp"
 #include "clang/AST/ASTContext.h"
 #include "clang/Tooling/Tooling.h"
 
@@ -34,7 +34,7 @@ class CmdTasker{
 		
 		void processFile(){
 			string fileEvalData = file2string(inputPath);
-			string fileOracleData = file2string(oraclePath);
+			string fileOracleData = file2string(oraclePath); // TODO: oraclePath is an dir, which must be changed
 			std::vector<std::string> args = {
 		        "-xc",
 		        "-frecovery-ast",
@@ -49,11 +49,11 @@ class CmdTasker{
 		}
 	
 	public:
-	CmdTasker(string inputPath, string oraclePath, string outputPath, string  mrkrCfgPath): 
+	CmdTasker(string inputPath, string oraclePath, string outputPath, string  mrkrFormatsPath): 
 			inputPath(inputPath), 
 			oraclePath(oraclePath),
 			outputPath(outputPath),
-			mrkrFormatsPath(mrkrCfgPath)
+			mrkrFormatsPath(mrkrFormatsPath)
 	{
 		loadMarkerFormats();
 		format = markerFormats["0"];

@@ -11,12 +11,12 @@
 			"active":false
 		},
 		{
-			"name":"",
-			"oracleDir":"/home/user/Desktop/CASTLE/Surgeon/csmith_f0/",
-			"tgtDir":"/home/user/Desktop/CASTLE/DeComScaffolder/ghidra_csmith_f0/",
-			"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/SFOF0Eval",
+			"name":"SFOracleMageEval",
+			"oracleDir":"/home/user/Desktop/CASTLE/InstrumentationScaffolder/csmith_mage/",
+			"tgtDir":"/home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_ghidra/",
+			"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/SFOracleMageEval",
 			"run_bin_as_shell":false,
-			"static_options":[{"--mode":"file"}],
+			"static_options":[{"--mrkrFormatsPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/castle-pipeline/instrumentation-config/formats.json"}],
 			"outputFlag":"-o",
 			"active":true
 		}

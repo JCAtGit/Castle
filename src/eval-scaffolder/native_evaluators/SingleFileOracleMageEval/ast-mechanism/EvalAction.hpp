@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 #include <nlohmann/json.hpp>
-#include "../../../../eval-scaffolder/native_evaluators/SingleFileOracleF0Eval/ast-mechanism/EvalVisitor.hpp"
+#include "../../SingleFileOracleMageEval/ast-mechanism/EvalVisitor.hpp"
 
 using namespace nlohmann;
 using namespace clang;

@@ -8,8 +8,8 @@ using namespace std;
 
 class CmdTasker{
 	private:
-		const string et_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/marker-eval-scaffolder/config/et_config.json";
-		const string es_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/marker-eval-scaffolder/config/es_config.json";
+		const string et_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/eval-scaffolder/config/et_config.json";
+		const string es_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/eval-scaffolder/config/es_config.json";
 		json et_config_data, es_config_data;
 		
 		void loadConfigs(){
@@ -47,7 +47,7 @@ class CmdTasker{
 		void processPath(filesystem::path filepath, json& et_config_data){
 			string command = 
 				et_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 						// binPath
-				et_config_data["oraclePath"].get<string>() 	+ " " + 												// oraclePath
+				et_config_data["oracleDir"].get<string>() 	+ " " + 												// oraclePath
 				et_config_data["outputFlag"].get<string>() 	+ " " + es_config_data["outputDir"].get<string>() 	+ 	// outputPath
 																	et_config_data["name"].get<string>() + "/" 	+
 																	filepath.stem().c_str() + ".c";
@@ -80,7 +80,9 @@ class CmdTasker{
 			cout << toolcfg["name"] << "\n";
 			filesystem::create_directories((es_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
-				processPath(entry, toolcfg);
+				if(entry.path().extension() == ".c"){
+					processPath(entry, toolcfg);
+				}
 			}
 			toolcfg["timestamp"] = time(NULL);
 		}
