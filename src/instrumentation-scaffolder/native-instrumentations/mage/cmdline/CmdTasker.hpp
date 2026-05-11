@@ -76,10 +76,8 @@ class CmdTasker{
 	 */
 	void preprocessQueueItem(filesystem::path path2process, filesystem::path outputResultPath){
 		//"clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + "example0.c" + ">" + "example0_formatted.c";
-		std::string command = "clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + path2process.string() + " > " + outputResultPath.string();
+		std::string command = "clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + path2process.string() + " > " + outputResultPath.string();
 		cout << command << endl;
-//		cout << "outputPath: " <<outputResultPath.string() << "\n";
-
 	    int status = std::system(command.c_str());
 	    if (status == 0) {
 			cout << "clang-format performed for:" + path2process.string() << endl;
@@ -94,7 +92,7 @@ class CmdTasker{
 				<< "pathQueue items: " << pathQueue.size() << endl;
 				
 		preprocessQueueItem(inputPath, outputPath);
-		auto codeString = file2string(outputPath); // should take outputPath instead of inputPath after clang formatting to outputPath
+		auto codeString = file2string(outputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
 		cout << "Enchanting " << inputPath.string() << endl;
 		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
 		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputPath.string());
@@ -120,10 +118,9 @@ class CmdTasker{
 	}
 	
 	/**
-	 * 	This file will be used to link separately, so that an optimization barrier can be created.
 	 *  The created file will be placed at the output root.
 	 *  Check the preview folder for an example output.
-	 TODO: Change constant extraction mechanism
+	 * 	TODO: Change constant extraction mechanism
 	 */
 	void createMarkerDefinitionHeaderFile(){
 		cout << "Start instrumentation header file creation." << endl;

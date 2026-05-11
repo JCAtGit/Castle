@@ -64,7 +64,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 			CompilerInstance& ci, 	Rewriter& rewriter, 	syntax::TokenBuffer tokenBuffer, 		vector<RecordedPPConstruct>& recordedPPEventsEvents, 	json markerFormatCfg):
 			CI(ci),					rewriter(rewriter),		tokenBuffer(std::move(tokenBuffer)), 	recordedPPEventsEvents(recordedPPEventsEvents), 		markerFormatCfg(markerFormatCfg),
 			
-			context(ci.getASTContext()), sema(ci.getSema()), SM(context.getSourceManager()){
+			context(ci.getASTContext()), sema(ci.getSema()), SM(ci.getASTContext().getSourceManager()){
 				markerName 			= 	markerFormatCfg["name"].get<string>();
 				markerKeyword 		= 	markerFormatCfg["keyword"].get<string>();
 				markerType 			= 	markerFormatCfg["functionType"].get<string>();
@@ -118,6 +118,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 			}
 			
 		bool VisitStmt(Stmt *S) {
+			cout << "Stmt" << endl;
 			if (SM.isInMainFile(S->getBeginLoc())){
 				//-- Start marker safety checks
 				//-- Surrounding ASTNodes check
@@ -148,11 +149,15 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 			return true;
 		}
 
-		bool visitDecl(Decl *D){
+		bool VisitDecl(Decl *D){
+			cout << "Decl" << endl;
 			if (SM.isInMainFile(D->getLocation())){
 				//-- Section: Preprocessor directives check
+				cout << "preselection" << endl;
 				auto detectedEvents = detectPPConstructsAroundDeclaration(D, tokenBuffer, SM, recordedPPEventsEvents);
 				if(!isPPSafeStmtMarking(detectedEvents)){return true;}
+				cout << "selection" << endl;
+
 //				// Clang Macro expansion id check.
 //				DynTypedNodeList Parents = context.getParents(*S);
 //				for (const auto &Parent : Parents) {
@@ -160,7 +165,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 //						return;
 //					}
 //				}
-//				if(S->getBeginLoc().isMacroID()){return;}
+				if(D->getBeginLoc().isMacroID()){return true;}
 				//-- ;	
 				switch (D->getKind()) {
 					case Decl::Function:
@@ -195,9 +200,9 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		 * https://clang.llvm.org/docs/AttributeReference.html#optnone
 		 */
 		void processFunctionDecl(FunctionDecl* FD){
-			if(FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<MinSizeAttr>() || FD->hasAttr<OptimizeNoneAttr>()){return;}
+//			if(FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<MinSizeAttr>() || FD->hasAttr<OptimizeNoneAttr>()){return;}
 			addOrCreateGNUOptnone(FD, rewriter, SM, CI.getLangOpts());			
-//			CI.getSema().AddOptnoneAttributeIfNoConflicts(FD, FD->getLocation());
+			CI.getSema().AddOptnoneAttributeIfNoConflicts(FD, FD->getLocation());
 		}
 			
 		// --Statements--

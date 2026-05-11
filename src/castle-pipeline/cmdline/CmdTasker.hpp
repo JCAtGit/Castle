@@ -28,11 +28,27 @@ class CmdTasker{
 		  	}
 		}
 	public:
+	
 	CmdTasker(string cp_configPath, string ct_configPath):cp_configPath(cp_configPath), ct_configPath(ct_configPath){
 		loadConfigs();
 	}
 	
-	
-	
-	
+	void startPipelines(){
+		string command;
+		for(auto pipeline: ct_configData["targets"]["pipeline"]){
+			for(json item : pipeline.items()){
+				cout << item["name"] << endl;
+				// TODO: Voorlopig werkt deze alleen voor default settings, moet later ook externe configs gebruiken.
+				command = 
+					item["binPath"].get<string>() 	+ " " 	+ 
+					" > /dev/null 2>&1";
+//				// TODO: add static flags
+//				
+//				if(toolcfg["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
+//				std::cout << command << "\n";
+//				auto status = std::system(command.c_str());
+				command.clear();
+			}
+		}
+	}
 };

@@ -102,6 +102,8 @@ bool isPPSafeDeclMarking(PPEventVectors ppEV){
 void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter,
                               const SourceManager &SM,
                               const LangOptions &LangOpts) {
+								llvm::errs() << "addOrCreateGNUOptnone called for " << FD->getName() << "\n";
+
     // Iterate over all attributes attached to the function.
     for (const auto *Attr : FD->attrs()) {
         // We are only interested in GNU attributes.
