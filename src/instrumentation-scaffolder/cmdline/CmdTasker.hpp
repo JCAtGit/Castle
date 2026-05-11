@@ -8,9 +8,8 @@ using namespace std;
 
 class CmdTasker{
 	private:
-		const string it_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/instrumentation-scaffolder/config/it_config.json";
-		const string is_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/instrumentation-scaffolder/config/is_config.json";
-		json it_config_data, is_config_data;
+		string 	is_configPath, it_configPath;
+		json 	is_configData, it_configData;
 		
 		void loadConfigs(){
 			cout << "Importing JSON configs.\n";
@@ -21,8 +20,8 @@ class CmdTasker{
 		   		return;
 		   	}
 		   	try {
-		    	it_config_data = json::parse(it_config_file);
-				is_config_data = json::parse(is_config_file);
+		    	it_configData = json::parse(it_config_file);
+				is_configData = json::parse(is_config_file);
 		   	} catch (const json::parse_error& e) {
 		    	cerr << "Parse error: " << e.what() << endl;
 		    	return;
@@ -47,7 +46,7 @@ class CmdTasker{
 		void processPath(filesystem::path filepath, json& it_config_data){
 			string command = 
 				it_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 						// binPath
-				it_config_data["outputFlag"].get<string>() 	+ " " + is_config_data["outputDir"].get<string>() 	+ 	// outputPath
+				it_config_data["outputFlag"].get<string>() 	+ " " + is_configData["outputDir"].get<string>() 	+ 	// outputPath
 																	it_config_data["name"].get<string>() + "/" 	+
 																	filepath.stem().c_str() + ".c";
 			addStaticFlags(command, it_config_data);
@@ -67,16 +66,16 @@ class CmdTasker{
 		    std::cout << "Saved config to " << path << std::endl;
 		}
 	public:
-	CmdTasker(){
+	CmdTasker(string is_configPath, string it_configPath) : is_configPath(is_configPath), it_configPath(it_configPath){
 		loadConfigs();
 	}
 	
 	void startInstrumentationProcesses(){
-		cout << "Starting instrumentation processes and outputting to " << is_config_data["outputDir"] << "\n";
-		for(auto& toolcfg:it_config_data["targets"]){
+		cout << "Starting instrumentation processes and outputting to " << is_configData["outputDir"] << "\n";
+		for(auto& toolcfg:it_configData["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << "\n";
-			filesystem::create_directories((is_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
+			filesystem::create_directories((is_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
 				processPath(entry, toolcfg);
 			}
@@ -85,11 +84,11 @@ class CmdTasker{
 	}
 	
 	void persistChanges(){
-		if(is_config_data["save_on_exit"].get<bool>()){
+		if(is_configData["save_on_exit"].get<bool>()){
 			cout << "Persist changes." << "\n";
-			it_config_data["timestamp"] = time(NULL);
-			saveJsonToFile(is_configPath,is_config_data);
-			saveJsonToFile(it_configPath, it_config_data);
+			it_configData["timestamp"] = time(NULL);
+			saveJsonToFile(is_configPath,is_configData);
+			saveJsonToFile(it_configPath, it_configData);
 		}
 	}
 };

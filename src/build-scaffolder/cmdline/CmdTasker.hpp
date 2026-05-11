@@ -8,9 +8,8 @@ using namespace std;
 
 class CmdTasker{
 	private:
-		const string bt_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/build-scaffolder/config/bt_config.json";
-		const string bs_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/build-scaffolder/config/bs_config.json";
-		json bt_config_data, bs_config_data;
+		string 	bs_configPath, bt_configPath;
+		json 	bs_configData, bt_configData;
 		
 		void loadConfigs(){
 			cout << "Importing JSON configs.\n";
@@ -21,8 +20,8 @@ class CmdTasker{
 		   		return;
 		   	}
 		   	try {
-		    	bt_config_data = json::parse(bt_config_file);
-				bs_config_data = json::parse(bs_config_file);
+		    	bt_configData = json::parse(bt_config_file);
+				bs_configData = json::parse(bs_config_file);
 		   	} catch (const json::parse_error& e) {
 		    	cerr << "Parse error: " << e.what() << endl;
 		    	return;
@@ -32,7 +31,7 @@ class CmdTasker{
 		void processPath(filesystem::path filepath, json& bt_config_data){
 			string command = 
 				bt_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 
-				bt_config_data["outputFlag"].get<string>() 	+ " " + bs_config_data["outputDir"].get<string>() + 
+				bt_config_data["outputFlag"].get<string>() 	+ " " + bs_configData["outputDir"].get<string>() + 
 																	bt_config_data["name"].get<string>() + "/" +
 																	filepath.stem().c_str() + ".o" +
 				" > /dev/null 2>&1";
@@ -52,16 +51,16 @@ class CmdTasker{
 		    std::cout << "Saved config to " << path << std::endl;
 		}
 	public:
-	CmdTasker(){
+	CmdTasker(string bs_configPath, string bt_configPath):bs_configPath(bs_configPath), bt_configPath(bt_configPath){
 		loadConfigs();
 	}
 	
 	void startBuildProcesses(){
-		cout << "Starting build processes and outputting to " << bs_config_data["outputDir"] << "\n";
-		for(auto& toolcfg:bt_config_data["targets"]){
+		cout << "Starting build processes and outputting to " << bs_configData["outputDir"] << "\n";
+		for(auto& toolcfg:bt_configData["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << "\n";
-			filesystem::create_directories((bs_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
+			filesystem::create_directories((bs_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
 				if(entry.path().extension() == ".c"){
 					processPath(entry, toolcfg);
@@ -72,11 +71,11 @@ class CmdTasker{
 	}
 	
 	void persistChanges(){
-		if(bs_config_data["save_on_exit"].get<bool>()){
+		if(bs_configData["save_on_exit"].get<bool>()){
 			cout << "Persist changes." << "\n";
-			bt_config_data["timestamp"] = time(NULL);
-			saveJsonToFile(bs_configPath,bs_config_data);
-			saveJsonToFile(bt_configPath, bt_config_data);
+			bt_configData["timestamp"] = time(NULL);
+			saveJsonToFile(bs_configPath,bs_configData);
+			saveJsonToFile(bt_configPath, bt_configData);
 		}
 	}
 };

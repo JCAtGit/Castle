@@ -8,9 +8,8 @@ using namespace std;
 
 class CmdTasker{
 	private:
-		const string et_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/eval-scaffolder/config/et_config.json";
-		const string es_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/eval-scaffolder/config/es_config.json";
-		json et_config_data, es_config_data;
+		string 	es_configPath, et_configPath;
+		json  	es_configData, et_configData;
 		
 		void loadConfigs(){
 			cout << "Importing JSON configs.\n";
@@ -21,8 +20,8 @@ class CmdTasker{
 		   		return;
 		   	}
 		   	try {
-		    	et_config_data = json::parse(et_config_file);
-				es_config_data = json::parse(es_config_file);
+		    	et_configData = json::parse(et_config_file);
+				es_configData = json::parse(es_config_file);
 		   	} catch (const json::parse_error& e) {
 		    	cerr << "Parse error: " << e.what() << endl;
 		    	return;
@@ -48,7 +47,7 @@ class CmdTasker{
 			string command = 
 				et_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 						// binPath
 				et_config_data["oracleDir"].get<string>() 	+ " " + 												// oraclePath
-				et_config_data["outputFlag"].get<string>() 	+ " " + es_config_data["outputDir"].get<string>() 	+ 	// outputPath
+				et_config_data["outputFlag"].get<string>() 	+ " " + es_configData["outputDir"].get<string>() 	+ 	// outputPath
 																	et_config_data["name"].get<string>() + "/" 	+
 																	filepath.stem().c_str() + ".c";
 			addStaticFlags(command, et_config_data);
@@ -68,17 +67,17 @@ class CmdTasker{
 		    std::cout << "Saved config to " << path << std::endl;
 		}
 	public:
-	CmdTasker(){
+	CmdTasker(string es_configPath, string et_configPath): es_configPath(es_configPath), et_configPath(et_configPath){
 		loadConfigs();
 	}
 	
 	// TODO
 	void startEvaluationProcesses(){
-		cout << "Starting evaluation processes and outputting to " << es_config_data["outputDir"] << "\n";
-		for(auto& toolcfg:et_config_data["targets"]){
+		cout << "Starting evaluation processes and outputting to " << es_configData["outputDir"] << "\n";
+		for(auto& toolcfg:et_configData["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << "\n";
-			filesystem::create_directories((es_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
+			filesystem::create_directories((es_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
 				if(entry.path().extension() == ".c"){
 					processPath(entry, toolcfg);
@@ -89,10 +88,10 @@ class CmdTasker{
 	}
 	
 	void persistChanges(){
-		if(es_config_data["save_on_exit"].get<bool>()){
-			et_config_data["timestamp"] = time(NULL);
-			saveJsonToFile(es_configPath, es_config_data);
-			saveJsonToFile(et_configPath, et_config_data);
+		if(es_configData["save_on_exit"].get<bool>()){
+			et_configData["timestamp"] = time(NULL);
+			saveJsonToFile(es_configPath, es_configData);
+			saveJsonToFile(et_configPath, et_configData);
 		}
 	}
 };

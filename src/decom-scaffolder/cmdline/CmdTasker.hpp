@@ -8,9 +8,8 @@ using namespace std;
 
 class CmdTasker{
 	private:
-		const string dt_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/decom-scaffolder/config/dt_config.json";
-		const string ds_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/decom-scaffolder/config/ds_config.json";
-		json dt_config_data, ds_config_data;
+		string 	ds_configPath, dt_configPath;
+		json 	ds_configData, dt_configData;
 		
 		void loadConfigs(){
 			cout << "Importing JSON configs.\n";
@@ -21,8 +20,8 @@ class CmdTasker{
 		   		return;
 		   	}
 		   	try {
-		    	dt_config_data = json::parse(dt_config_file);
-				ds_config_data = json::parse(ds_config_file);
+		    	dt_configData = json::parse(dt_config_file);
+				ds_configData = json::parse(ds_config_file);
 		   	} catch (const json::parse_error& e) {
 		    	cerr << "Parse error: " << e.what() << endl;
 		    	return;
@@ -47,7 +46,7 @@ class CmdTasker{
 		void processPath(filesystem::path filepath, json& dt_config_data){
 			string command = 
 				dt_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 
-				dt_config_data["outputFlag"].get<string>() 	+ " " + ds_config_data["outputDir"].get<string>() + 
+				dt_config_data["outputFlag"].get<string>() 	+ " " + ds_configData["outputDir"].get<string>() + 
 																	dt_config_data["name"].get<string>() + "/" +
 																	filepath.stem().c_str() + ".c";
 			addStaticFlags(command, dt_config_data);
@@ -67,16 +66,16 @@ class CmdTasker{
 		    std::cout << "Saved config to " << path << std::endl;
 		}
 	public:
-	CmdTasker(){
+	CmdTasker(string ds_configPath, string dt_configPath): ds_configPath(ds_configPath), dt_configPath(dt_configPath) {
 		loadConfigs();
 	}
 	
 	void startDecompilationProcesses(){
-		cout << "Starting decompilation processes and outputting to " << ds_config_data["outputDir"] << "\n";
-		for(auto& toolcfg:dt_config_data["targets"]){
+		cout << "Starting decompilation processes and outputting to " << ds_configData["outputDir"] << "\n";
+		for(auto& toolcfg:dt_configData["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << "\n";
-			filesystem::create_directories((ds_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
+			filesystem::create_directories((ds_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
 				// TODO: decompile entry has to be an executable, should have .o, some or no extension
 				processPath(entry, toolcfg);
@@ -86,10 +85,10 @@ class CmdTasker{
 	}
 	
 	void persistChanges(){
-		if(ds_config_data["save_on_exit"].get<bool>()){
-			dt_config_data["timestamp"] = time(NULL);
-			saveJsonToFile(ds_configPath, ds_config_data);
-			saveJsonToFile(dt_configPath, dt_config_data);
+		if(ds_configData["save_on_exit"].get<bool>()){
+			dt_configData["timestamp"] = time(NULL);
+			saveJsonToFile(ds_configPath, ds_configData);
+			saveJsonToFile(dt_configPath, dt_configData);
 		}
 	}
 };

@@ -46,7 +46,6 @@ class CmdTasker{
 	  	}
 	}
 	
-	
 	void setupFileQueue(){
 		cout << "Setup File Queue Start. \n";
 		if(filesystem::is_regular_file(inputPath)){

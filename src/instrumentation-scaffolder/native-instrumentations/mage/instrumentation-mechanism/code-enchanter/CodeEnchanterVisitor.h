@@ -61,7 +61,6 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		
 	public:
 		CodeMarkerVisitor(
-			
 			CompilerInstance& ci, 	Rewriter& rewriter, 	syntax::TokenBuffer tokenBuffer, 		vector<RecordedPPConstruct>& recordedPPEventsEvents, 	json markerFormatCfg):
 			CI(ci),					rewriter(rewriter),		tokenBuffer(std::move(tokenBuffer)), 	recordedPPEventsEvents(recordedPPEventsEvents), 		markerFormatCfg(markerFormatCfg),
 			
@@ -188,7 +187,13 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		// --Declarations--
 		void processDecl(Decl* D) {}
 		
-		// https://clang.llvm.org/docs/AttributeReference.html#optnone
+		/**
+		 * TODO: Safe inline removals:
+		 * https://stackoverflow.com/questions/79589301/will-removal-of-all-inline-keywords-from-my-code-leave-my-c-program-semantical
+		 * 
+		 * Useful info:
+		 * https://clang.llvm.org/docs/AttributeReference.html#optnone
+		 */
 		void processFunctionDecl(FunctionDecl* FD){
 			if(FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<MinSizeAttr>() || FD->hasAttr<OptimizeNoneAttr>()){return;}
 			addOrCreateGNUOptnone(FD, rewriter, SM, CI.getLangOpts());			
@@ -216,11 +221,6 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 			false, 
 			true
 			);
-			
-	//		llvm::outs() << "DeclStmt found at " << DS->getSourceRange().getBegin().printToString(context->getSourceManager()) << "\n";
-	//		if (auto macroName = getMacroNameIfStmtStartsWithMacro(DS, *tokenBuffer, context->getSourceManager(), context->getLangOpts())) {
-	//		        llvm::outs() << "DeclStmt originates from macro: " << *macroName << "\n";
-	//		}
 		}
 			
 		void processForStmt(ForStmt* FS) {
@@ -290,8 +290,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		}
 		
 		void processGotoStmt(GotoStmt* GS){
-			rewriter.InsertText(
-			GS->getBeginLoc(),
+			rewriter.InsertText(GS->getBeginLoc(),
 			synthesizeCallMarkerString(), 
 			false, 
 			true

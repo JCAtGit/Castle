@@ -10,9 +10,8 @@ using namespace std;
 
 class CmdTasker{
 	private:
-		const string cg_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/codebase-scaffolder/config/cg_config.json";
-		const string cs_configPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/codebase-scaffolder/config/cs_config.json";
-		json cg_config_data, cs_config_data;
+		string 	cg_configPath, cs_configPath;
+		json 	cg_configData, cs_configData;
 		
 		void loadConfigs(){
 			cout << "Importing JSON configs.\n";
@@ -23,8 +22,8 @@ class CmdTasker{
 		   		return;
 		   	}
 		   	try {
-		    	cg_config_data = json::parse(cg_config_file);
-				cs_config_data = json::parse(cs_config_file);
+		    	cg_configData = json::parse(cg_config_file);
+				cs_configData = json::parse(cs_config_file);
 		   	} catch (const json::parse_error& e) {
 		    	cerr << "Parse error: " << e.what() << endl;
 		    	return;
@@ -42,26 +41,26 @@ class CmdTasker{
 		    std::cout << "Saved config to " << path << std::endl;
 		}
 	public:
-	CmdTasker(){
+	CmdTasker(string cs_configPath, string cg_configPath): cs_configPath(cs_configPath), cg_configPath(cg_configPath){
 		cout << "Setup CmdTasker.\n";
 		loadConfigs();
 	}
 	
 	void startCodeGeneration(){
-		cout << "Starting code generation and outputting to " << cs_config_data["outputDir"] << "\n";
+		cout << "Starting code generation and outputting to " << cs_configData["outputDir"] << "\n";
 		string command;
-		for(auto& toolcfg:cg_config_data["targets"]){
+		for(auto& toolcfg:cg_configData["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << " [" << toolcfg["it_begin"]  << "," << toolcfg["it_end"] << ")\n";
-			filesystem::create_directories((cs_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
+			filesystem::create_directories((cs_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
 				command = 
 					toolcfg["binPath"].get<string>() 	+ " " 	+ 
 					toolcfg["seedFlag"].get<string>() 	+ " " 	+ std::to_string(toolcfg["it_begin"].get<int>()) 	+ " " +
-					toolcfg["outputFlag"].get<string>() + " \"" + cs_config_data["outputDir"].get<string>() 			+ 
+					toolcfg["outputFlag"].get<string>() + " \"" + cs_configData["outputDir"].get<string>() 				+ 
 					toolcfg["name"].get<string>() 		+ "/" 	+ std::to_string(toolcfg["it_begin"].get<int>())	+ ".c\"" + 					
 					" > /dev/null 2>&1";
-				// TODO: add static flags	
+				// TODO: add static flags
 				
 				if(toolcfg["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 				std::cout << command << "\n";
@@ -73,10 +72,10 @@ class CmdTasker{
 	}
 	
 	void persistChanges(){
-		if(cs_config_data["save_on_exit"].get<bool>()){
-			cs_config_data["timestamp"] = time(NULL);
-			saveJsonToFile(cs_configPath,cs_config_data);
-			saveJsonToFile(cg_configPath,cg_config_data);
+		if(cs_configData["save_on_exit"].get<bool>()){
+			cs_configData["timestamp"] = time(NULL);
+			saveJsonToFile(cs_configPath,cs_configData);
+			saveJsonToFile(cg_configPath,cg_configData);
 		}
 	}
 };
