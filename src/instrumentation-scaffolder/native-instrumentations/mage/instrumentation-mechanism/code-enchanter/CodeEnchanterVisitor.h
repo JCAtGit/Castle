@@ -118,7 +118,6 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 			}
 			
 		bool VisitStmt(Stmt *S) {
-			cout << "Stmt" << endl;
 			if (SM.isInMainFile(S->getBeginLoc())){
 				//-- Start marker safety checks
 				//-- Surrounding ASTNodes check
@@ -150,21 +149,18 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		}
 
 		bool VisitDecl(Decl *D){
-			cout << "Decl" << endl;
 			if (SM.isInMainFile(D->getLocation())){
 				//-- Section: Preprocessor directives check
-				cout << "preselection" << endl;
 				auto detectedEvents = detectPPConstructsAroundDeclaration(D, tokenBuffer, SM, recordedPPEventsEvents);
 				if(!isPPSafeStmtMarking(detectedEvents)){return true;}
-				cout << "selection" << endl;
 
-//				// Clang Macro expansion id check.
-//				DynTypedNodeList Parents = context.getParents(*S);
-//				for (const auto &Parent : Parents) {
-//					if (Parent.getSourceRange().getBegin().isMacroID()) {
-//						return;
-//					}
-//				}
+				// Clang Macro expansion id check.
+				DynTypedNodeList Parents = context.getParents(*D);
+				for (const auto &Parent : Parents) {
+					if (Parent.getSourceRange().getBegin().isMacroID()) {
+						return true;
+					}
+				}
 				if(D->getBeginLoc().isMacroID()){return true;}
 				//-- ;	
 				switch (D->getKind()) {
@@ -200,9 +196,9 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		 * https://clang.llvm.org/docs/AttributeReference.html#optnone
 		 */
 		void processFunctionDecl(FunctionDecl* FD){
-//			if(FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<MinSizeAttr>() || FD->hasAttr<OptimizeNoneAttr>()){return;}
+			if(FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<MinSizeAttr>() || FD->hasAttr<OptimizeNoneAttr>()){return;}
 			addOrCreateGNUOptnone(FD, rewriter, SM, CI.getLangOpts());			
-			CI.getSema().AddOptnoneAttributeIfNoConflicts(FD, FD->getLocation());
+//			CI.getSema().AddOptnoneAttributeIfNoConflicts(FD, FD->getLocation());
 		}
 			
 		// --Statements--

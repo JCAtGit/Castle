@@ -10,7 +10,6 @@
 #include <vector>
 #include <string>
 #include <optional>
-#include <algorithm>
 #include "clang/Lex/Lexer.h"
 #include "PPDatastructures.hpp"
 #include "clang/Basic/LangOptions.h"
@@ -99,34 +98,26 @@ bool isPPSafeDeclMarking(PPEventVectors ppEV){
 	);	
 }
 
-void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter,
-                              const SourceManager &SM,
-                              const LangOptions &LangOpts) {
-								llvm::errs() << "addOrCreateGNUOptnone called for " << FD->getName() << "\n";
-
+// --------------------------------------------------------------
+// Attribute helpers
+// --------------------------------------------------------------
+void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter, const SourceManager &SM, const LangOptions &LangOpts) {
     // Iterate over all attributes attached to the function.
     for (const auto *Attr : FD->attrs()) {
         // We are only interested in GNU attributes.
-        if (Attr->getSyntax() != AttributeCommonInfo::AS_GNU) {
-            continue;
-        }
+        if (Attr->getSyntax() != AttributeCommonInfo::AS_GNU) {continue;}
 
         SourceRange range = Attr->getRange();
-        if (range.isInvalid()) {
-            continue;
-        }
+        if (range.isInvalid()) {continue;}
 
         // Get the exact source code of the attribute as a string.
         CharSourceRange charRange = Lexer::getAsCharRange(range, SM, LangOpts);
         StringRef attrText = Lexer::getSourceText(charRange, SM, LangOpts);
-        if (attrText.empty()) {
-            continue;
-        }
-
-        std::string newAttrText;
+        if (attrText.empty()) {continue;}
 
         // Determine if the attribute list inside the parentheses is empty.
         // We look for the pattern "(()" for the start of the list and "))" for the end.
+		std::string newAttrText;
         if (attrText.find("()") != StringRef::npos) {
             // Case 1: The attribute list is empty: " __attribute__(()) "
             // We replace the whole attribute with a new one that contains 'optnone'.
