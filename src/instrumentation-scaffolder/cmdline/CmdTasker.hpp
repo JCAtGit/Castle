@@ -44,14 +44,15 @@ class CmdTasker{
 		}
 		
 		void processPath(filesystem::path filepath, json& it_config_data){
-			string command = 
-				it_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " " + 						// binPath
-				it_config_data["outputFlag"].get<string>() 	+ " " + is_configData["outputDir"].get<string>() 	+ 	// outputPath
-																	it_config_data["name"].get<string>() + "/" 	+
-																	filepath.stem().c_str() + ".c";
+			string command = it_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " ";		// binPath
 			addStaticFlags(command, it_config_data);
+			command += 	" " + 
+						it_config_data["outputFlag"].get<string>() 		+ " " + 							// outputPath
+						is_configData["outputDir"].get<string>() 		+ 									
+						it_config_data["name"].get<string>() 			+ "/" +
+						filepath.stem().c_str() 						+ ".c";
 			if(it_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
-			command = command + " > /dev/null 2>&1";
+			if(it_config_data["redirectNull"].get<bool>()){command = command + " > /dev/null 2>&1";}
 			std::cout << command << "\n";
 			auto status = std::system(command.c_str());
 		}

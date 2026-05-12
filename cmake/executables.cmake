@@ -3,10 +3,10 @@ add_executable(CodebaseScaffolder src/codebase-scaffolder/main.cpp)
 add_executable(BuildScaffolder src/build-scaffolder/main.cpp)
 add_executable(DecomScaffolder src/decom-scaffolder/main.cpp)
 add_executable(EvalScaffolder src/eval-scaffolder/main.cpp)
-add_executable(SFOracleMageEval src/eval-scaffolder/native_evaluators/SingleFileOracleMageEval/main.cpp)
 add_executable(InstrumentationScaffolder src/instrumentation-scaffolder/main.cpp)
+add_executable(SFOracleMageEval src/eval-scaffolder/native_evaluators/SingleFileOracleMageEval/main.cpp)
 
-
+add_executable(PseudoCVisitor src/prototype/PseudoCVisitor/main.cpp)
 #add_executable(JSONCPP src/prototype/jsoncpp.cpp)
 #add_executable(DirTraversal src/prototype/DirTraverser/DirTraversal.cpp)
 #add_executable(CrossASTExample src/prototype/CrossASTTraverser/CrossASTExample.cpp)

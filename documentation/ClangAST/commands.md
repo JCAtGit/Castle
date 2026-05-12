@@ -18,15 +18,13 @@ clang -Xclang -ast-dump -fsyntax-only example0.c -I /usr/include/c++/15/
 
 **These commands dump to terminal, no colours: ** <br/>
 clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics testfile0.c > testfile0_ast.txt
-clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics -Xclang -ast-dump file.cpp
-clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics -Xclang -ast-dump-filter=main file.cpp
+clang -fno-color-diagnostics -Xclang -ast-dump 				-fsyntax-only file.cpp
+clang -fno-color-diagnostics -Xclang -ast-dump-filter=main 	-fsyntax-only file.cpp
 
 **These commands dump ast to files: ** <br/> 	<-- use this
-clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics -Xclang -ast-dump-filter=main testfile0.c > testfile0_ast.txt
-clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics -Xclang -ast-dump testfile0.c > testfile0_ast.txt
-
-clang -Xclang -ast-dump -fsyntax-only -fno-color-diagnostics -Wdisabled-macro-expansion -Xclang -ast-dump testfile0.c > testfile0_ast.txt
-
+clang -w -fno-color-diagnostics -Xclang -ast-dump-filter=main 	-fsyntax-only testfile0.c > testfile0_ast.txt
+clang -w -fno-color-diagnostics -Xclang -ast-dump 				-fsyntax-only testfile0.c > testfile0_ast.txt
+ 
 ## Generate visual CFG from c-file, examples
 clang --analyze -Xclang -analyzer-checker=debug.ViewCFG yourfile.c
 clang --analyze -Xclang -analyzer-checker=debug.DumpCFG -o /dev/null yourfile.c > cfg_output.txt

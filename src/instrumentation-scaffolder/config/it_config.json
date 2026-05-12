@@ -7,6 +7,7 @@
 			"run_bin_as_shell":false,
 			"static_options":[],
 			"outputFlag":"-o",
+			"redirectNull": true,
 			"active":false
 		},
 		{
@@ -16,6 +17,43 @@
 			"run_bin_as_shell":false,
 			"static_options":[],
 			"outputFlag":"-o",
+			"redirectNull": true,
+			"active":true
+		},
+		{
+			"name":"csmith_mage_clangAST",
+			"tgtDir":"/home/user/Desktop/CASTLE/InstrumentationScaffolder/csmith_mage/",
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"static_options":[
+				{"-w":""},{"-fno-color-diagnostics":""},{"-Xclang":""},{"-ast-dump":""},{"-fsyntax-only":""}
+			],
+			"outputFlag":">",
+			"redirectNull": false,
+			"active":false
+		},
+		{
+			"name":"csmith_mage_clang_ghidra_clangAST",
+			"tgtDir":"/home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_ghidra/",
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"static_options":[
+				{"-w":""},{"-fno-color-diagnostics":""},{"-Xclang":""},{"-ast-dump":""},{"-fsyntax-only":""}
+			],
+			"outputFlag":">",
+			"redirectNull": false,
+			"active":true
+		},
+		{
+			"name":"csmith_mage_clang_retdec_clangAST",
+			"tgtDir":"/home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_retdec/",
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"static_options":[
+				{"-w":""},{"-fno-color-diagnostics":""},{"-Xclang":""},{"-ast-dump":""},{"-fsyntax-only":""}
+			],
+			"outputFlag":">",
+			"redirectNull": false,
 			"active":true
 		}
 	]

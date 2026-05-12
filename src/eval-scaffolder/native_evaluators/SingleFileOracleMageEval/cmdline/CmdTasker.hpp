@@ -3,10 +3,13 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include "../../../../../include/helper.hpp"
-#include "../../SingleFileOracleMageEval/ast-mechanism/EvalVisitor.hpp"
+
 #include "clang/AST/ASTContext.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
+#include "../../../../../include/helper.hpp"
+#include "../ast-mechanism/EvalVisitor.hpp"
+#include "../ast-mechanism/TestVisitor.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -42,16 +45,21 @@ class CmdTasker{
 		    };
 			auto astEvalUnit = clang::tooling::buildASTFromCodeWithArgs(fileEvalData, args);
 			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args);
-			auto visitor = std::make_unique<EvalVisitor>(format);
 			
+			// first identify markers and check integrity.
+			
+//			auto visitor = std::make_unique<EvalVisitor>(format);
+//			visitor->TraverseDecl(astEvalUnit->getASTContext().getTranslationUnitDecl());
+
+			auto testVisitor = std::make_unique<TestVisitor>(astOracleUnit->getSourceManager(), format);
+			testVisitor->TraverseDecl(astOracleUnit->getASTContext().getTranslationUnitDecl());
 			// TODO: complete, test drive first
-			visitor->TraverseDecl(astEvalUnit->getASTContext().getTranslationUnitDecl());
 		}
 	
 	public:
 	CmdTasker(string inputPath, string oraclePath, string outputPath, string  mrkrFormatsPath): 
-			inputPath(inputPath), 
-			oraclePath(oraclePath),
+			inputPath(inputPath), 		// file or dir
+			oraclePath(oraclePath), 	// when iterating over files, looks for same name in oracle path
 			outputPath(outputPath),
 			mrkrFormatsPath(mrkrFormatsPath)
 	{
