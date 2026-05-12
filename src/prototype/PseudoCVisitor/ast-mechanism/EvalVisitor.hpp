@@ -12,14 +12,14 @@ using namespace clang;
 
 class EvalVisitor: public RecursiveASTVisitor<EvalVisitor> {
 	private:
-		SourceManager& SM;
+		SourceManager& oracleSM;
 	public:
-		explicit EvalVisitor(SourceManager& SM) : SM(SM){}
+		explicit EvalVisitor(SourceManager& SM) : oracleSM(SM){}
 		
 		// Evaluates by traversing through the oracle and then mapping onto the target.
 		bool VisitStmt(Stmt *S) {
 			if (
-				SM.isInMainFile(S->getBeginLoc()) 			&& 
+				oracleSM.isInMainFile(S->getBeginLoc()) 			&& 
 				S->getStmtClass() == Stmt::CallExprClass
 			){
 				CallExpr* CE = cast<CallExpr>(S);

@@ -1,6 +1,6 @@
 #include <CLI/CLI.hpp>
 
-#include "../SingleFileOracleMageEval/cmdline/CmdTasker.hpp"
+#include "../MageEval/cmdline/CmdTasker.hpp"
 
 int main(int argc, char **argv) {
 	CLI::App app{"SingleFileOracleF0Eval"};

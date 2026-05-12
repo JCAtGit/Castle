@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <nlohmann/json.hpp>
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/Stmt.h"
@@ -9,19 +10,20 @@
 
 using namespace nlohmann;
 using namespace clang;
+using namespace std;
 
 class EvalVisitor: public RecursiveASTVisitor<EvalVisitor> {
 	private:
-		json& markerFormat;
-		SourceManager& SM;
+		json& markerFormat;			// assumption: compiled code retains marker declaration name info because of noopt, but decompilers remain wildcard.
+		SourceManager& oracleSM;
 		
 		std::unordered_map<std::string, clang::FunctionDecl*> astIndex;
 	public:
 		EvalVisitor(
-			SourceManager& SM, 	json& markerFormat, ASTContext& decomAST) : 
-			SM(SM), 			markerFormat(markerFormat)
+			SourceManager& oracleSM, 	json& markerFormat, 		ASTContext& decomAST) : 
+			oracleSM(oracleSM), 		markerFormat(markerFormat)
 			{
-				indexAST(decomAST);
+				indexAST(decomAST);		
 			}
 		
 		// Build index from AST: map qualified name -> FunctionDecl*
@@ -36,19 +38,20 @@ class EvalVisitor: public RecursiveASTVisitor<EvalVisitor> {
 			
 		// Evaluates by traversing through the oracle and then mapping onto the target.
 		bool VisitStmt(Stmt *S) {
-			if (
-				SM.isInMainFile(S->getBeginLoc()) 			&& 
-				S->getStmtClass() == Stmt::CallExprClass
-			){
+			if (oracleSM.isInMainFile(S->getBeginLoc()) && S->getStmtClass() == Stmt::CallExprClass){
 				CallExpr* CE = cast<CallExpr>(S);
 				auto DC = CE->getDirectCallee();
 				if(DC == nullptr){return true;}
-				
+				if(DC->getNameInfo().getName().getAsString() != markerFormat["name"].get<string>()){return true;} // TODO?: check comment at markerformat declaration.
+				if (auto *IL = dyn_cast<IntegerLiteral>(CE->getArg(0))) {
+				    llvm::APInt Value = IL->getValue();
+				    int64_t intValue = Value.getSExtValue(); // or getZExtValue() for unsigned
+					cout << DC->getNameInfo().getName().getAsString() << intValue <<  endl;
+				}
 				// TODO:... 
+				
 			}
 
-			// if marker is visited in oracle or decom then establish mapping
-			llvm::outs() << S->getStmtClassName() << " test \n";
 			return true;
 		}
 	

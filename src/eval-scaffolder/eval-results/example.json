@@ -2,14 +2,14 @@
 	"Comments":
 		"Each criteria has a code associated with it, e.g. 0 or 1?. Then we use a bitmap to store the results? 
 		A result may look like: 0000000011000101. With each bit indicating some testresult pass/fail. 
-		Then we can map positions of associated markers/code findings: 		bitmap 			
+		Then we can map positions of associated markers/code findings: 		GUID: bitmap 			
 																			oracle pos	(some range or specific coord in oracle, can include if multiple files)
 																			decom pos	(some range or specific coord in decom,  can include if multiple files)
-																Example:	0000000011000101
+																Example:	JsDSA8djx :0000000011000101
 																			<line:406:3, col:12> or </home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_ghidra/0.c:1:1, col:25>
 																			<line:406:3, col:12> or </home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_ghidra/0.c:1:1, col:25>				
 																															
-				",
+		",
 	"bitmap":{
 		"FunctionDecl":{},
 		"CallExpr":{}
