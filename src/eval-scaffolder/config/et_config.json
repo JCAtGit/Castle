@@ -12,7 +12,7 @@
 			"active":false
 		},
 		{
-			"name":"MageEval",
+			"name":"csmith_mage_clang_ghidra_mageEval",
 			"oracleDir":"/home/user/Desktop/CASTLE/InstrumentationScaffolder/csmith_mage/",
 			"tgtDir":"/home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_ghidra/",
 			"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/MageEval",

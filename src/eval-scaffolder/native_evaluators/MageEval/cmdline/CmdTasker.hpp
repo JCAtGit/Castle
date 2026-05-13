@@ -16,10 +16,9 @@ using namespace std;
 
 class CmdTasker{
 	private:		
-		string inputPath, oraclePath, outputPath, mrkrFormatsPath;
-		json markerFormats;
+		filesystem::path inputPath, oracleDir, outputPath, mrkrFormatsPath;
+		json markerFormats, evalResults;
 		json format;
-		std::unordered_map<std::string, clang::FunctionDecl*> decomFnDeclIndex; // of gewoon een algemene decl index?
 
 		void loadMarkerFormats(){
 			ifstream mrkrFormatsFile(mrkrFormatsPath);
@@ -35,43 +34,32 @@ class CmdTasker{
 		  	}
 		}
 		
-		// Build index from AST: map qualified name -> FunctionDecl*
-	    void indexASTFunctionDecls(std::unordered_map<std::string, clang::FunctionDecl*> &astFnDeclIndex, clang::ASTContext &context) {
-	        for (auto *D : context.getTranslationUnitDecl()->decls()) {
-	            if (auto *FD = llvm::dyn_cast<clang::FunctionDecl>(D)) {
-	                std::string name = FD->getQualifiedNameAsString();
-	                astFnDeclIndex[name] = FD;
-	            }
-	        }
-	    }
-		
 		void processFile(){
 			string fileEvalData = file2string(inputPath);
-			string fileOracleData = file2string(oraclePath); // TODO: oraclePath is an dir, which must be changed
-			std::vector<std::string> args = {
+			string fileOracleData = file2string(oracleDir); // TODO: oraclePath is an dir, which must be changed
+			vector<std::string> args = {
 		        "-xc",
+				"-w",
 				"-Xclang",
 		        "-frecovery-ast",
-				"-Xclang",
 		        "-frecovery-ast-type"
 		    };
-			auto astEvalUnit = clang::tooling::buildASTFromCodeWithArgs(fileEvalData, args);
-			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args);
-			indexASTFunctionDecls(decomFnDeclIndex, astEvalUnit->getASTContext());
+			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileEvalData, args, inputPath.filename().c_str());
+			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
 
 			// first identify markers and check integrity.
-			auto evalVisitor = std::make_unique<EvalVisitor>(astOracleUnit->getSourceManager(), format, astEvalUnit->getASTContext());
-			evalVisitor->TraverseDecl(astEvalUnit->getASTContext().getTranslationUnitDecl());
-
-			auto testVisitor = std::make_unique<TestVisitor>(astOracleUnit->getSourceManager(), format);
-			testVisitor->TraverseDecl(astOracleUnit->getASTContext().getTranslationUnitDecl());
-			// TODO: complete, test drive first
+			auto evalVisitor = make_unique<EvalVisitor>(
+				astOracleUnit->getASTContext(),
+				astDecomUnit->getASTContext(), 
+				format,
+				evalResults);
+			evalVisitor->TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
 		}
 	
 	public:
-	CmdTasker(string inputPath, string oraclePath, string outputPath, string  mrkrFormatsPath): 
+	CmdTasker(filesystem::path inputPath, filesystem::path oracleDir, filesystem::path outputPath, filesystem::path  mrkrFormatsPath): 
 			inputPath(inputPath), 		// file or dir
-			oraclePath(oraclePath), 	// when iterating over files, looks for same name in oracle path
+			oracleDir(oracleDir), 		// when iterating over files, looks for same name in oracle path
 			outputPath(outputPath),
 			mrkrFormatsPath(mrkrFormatsPath)
 	{
@@ -80,7 +68,7 @@ class CmdTasker{
 	}
 		
 	void startEvaluationProcesses(){
-		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oraclePath << ")" << endl;
+		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << endl;
 		processFile();
 	}
 };
