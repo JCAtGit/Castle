@@ -52,20 +52,22 @@ class EvalVisitor: public RecursiveASTVisitor<EvalVisitor> {
 				auto DC = CE->getDirectCallee();
 				if(DC == nullptr){return true;}
 				if(DC->getNameInfo().getName().getAsString() != markerFormat["name"].get<string>()){return true;} // TODO?: check comment at markerformat declaration.
-				auto *IL = dyn_cast<IntegerLiteral>(CE->getArg(0)->IgnoreImpCasts());
-				if (!IL) {return true;}
-				llvm::APInt Value = IL->getValue();
-			    int64_t intValue = Value.getSExtValue(); // or getZExtValue() for unsigned
-				cout << "intValue:" << intValue <<  endl;
-				cout << DC->getNameInfo().getName().getAsString() << endl;
+//				cout << DC->getNameInfo().getName().getAsString() << endl;
 				// TODO:... 
-				startEval();
+				startEval(CE);
 			}
 			return true;
 		}
 	
-		void startEval(
-			
-		);
+		/**
+		 * If a macro is marked, then different procedures need to be taken. Currently macro's are avoided.
+		 */
+		void startEval(CallExpr* CE){
+			auto *IL = dyn_cast<IntegerLiteral>(CE->getArg(0)->IgnoreImpCasts());
+			if (!IL) {return;}
+			llvm::APInt Value = IL->getValue();
+		    int64_t intValue = Value.getSExtValue(); // or getZExtValue() for unsigned
+			cout << "intValue:" << intValue <<  endl;
+		}
 
 };
