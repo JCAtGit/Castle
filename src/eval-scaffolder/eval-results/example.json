@@ -2,32 +2,71 @@
 	"Comments":
 		"Each criteria has a code associated with it, e.g. 0 or 1?. Then we use a bitmap to store the results?
 		A result may look like: 0000000011000101. With each bit indicating some testresult pass/fail. 
-		Then we can map positions of associated markers/code findings: 		ENUM_ASTCategory ENUM_ConstructCategory(optional) bitmap  			
+		Then we can map positions of associated markers/code findings: 		ENUM_ASTCategory ENUM_ConstructCategory Construct_bitmap Marker_bitmap  			
 																			oracle pos	(some range or specific coord in oracle, can include if multiple files)
 																			decom pos	(some range or specific coord in decom,  can include if multiple files) <-- use as ID or hash it??
-																Example:	7 0(NONE) 0000000011000101 
+																Example:	7 1 00101 1101
 																			<line:406:3, col:12> or </home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_ghidra/0.c:1:1, col:25>
 																			<line:406:3, col:12> or </home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_ghidra/0.c:1:1, col:25>
 		How do we include specific vs holistic results? Bitmaps can be used generally for holistic results, but individual variances tend to be a bad fit.
 		",
-	"":"",
+	"Enums":{
+		"ASTCategory":{
+			
+		},
+		"ConstructCategory":{
+			"0":"NONE,i",
+		},
+		"ConstructResultBitmap":"string/integer representation of some bitlength, might need padding? Array of bools?",
+		"MarkerResultBitmap":"idem"
+	},
 	"resultExample":{
 		"FunctionDecl":{
+			"hasOracleMarkee":false,
 			"hasOracleReturnType": false,
 			"hasOracleParamsTypes": false,
 			"hasOracleParamsCount": false,
 		},
 		"CallExpr":{
-			"hasOracleCallExpr":false
+			"hasOracleMarkee":false,
+			"hasOracleCallExpr":false,
+			"hasOracleParams":false
 		},
-		"RecordDecl":{
-			"Struct":{
-				"hasOracleFieldDeclTypes":false,
-				"hasOracleFieldDeclCount":false
+		"DeclStmt":{
+			"RecordDecl":{
+				"Struct":{
+					"hasOracleMarkee":false,
+					"hasOracleFieldDeclTypes":false,
+					"hasOracleFieldDeclCount":false
+				}
+			},
+			"VarDecl":{
+				"hasOracleMarkee":false,
+				"hasOracleDeclType":false
 			}
 		},
-		"VarDecl":{
-			
+		"ForStmt":{
+			"hasOracleMarkee":false,
+			"hasOracle...":false
+		},
+		"WhileStmt":{
+			"hasOracleMarkee":false,
+		},
+		"DoStmt":{
+			"hasOracleMarkee":false,
+			"hasOracleBinaryOperator":false
+		},
+		"IfStmt":{
+			"hasOracleMarkee":false,
+			"hasOracleIfChain":false
+		},
+		"goto":{
+			"hasOracleMarkee":false,
+			"hasOracleRedirection":false
+		},
+		"Markers":{
+			"hasOracleParentMarkerNode, ignores main":false,
+			"hasOracleImmediateSiblingMarkerNodes":false,
 		}
 	},
 	

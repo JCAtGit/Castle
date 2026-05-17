@@ -166,19 +166,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 				switch (D->getKind()) {
 					case Decl::Function:
 					    processFunctionDecl(cast<FunctionDecl>(D)); break;
-					case Decl::Var:
-						// ProcessVariable(cast<VarDecl>(D));
-					    break;
-					case Decl::Record: break;
-					case Decl::CXXRecord: //subclass of RecordDecl
-						// ProcessRecord(cast<RecordDecl>(D));
-					    break;
-					case Decl::Enum:
-						// ProcessEnum(cast<EnumDecl>(D));
-					    break;
-					case Decl::Typedef:
-						// ProcessTypedef(cast<TypedefDecl>(D));
-					    break;
+					case Decl::Var: break;
 					default: break;
 					}
 				}

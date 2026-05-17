@@ -8,8 +8,9 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
 #include "../../../../../include/helper.hpp"
-#include "../../MageEval/ast-mechanism/EvalVisitor.hpp"
-#include "../../MageEval/ast-mechanism/TestVisitor.hpp"
+#include "../ast-mechanism/EvalVisitor.hpp"
+#include "../ast-mechanism/TestVisitor.hpp"
+#include "../ast-mechanism/DecomIndexVisitor.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -18,7 +19,7 @@ class CmdTasker{
 	private:		
 		filesystem::path inputPath, oracleDir, outputPath, mrkrFormatsPath;
 		json markerFormats, evalResults;
-		json format;
+		json selectedFormat;
 
 		void loadMarkerFormats(){
 			ifstream mrkrFormatsFile(mrkrFormatsPath);
@@ -42,17 +43,35 @@ class CmdTasker{
 				"-w",
 				"-Xclang",
 		        "-frecovery-ast",
+				"-Xclang",
 		        "-frecovery-ast-type"
 		    };
+			std::unordered_map<std::string, FunctionDecl*> decomASTFnDeclIndex; 	// can be used to check marker integrity amongst other
+			std::unordered_map<int, CallExpr*> decomASTCallExprIndex; 				// used for quick fetching of markers
 			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileEvalData, args, inputPath.filename().c_str());
 			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
-
-			// first identify markers and check integrity.
+			
+			// TODO: identify markers and check integrity.
+			auto decomIndexVisitor = make_unique<DecomIndexVisitor>(
+				selectedFormat,
+				astDecomUnit->getASTContext(), 
+				decomASTFnDeclIndex, 
+				decomASTCallExprIndex
+			);
+			
+			cout << "testprint0: " << decomASTCallExprIndex.size() << endl;
+			for(const auto &pair : decomASTCallExprIndex){
+				cout << pair.first << ":" << pair.second->getDirectCallee()->getNameInfo().getName().getAsString() << endl;
+			}
+			
 			auto evalVisitor = make_unique<EvalVisitor>(
 				astOracleUnit->getASTContext(),
 				astDecomUnit->getASTContext(), 
-				format,
-				evalResults);
+				selectedFormat,
+				evalResults,
+				decomASTFnDeclIndex,
+				decomASTCallExprIndex
+			);
 			evalVisitor->TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
 		}
 	
@@ -64,7 +83,7 @@ class CmdTasker{
 			mrkrFormatsPath(mrkrFormatsPath)
 	{
 		loadMarkerFormats();
-		format = markerFormats["0"];
+		selectedFormat = markerFormats["0"];
 	}
 		
 	void startEvaluationProcesses(){

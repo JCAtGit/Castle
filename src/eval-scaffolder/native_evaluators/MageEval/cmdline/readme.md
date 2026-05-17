@@ -1,21 +1,15 @@
-# De cmd folder handelt de program aanroep af samen met de meegeleverde argumenten en flags.
+Example for 1.c:
 
-## Link mechanism
-// Everything here is clang specific.
-// For reference, this is the kind of command sequence that build_executable does:
-// clang .\source_1.c -c -emit-llvm
-// clang .\source_2.c -c -emit-llvm
-// llvm-link .\source_1.bc .\source_2.bc -o merged.bc
-// llvm-dis merged.bc -o human_readable.ll
-// clang merged.bc -o exe.exe
+{
+	"name":"csmith_mage_clang_ghidra_mageEval",
+	"oracleDir":"/home/user/Desktop/CASTLE/InstrumentationScaffolder/csmith_mage/",
+	"tgtDir":"/home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_ghidra/",
+	"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/MageEval",
+	"run_bin_as_shell":false,
+	"static_options":[{"--mrkrFormatsPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/castle-pipeline/instrumentation-config/formats.json"}],
+	"outputFlag":"-o",
+	"redirectNull": false,
+	"active":true
+}
 
-individual files -[clang -c for each file]-> individual .bc bitcode-files -[]>
-
-
-## How to Link a Large Number of Files
-To bypass this limitation, use a response file. This technique allows you to pass a long list of files via a file, not the command line.
-
-Create a text file (e.g., files.txt) listing the bitcode files, one per line.
-Pass the file to llvm-link using the @ syntax:
-bash
-llvm-link @files.txt -o output.bc
+/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/MageEval /home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_ghidra/1.c /home/user/Desktop/CASTLE/InstrumentationScaffolder/csmith_mage/ -o /home/user/Desktop/CASTLE/EvalScaffolder/csmith_mage_clang_ghidra_mageEval/1.c --mrkrFormatsPath /home/user/eclipse-workspace/DE_CompilationBenchmarker/src/castle-pipeline/instrumentation-config/formats.json

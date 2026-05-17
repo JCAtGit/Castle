@@ -1,77 +1,99 @@
-Dumping main:
-FunctionDecl 0x55b7edeee608 <declarations.c:4:1, line:40:1> line:4:5 main 'int (int, char **)'
-|-ParmVarDecl 0x55b7edeee478 <col:10, col:14> col:14 argc 'int'
-|-ParmVarDecl 0x55b7edeee528 <col:20, col:27> col:27 argv 'char **'
-`-CompoundStmt 0x55b7edef3df0 <col:33, line:40:1>
-  |-DeclStmt 0x55b7edeee9f8 <line:5:2, col:47>
-  | |-RecordDecl 0x55b7edeee6c0 <col:2, col:31> col:9 struct Point definition
-  | | |-FieldDecl 0x55b7edeee778 <col:17, col:21> col:21 x 'int'
-  | | `-FieldDecl 0x55b7edeee7e0 <col:24, col:28> col:28 y 'int'
-  | `-VarDecl 0x55b7edeee888 <col:2, col:46> col:33 p 'struct Point' cinit
-  |   `-InitListExpr 0x55b7edeee990 <col:37, col:46> 'struct Point'
-  |     |-IntegerLiteral 0x55b7edeee8f0 <col:39> 'int' 10
-  |     `-IntegerLiteral 0x55b7edeee910 <col:43> 'int' 20
-  |-DeclStmt 0x55b7edeeed48 <line:6:2, col:41>
-  | |-RecordDecl 0x55b7edeeea10 <col:2, col:25> col:2 struct definition
-  | | |-FieldDecl 0x55b7edeeeac8 <col:11, col:15> col:15 x 'int'
-  | | `-FieldDecl 0x55b7edeeeb30 <col:18, col:22> col:22 y 'int'
-  | `-VarDecl 0x55b7edeeebd8 <col:2, col:40> col:27 r 'struct (unnamed struct at declarations.c:6:2)':'struct (unnamed at declarations.c:6:2)' cinit
-  |   `-InitListExpr 0x55b7edeeece0 <col:31, col:40> 'struct (unnamed struct at declarations.c:6:2)':'struct (unnamed at declarations.c:6:2)'
-  |     |-IntegerLiteral 0x55b7edeeec40 <col:33> 'int' 10
-  |     `-IntegerLiteral 0x55b7edeeec60 <col:37> 'int' 20
-  |-DeclStmt 0x55b7edeeede0 <line:9:2, col:8>
-  | `-VarDecl 0x55b7edeeed78 <col:2, col:6> col:6 xx 'int'
-  |-DeclStmt 0x55b7edeeef30 <line:10:2, col:15>
-  | |-VarDecl 0x55b7edeeee10 <col:2, col:6> col:6 used x 'int'
-  | `-VarDecl 0x55b7edeeee90 <col:2, col:14> col:9 ee 'int' cinit
-  |   `-IntegerLiteral 0x55b7edeeeef8 <col:14> 'int' 2
-  |-DeclStmt 0x55b7edeef000 <line:11:2, col:16>
-  | `-VarDecl 0x55b7edeeef60 <col:2, col:12> col:8 y 'float' cinit
-  |   `-ImplicitCastExpr 0x55b7edeeefe8 <col:12> 'float' <FloatingCast>
-  |     `-FloatingLiteral 0x55b7edeeefc8 <col:12> 'double' 3.140000e+00
-  |-DeclStmt 0x55b7edeef0c0 <line:12:2, col:14>
-  | `-VarDecl 0x55b7edeef028 <col:2, col:11> col:7 z 'char' cinit
-  |   `-ImplicitCastExpr 0x55b7edeef0a8 <col:11> 'char' <IntegralCast>
-  |     `-CharacterLiteral 0x55b7edeef090 <col:11> 'int' 65
-  |-DeclStmt 0x55b7edef32c0 <line:15:2, col:17>
-  | |-VarDecl 0x55b7edef3118 <col:2, col:6> col:6 a 'int'
-  | |-VarDecl 0x55b7edef3198 <col:2, col:13> col:9 b 'int' cinit
-  | | `-IntegerLiteral 0x55b7edef3200 <col:13> 'int' 5
-  | `-VarDecl 0x55b7edef3238 <col:2, col:16> col:16 c 'int'
-  |-DeclStmt 0x55b7edef3390 <line:18:2, col:10>
-  | `-VarDecl 0x55b7edef3328 <col:2, col:7> col:7 ptr 'int *'
-  |-DeclStmt 0x55b7edef3460 <line:19:2, col:16>
-  | `-VarDecl 0x55b7edef33c0 <col:2, col:15> col:7 ptr2 'int *' cinit
-  |   `-UnaryOperator 0x55b7edef3448 <col:14, col:15> 'int *' prefix '&' cannot overflow
-  |     `-DeclRefExpr 0x55b7edef3428 <col:15> 'int' lvalue Var 0x55b7edeeee10 'x' 'int'
-  |-DeclStmt 0x55b7edef3580 <line:22:2, col:13>
-  | `-VarDecl 0x55b7edef3518 <col:2, col:12> col:6 arr 'int[10]'
-  |-DeclStmt 0x55b7edef3720 <line:23:2, col:18>
-  | `-VarDecl 0x55b7edef36b8 <col:2, col:17> col:6 matrix 'int[5][5]'
-  |-DeclStmt 0x55b7edef3850 <line:24:2, col:22>
-  | `-VarDecl 0x55b7edef3790 <col:2, col:15> col:7 str 'char[6]' cinit
-  |   `-StringLiteral 0x55b7edef3830 <col:15> 'char[6]' "hello"
-  |-DeclStmt 0x55b7edef3908 <line:27:2, col:26>
-  | `-VarDecl 0x55b7edef3880 <col:2, col:23> col:12 READONLY 'const int' cinit
-  |   `-IntegerLiteral 0x55b7edef38e8 <col:23> 'int' 100
-  |-DeclStmt 0x55b7edef39a0 <line:28:2, col:21>
-  | `-VarDecl 0x55b7edef3938 <col:2, col:15> col:15 status 'volatile int'
-  |-DeclStmt 0x55b7edef3ac8 <line:29:2, col:37>
-  | `-VarDecl 0x55b7edef39d0 <col:2, col:20> col:14 msg 'const char *' cinit
-  |   `-ImplicitCastExpr 0x55b7edef3ab0 <col:20> 'const char *' <NoOp>
-  |     `-ImplicitCastExpr 0x55b7edef3a98 <col:20> 'char *' <ArrayToPointerDecay>
-  |       `-StringLiteral 0x55b7edef3a70 <col:20> 'char[16]' lvalue "constant string"
-  |-DeclStmt 0x55b7edef3b80 <line:32:2, col:24>
-  | `-VarDecl 0x55b7edef3af8 <col:2, col:23> col:13 counter 'int' static cinit
-  |   `-IntegerLiteral 0x55b7edef3b60 <col:23> 'int' 0
-  |-DeclStmt 0x55b7edef3c28 <line:33:2, col:24>
-  | `-VarDecl 0x55b7edef3bb0 parent 0x55b7ede87338 <col:2, col:13> col:13 global_flag 'int' extern
-  |-DeclStmt 0x55b7edef3cb0 <line:36:2, col:22>
-  | `-TypedefDecl 0x55b7edef3c58 <col:2, col:15> col:15 referenced int_ptr 'int *'
-  |   `-PointerType 0x55b7edef32e0 'int *'
-  |     `-BuiltinType 0x55b7ede87440 'int'
-  |-DeclStmt 0x55b7edef3da8 <line:37:2, col:12>
-  | `-VarDecl 0x55b7edef3d40 <col:2, col:10> col:10 pr 'int_ptr':'int *'
-  `-ReturnStmt 0x55b7edef3de0 <line:39:2, col:9>
-    `-IntegerLiteral 0x55b7edef3dc0 <col:9> 'int' 0
-
+TranslationUnitDecl 0x55f2266ac4c8 <<invalid sloc>> <invalid sloc>
+|-TypedefDecl 0x55f2266ad0a0 <<invalid sloc>> <invalid sloc> implicit __int128_t '__int128'
+| `-BuiltinType 0x55f2266aca90 '__int128'
+|-TypedefDecl 0x55f2266ad110 <<invalid sloc>> <invalid sloc> implicit __uint128_t 'unsigned __int128'
+| `-BuiltinType 0x55f2266acab0 'unsigned __int128'
+|-TypedefDecl 0x55f2266ad420 <<invalid sloc>> <invalid sloc> implicit __NSConstantString 'struct __NSConstantString_tag'
+| `-RecordType 0x55f2266ad1f0 'struct __NSConstantString_tag'
+|   `-Record 0x55f2266ad168 '__NSConstantString_tag'
+|-TypedefDecl 0x55f2266acd48 <<invalid sloc>> <invalid sloc> implicit __builtin_ms_va_list 'char *'
+| `-PointerType 0x55f2266acd00 'char *'
+|   `-BuiltinType 0x55f2266ac570 'char'
+|-TypedefDecl 0x55f2266ad030 <<invalid sloc>> <invalid sloc> implicit __builtin_va_list 'struct __va_list_tag[1]'
+| `-ConstantArrayType 0x55f2266acfe0 'struct __va_list_tag[1]' 1 
+|   `-RecordType 0x55f2266ace20 'struct __va_list_tag'
+|     `-Record 0x55f2266acda0 '__va_list_tag'
+|-RecordDecl 0x55f226713590 <declarations.c:1:1, line:4:1> line:1:1 struct definition
+| |-FieldDecl 0x55f226713648 <line:2:3, col:7> col:7 x 'int'
+| `-FieldDecl 0x55f2267136b0 <line:3:3, col:7> col:7 y 'int'
+|-VarDecl 0x55f226713758 <line:1:1, line:4:14> col:3 p 'struct (unnamed struct at declarations.c:1:1)':'struct (unnamed at declarations.c:1:1)' cinit
+| `-InitListExpr 0x55f2267138a8 <col:7, col:14> 'struct (unnamed struct at declarations.c:1:1)':'struct (unnamed at declarations.c:1:1)'
+|   |-IntegerLiteral 0x55f226713808 <col:8> 'int' 10
+|   `-IntegerLiteral 0x55f226713828 <col:12> 'int' 20
+|-VarDecl 0x55f226713928 <line:6:1, col:9> col:5 t 'int' cinit
+| `-IntegerLiteral 0x55f226713990 <col:9> 'int' 3
+`-FunctionDecl 0x55f226713b58 <line:8:1, line:51:1> line:8:5 main 'int (int, char **)'
+  |-ParmVarDecl 0x55f2267139c8 <col:10, col:14> col:14 argc 'int'
+  |-ParmVarDecl 0x55f226713a78 <col:20, col:27> col:27 argv 'char **'
+  `-CompoundStmt 0x55f226719350 <col:33, line:51:1>
+    |-DeclStmt 0x55f226713f48 <line:10:3, line:13:17>
+    | |-RecordDecl 0x55f226713c10 <line:10:3, line:13:3> line:10:10 struct Point definition
+    | | |-FieldDecl 0x55f226713cc8 <line:11:5, col:9> col:9 x 'int'
+    | | `-FieldDecl 0x55f226713d30 <line:12:5, col:9> col:9 y 'int'
+    | `-VarDecl 0x55f226713dd8 <line:10:3, line:13:16> col:5 p 'struct Point' cinit
+    |   `-InitListExpr 0x55f226713ee0 <col:9, col:16> 'struct Point'
+    |     |-IntegerLiteral 0x55f226713e40 <col:10> 'int' 10
+    |     `-IntegerLiteral 0x55f226713e60 <col:14> 'int' 20
+    |-DeclStmt 0x55f226714298 <line:15:3, line:18:17>
+    | |-RecordDecl 0x55f226713f60 <line:15:3, line:18:3> line:15:3 struct definition
+    | | |-FieldDecl 0x55f226714018 <line:16:5, col:9> col:9 x 'int'
+    | | `-FieldDecl 0x55f226714080 <line:17:5, col:9> col:9 y 'int'
+    | `-VarDecl 0x55f226714128 <line:15:3, line:18:16> col:5 r 'struct (unnamed struct at declarations.c:15:3)':'struct (unnamed at declarations.c:15:3)' cinit
+    |   `-InitListExpr 0x55f226714230 <col:9, col:16> 'struct (unnamed struct at declarations.c:15:3)':'struct (unnamed at declarations.c:15:3)'
+    |     |-IntegerLiteral 0x55f226714190 <col:10> 'int' 10
+    |     `-IntegerLiteral 0x55f2267141b0 <col:14> 'int' 20
+    |-DeclStmt 0x55f226714330 <line:21:3, col:9>
+    | `-VarDecl 0x55f2267142c8 <col:3, col:7> col:7 xx 'int'
+    |-DeclStmt 0x55f226714480 <line:22:3, col:16>
+    | |-VarDecl 0x55f226714360 <col:3, col:7> col:7 used x 'int'
+    | `-VarDecl 0x55f2267143e0 <col:3, col:15> col:10 ee 'int' cinit
+    |   `-IntegerLiteral 0x55f226714448 <col:15> 'int' 2
+    |-DeclStmt 0x55f226714550 <line:23:3, col:17>
+    | `-VarDecl 0x55f2267144b0 <col:3, col:13> col:9 y 'float' cinit
+    |   `-ImplicitCastExpr 0x55f226714538 <col:13> 'float' <FloatingCast>
+    |     `-FloatingLiteral 0x55f226714518 <col:13> 'double' 3.140000e+00
+    |-DeclStmt 0x55f226718648 <line:24:3, col:15>
+    | `-VarDecl 0x55f2267185b0 <col:3, col:12> col:8 z 'char' cinit
+    |   `-ImplicitCastExpr 0x55f226718630 <col:12> 'char' <IntegralCast>
+    |     `-CharacterLiteral 0x55f226718618 <col:12> 'int' 65
+    |-DeclStmt 0x55f226718820 <line:27:3, col:18>
+    | |-VarDecl 0x55f226718678 <col:3, col:7> col:7 a 'int'
+    | |-VarDecl 0x55f2267186f8 <col:3, col:14> col:10 b 'int' cinit
+    | | `-IntegerLiteral 0x55f226718760 <col:14> 'int' 5
+    | `-VarDecl 0x55f226718798 <col:3, col:17> col:17 c 'int'
+    |-DeclStmt 0x55f2267188f0 <line:30:3, col:11>
+    | `-VarDecl 0x55f226718888 <col:3, col:8> col:8 ptr 'int *'
+    |-DeclStmt 0x55f2267189c0 <line:31:3, col:17>
+    | `-VarDecl 0x55f226718920 <col:3, col:16> col:8 ptr2 'int *' cinit
+    |   `-UnaryOperator 0x55f2267189a8 <col:15, col:16> 'int *' prefix '&' cannot overflow
+    |     `-DeclRefExpr 0x55f226718988 <col:16> 'int' lvalue Var 0x55f226714360 'x' 'int'
+    |-DeclStmt 0x55f226718ae0 <line:34:3, col:14>
+    | `-VarDecl 0x55f226718a78 <col:3, col:13> col:7 arr 'int[10]'
+    |-DeclStmt 0x55f226718c80 <line:35:3, col:19>
+    | `-VarDecl 0x55f226718c18 <col:3, col:18> col:7 matrix 'int[5][5]'
+    |-DeclStmt 0x55f226718db0 <line:36:3, col:23>
+    | `-VarDecl 0x55f226718cf0 <col:3, col:16> col:8 str 'char[6]' cinit
+    |   `-StringLiteral 0x55f226718d90 <col:16> 'char[6]' "hello"
+    |-DeclStmt 0x55f226718e68 <line:39:3, col:27>
+    | `-VarDecl 0x55f226718de0 <col:3, col:24> col:13 READONLY 'const int' cinit
+    |   `-IntegerLiteral 0x55f226718e48 <col:24> 'int' 100
+    |-DeclStmt 0x55f226718f00 <line:40:3, col:22>
+    | `-VarDecl 0x55f226718e98 <col:3, col:16> col:16 status 'volatile int'
+    |-DeclStmt 0x55f226719028 <line:41:3, col:38>
+    | `-VarDecl 0x55f226718f30 <col:3, col:21> col:15 msg 'const char *' cinit
+    |   `-ImplicitCastExpr 0x55f226719010 <col:21> 'const char *' <NoOp>
+    |     `-ImplicitCastExpr 0x55f226718ff8 <col:21> 'char *' <ArrayToPointerDecay>
+    |       `-StringLiteral 0x55f226718fd0 <col:21> 'char[16]' lvalue "constant string"
+    |-DeclStmt 0x55f2267190e0 <line:44:3, col:25>
+    | `-VarDecl 0x55f226719058 <col:3, col:24> col:14 counter 'int' static cinit
+    |   `-IntegerLiteral 0x55f2267190c0 <col:24> 'int' 0
+    |-DeclStmt 0x55f226719188 <line:45:3, col:25>
+    | `-VarDecl 0x55f226719110 parent 0x55f2266ac4c8 <col:3, col:14> col:14 global_flag 'int' extern
+    |-DeclStmt 0x55f226719210 <line:48:3, col:23>
+    | `-TypedefDecl 0x55f2267191b8 <col:3, col:16> col:16 referenced int_ptr 'int *'
+    |   `-PointerType 0x55f226718840 'int *'
+    |     `-BuiltinType 0x55f2266ac5d0 'int'
+    |-DeclStmt 0x55f226719308 <line:49:3, col:13>
+    | `-VarDecl 0x55f2267192a0 <col:3, col:11> col:11 pr 'int_ptr':'int *'
+    `-ReturnStmt 0x55f226719340 <line:50:3, col:10>
+      `-IntegerLiteral 0x55f226719320 <col:10> 'int' 0

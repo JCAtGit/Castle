@@ -3,6 +3,8 @@ struct {
   int y;
 } p = {10, 20};
 
+int t = 3;
+
 int main(int argc, char **argv) {
 
   struct Point {

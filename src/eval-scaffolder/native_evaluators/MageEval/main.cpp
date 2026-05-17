@@ -9,8 +9,8 @@ int main(int argc, char **argv) {
 	app.add_option("inputPath", inputPath, "input path to evaluate")
 		->required();
 	
-	std::string oraclePath;
-	app.add_option("oraclePath", oraclePath, "input path to use as oracle")
+	std::string oracleDir;
+	app.add_option("oraclePath", oracleDir, "input dir to use as oracle, uses input filename in dir")
 		->required();
 
 	std::string outputPath;
@@ -23,6 +23,6 @@ int main(int argc, char **argv) {
 
 	CLI11_PARSE(app, argc, argv);
 
-	CmdTasker cmdTskr(inputPath, oraclePath, outputPath, mrkrFormatsPath);
+	CmdTasker cmdTskr(inputPath, oracleDir, outputPath, mrkrFormatsPath);
 	cmdTskr.startEvaluationProcesses();
 }
