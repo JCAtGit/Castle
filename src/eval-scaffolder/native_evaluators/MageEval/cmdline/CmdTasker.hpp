@@ -8,9 +8,10 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
 #include "../../../../../include/helper.hpp"
-#include "../ast-mechanism/EvalVisitor.hpp"
-#include "../ast-mechanism/TestVisitor.hpp"
+#include "../ast-mechanism/DecomIndexHandler.hpp"
 #include "../ast-mechanism/DecomIndexVisitor.hpp"
+
+#include "../ast-mechanism/EvalVisitor.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -50,19 +51,28 @@ class CmdTasker{
 			std::unordered_map<int, CallExpr*> decomASTCallExprIndex; 				// used for quick fetching of markers
 			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileEvalData, args, inputPath.filename().c_str());
 			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
-			
-			// TODO: identify markers and check integrity.
-			auto decomIndexVisitor = make_unique<DecomIndexVisitor>(
-				selectedFormat,
-				astDecomUnit->getASTContext(), 
-				decomASTFnDeclIndex, 
-				decomASTCallExprIndex
-			);
-			
-			cout << "testprint0: " << decomASTCallExprIndex.size() << endl;
-			for(const auto &pair : decomASTCallExprIndex){
-				cout << pair.first << ":" << pair.second->getDirectCallee()->getNameInfo().getName().getAsString() << endl;
-			}
+
+			// Set up MatchFinder
+		    DecomIndexHandler handler(selectedFormat, decomASTFnDeclIndex, decomASTCallExprIndex);
+		    MatchFinder finder;
+		    finder.addMatcher(functionDecl().bind("func"), &handler);
+		    finder.addMatcher(callExpr().bind("call"), &handler);
+		    
+		    // Run matching – this will populate the indices and also build parent maps
+		    finder.matchAST(astDecomUnit->getASTContext());
+
+//			auto decomIndexVisitor = make_unique<DecomIndexVisitor>(
+//				selectedFormat,
+//				astDecomUnit->getASTContext(),
+//				decomASTFnDeclIndex,
+//				decomASTCallExprIndex
+//			);
+
+		    // Now the maps are filled. The parent maps are also available.
+		    std::cout << "testprint0: " << decomASTCallExprIndex.size() << std::endl;
+		    for (const auto &pair : decomASTCallExprIndex) {
+		        std::cout << pair.first << ":" << pair.second->getDirectCallee()->getNameInfo().getName().getAsString() << std::endl;
+		    }
 			
 			auto evalVisitor = make_unique<EvalVisitor>(
 				astOracleUnit->getASTContext(),
