@@ -30,7 +30,6 @@ class OracleFindingsGatherer: public MatchFinder::MatchCallback {
 		    int64_t intValue = Value.getZExtValue();
 			cout << markerCE->getDirectCallee()->getNameInfo().getName().getAsString() << " : " << intValue << endl;
 			
-			optional<DynTypedNode> markedSibling = getNextSibling(DynTypedNode::create(*markerCE) , oracleAST); // assume not nullopt for oracle
 			auto parents = oracleAST.getParents(*markerCE);
 			auto parentStmt = parents[0].get<Stmt>();
 		   	llvm::errs() << "Number of parents: " << parents.size() << "\n";
@@ -51,8 +50,8 @@ class OracleFindingsGatherer: public MatchFinder::MatchCallback {
 		json& markerFormat;
 		ASTContext& oracleAST;
 		
-		void gatherMarkerMetadata(CallExpr *markerCE){
-			getPrev
+		void gatherMarkerMetadata(CallExpr *markerCE, llvm::SmallVector<DynTypedNode, 16> siblings, int markerCESiblingIndex){
+			
 		}
 		
 		void selectProcessor(){

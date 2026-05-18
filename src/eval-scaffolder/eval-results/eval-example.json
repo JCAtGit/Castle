@@ -66,7 +66,8 @@
 		},
 		"Markers":{
 			"hasOracleParentMarkerNode, ignores main":false,
-			"hasOracleImmediateSiblingMarkerNodes":false,
+			"hasOracleSiblingMarkerNodes":false,
+			"hasOracleSiblingMarkerNodesOrder":false,
 		}
 	},
 	

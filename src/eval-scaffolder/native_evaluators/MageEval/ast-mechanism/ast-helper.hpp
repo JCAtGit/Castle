@@ -9,8 +9,7 @@
 using namespace clang;
 using namespace std;
 
-size_t findNodeSiblingIndex(const llvm::SmallVectorImpl<DynTypedNode> &siblings,
-                     const DynTypedNode &node) {
+size_t findNodeSiblingIndex(const llvm::SmallVectorImpl<DynTypedNode> &siblings, const DynTypedNode &node) {
     for (size_t i = 0; i < siblings.size(); ++i) {
         if (siblings[i] == node) return i;
     }

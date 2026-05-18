@@ -1,3 +1,8 @@
 {
-	
+	"Marker":{
+		"index":0,
+		"parentMarkerIndex": 0,
+		"nextSiblingMarkerIndex":0,
+		"prevSiblingMarkerIndex":0
+	}
 }
