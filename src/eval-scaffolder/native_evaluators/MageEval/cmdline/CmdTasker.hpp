@@ -5,13 +5,14 @@
 #include <memory>
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTTypeTraits.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
 #include "../../../../../include/helper.hpp"
-#include "../ast-mechanism/DecomIndexHandler.hpp"
-#include "../ast-mechanism/DecomIndexVisitor.hpp"
 
-#include "../ast-mechanism/EvalVisitor.hpp"
+#include "../ast-mechanism/DecomFindingsGatherer.hpp"
+#include "../ast-mechanism/OracleFindingsGatherer.hpp"
+#include "../ast-mechanism/GatheredFindingsEvaluator.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -22,6 +23,15 @@ class CmdTasker{
 		json markerFormats, evalResults;
 		json selectedFormat;
 
+		const vector<std::string> args = {
+	        "-xc",
+			"-w",
+			"-Xclang",
+	        "-frecovery-ast",
+			"-Xclang",
+	        "-frecovery-ast-type"
+	    };
+		
 		void loadMarkerFormats(){
 			ifstream mrkrFormatsFile(mrkrFormatsPath);
 			if (!mrkrFormatsFile.is_open()) {
@@ -37,52 +47,28 @@ class CmdTasker{
 		}
 		
 		void processFile(){
-			string fileEvalData = file2string(inputPath);
-			string fileOracleData = file2string(oracleDir); // TODO: oraclePath is an dir, which must be changed
-			vector<std::string> args = {
-		        "-xc",
-				"-w",
-				"-Xclang",
-		        "-frecovery-ast",
-				"-Xclang",
-		        "-frecovery-ast-type"
-		    };
-			std::unordered_map<std::string, FunctionDecl*> decomASTFnDeclIndex; 	// can be used to check marker integrity amongst other
-			std::unordered_map<int, CallExpr*> decomASTCallExprIndex; 				// used for quick fetching of markers
-			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileEvalData, args, inputPath.filename().c_str());
+			string fileDecomData = file2string(inputPath);
+			string fileOracleData = file2string(oracleDir / inputPath.filename()); // TODO: oraclePath is an dir, which must be changed
+			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputPath.filename().c_str());
 			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
-
-			// Set up MatchFinder
-		    DecomIndexHandler handler(selectedFormat, decomASTFnDeclIndex, decomASTCallExprIndex);
-		    MatchFinder finder;
-		    finder.addMatcher(functionDecl().bind("func"), &handler);
-		    finder.addMatcher(callExpr().bind("call"), &handler);
-		    
-		    // Run matching – this will populate the indices and also build parent maps
-		    finder.matchAST(astDecomUnit->getASTContext());
-
-//			auto decomIndexVisitor = make_unique<DecomIndexVisitor>(
-//				selectedFormat,
-//				astDecomUnit->getASTContext(),
-//				decomASTFnDeclIndex,
-//				decomASTCallExprIndex
-//			);
-
-		    // Now the maps are filled. The parent maps are also available.
-		    std::cout << "testprint0: " << decomASTCallExprIndex.size() << std::endl;
-		    for (const auto &pair : decomASTCallExprIndex) {
-		        std::cout << pair.first << ":" << pair.second->getDirectCallee()->getNameInfo().getName().getAsString() << std::endl;
-		    }
+			unordered_map<int, json> decomFindings;
+			unordered_map<int, json> oracleFindings;
+			unordered_map<int, json> evalResults;
+			DecomFindingsGatherer dfg(selectedFormat, astDecomUnit->getASTContext());
+			OracleFindingsGatherer ofg(selectedFormat, astOracleUnit->getASTContext());
+			GatheredFindingsEvaluator gfe;			
 			
-			auto evalVisitor = make_unique<EvalVisitor>(
-				astOracleUnit->getASTContext(),
-				astDecomUnit->getASTContext(), 
-				selectedFormat,
-				evalResults,
-				decomASTFnDeclIndex,
-				decomASTCallExprIndex
-			);
-			evalVisitor->TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
+			// Gebruik andere actions voor FunctionDecls
+		    MatchFinder decomFinder, oracleFinder;
+			cout << "DecomMatcher" << endl;
+		    decomFinder.addMatcher(callExpr().bind("dfgCallExpr"), &dfg);
+			decomFinder.matchAST(astDecomUnit->getASTContext());
+
+			cout << "OracleMatcher" << endl;
+			oracleFinder.addMatcher(callExpr().bind("ofgCallExpr"), &ofg);
+			oracleFinder.matchAST(astOracleUnit->getASTContext());
+		    // Run matching – this will populate the indices and also build parent maps
+
 		}
 	
 	public:

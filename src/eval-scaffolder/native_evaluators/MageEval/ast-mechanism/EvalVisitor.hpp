@@ -130,9 +130,9 @@ class EvalVisitor: public RecursiveASTVisitor<EvalVisitor> {
 				case Stmt::CompoundStmtClass: break;
 				case Stmt::BreakStmtClass: break;
 				default: break;
-				}
-				return evalResult;
 			}
+			return evalResult;
+		}
 			
 		void processCallExpr(CallExpr *oracleCE, const Stmt *markedSiblingStmt){
 				
