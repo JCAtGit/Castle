@@ -6,6 +6,7 @@ add_executable(EvalScaffolder src/eval-scaffolder/main.cpp)
 add_executable(InstrumentationScaffolder src/instrumentation-scaffolder/main.cpp)
 add_executable(MageEval src/eval-scaffolder/native_evaluators/MageEval/main.cpp)
 
+add_executable(SEDiagnosticConsumer src/prototype/SEDiagnosticConsumer/main.cpp)
 #add_executable(PseudoCVisitor src/prototype/PseudoCVisitor/main.cpp)
 #add_executable(JSONCPP src/prototype/jsoncpp.cpp)
 #add_executable(DirTraversal src/prototype/DirTraverser/DirTraversal.cpp)

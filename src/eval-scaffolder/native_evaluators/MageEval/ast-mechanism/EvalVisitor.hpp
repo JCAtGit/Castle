@@ -85,13 +85,13 @@ class EvalVisitor: public RecursiveASTVisitor<EvalVisitor> {
 		       llvm::errs() << "No parents found – ParentMapContext not built\n";
 		   }
 			
-			optional<DynTypedNode> markedSibling = getNextSibling(DynTypedNode::create(*oracleCE) , oracleAST); // assume not nullopt for oracle
+//			optional<DynTypedNode> markedSibling = getNextSibling(DynTypedNode::create(*oracleCE) , oracleAST); // assume not nullopt for oracle
 			cout << "check 0" <<endl;
 
 		  	const Stmt *markedSiblingStmt = markedSibling->get<Stmt>();
 			cout << "check 1" <<endl;
 			switch (markedSiblingStmt->getStmtClass()) {
-				case Stmt::CallExprClass: processCallExpr(oracleCE, markedSiblingStmt); break;
+				case Stmt::CallExprClass:  break;
 				case Stmt::WhileStmtClass: break;
 				case Stmt::LabelStmtClass: break;
 				case Stmt::VAArgExprClass: break;            // va_arg macro (C89/C99)

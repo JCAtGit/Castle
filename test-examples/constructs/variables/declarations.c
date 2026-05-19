@@ -18,6 +18,7 @@ int main(int argc, char **argv) {
   } r = {10, 20};
 
   // Simple variable declarations
+  static const char *msg = "hello";
   int xx;
   int x, ee = 2;
   float y = 3.14;

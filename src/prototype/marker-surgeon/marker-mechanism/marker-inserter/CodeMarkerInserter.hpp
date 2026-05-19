@@ -9,11 +9,11 @@
 
 #include "../../config/config_ds.hpp"
 #include "../../../../../include/helper.hpp"
-#include "../../../../../prototype/marker-surgeon/marker-mechanism/marker-inserter/construct-processors/0/icp0.hpp"
-#include "../../../../../prototype/marker-surgeon/marker-mechanism/marker-inserter/construct-processors/0/markerPredicates.hpp"
-#include "../../../../../prototype/marker-surgeon/marker-mechanism/marker-inserter/construct-processors/1/icp1.hpp"
-#include "../../../../../prototype/marker-surgeon/marker-mechanism/marker-inserter/construct-processors/InserterConstructProcessorInterface.hpp"
-#include "../../../../../prototype/marker-surgeon/marker-mechanism/MarkerSurgeonInterface.hpp"
+#include "construct-processors/0/icp0.hpp"
+#include "construct-processors/0/markerPredicates.hpp"
+#include "construct-processors/1/icp1.hpp"
+#include "construct-processors/InserterConstructProcessorInterface.hpp"
+#include "../MarkerSurgeonInterface.hpp"
 #include "../../../../../prototype/marker-surgeon/preprocessor-mechanism/directives/directive-processor.hpp"
 
 using namespace clang;

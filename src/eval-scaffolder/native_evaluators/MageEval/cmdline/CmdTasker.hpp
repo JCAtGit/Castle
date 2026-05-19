@@ -5,14 +5,15 @@
 #include <memory>
 
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/ASTTypeTraits.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
 #include "../../../../../include/helper.hpp"
+#include "../alt/CrossASTVisitor.hpp"
 
 #include "../ast-mechanism/DecomFindingsGatherer.hpp"
 #include "../ast-mechanism/OracleFindingsGatherer.hpp"
 #include "../ast-mechanism/GatheredFindingsEvaluator.hpp"
+#include "../alt/CrossASTVisitor.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -59,16 +60,21 @@ class CmdTasker{
 			GatheredFindingsEvaluator gfe;			
 			
 			// Gebruik andere actions voor FunctionDecls
-		    MatchFinder decomFinder, oracleFinder;
-			cout << "DecomMatcher" << endl;
-		    decomFinder.addMatcher(callExpr().bind("dfgCallExpr"), &dfg);
-			decomFinder.matchAST(astDecomUnit->getASTContext());
+//		    MatchFinder decomFinder, oracleFinder;
+//			cout << "DecomMatcher" << endl;
+//		    decomFinder.addMatcher(callExpr().bind("dfgCallExpr"), &dfg);
+//			decomFinder.matchAST(astDecomUnit->getASTContext());
+//
+//			cout << "OracleMatcher" << endl;
+//			oracleFinder.addMatcher(callExpr().bind("ofgCallExpr"), &ofg);
+//			oracleFinder.matchAST(astOracleUnit->getASTContext());
 
-			cout << "OracleMatcher" << endl;
-			oracleFinder.addMatcher(callExpr().bind("ofgCallExpr"), &ofg);
-			oracleFinder.matchAST(astOracleUnit->getASTContext());
-		    // Run matching – this will populate the indices and also build parent maps
-
+			CrossASTVisitor CAVisitor(selectedFormat, astOracleUnit->getASTContext(), astDecomUnit->getASTContext());
+			CAVisitor.selectMode(0);
+			CAVisitor.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
+			CAVisitor.selectMode(1);
+			CAVisitor.TraverseDecl(astOracleUnit->getASTContext().getTranslationUnitDecl());
+			CAVisitor.evalProcessor();
 		}
 	
 	public:
