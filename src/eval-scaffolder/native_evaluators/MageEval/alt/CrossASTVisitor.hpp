@@ -135,7 +135,7 @@ class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
 			auto MCEOracleMarkee = getNextSiblingFromList(MCEOracleSiblings, MCEOracleSibIndex);
 
 			auto MCEDecom = decomMarkerMap.at(markerID);
-			auto MCEDecomParent = decomMarkerParentMap[0];
+			auto MCEDecomParent = decomMarkerParentMap.at(markerID);
 			auto MCEDecomSiblings = getChildrenNodes(MCEDecomParent);
 			auto MCEDecomSibIndex = findNodeSiblingIndex(MCEDecomSiblings, DynTypedNode::create(*MCEDecom));
 			auto MCEDecomMarkee = getNextSiblingFromList(MCEDecomSiblings, MCEDecomSibIndex);
@@ -155,9 +155,11 @@ class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
 				cout << "== result:decl" << endl;
 			} else {
 				cout << "== result:else" << endl;
-				MCEOracleMarkee->dump(llvm::outs(), oracleAST);
+				MCEOracleParent->dump(llvm::outs(), oracleAST);
+				cout << endl;
+				MCEDecomParent->dump(llvm::outs(), decomAST);
 				cout << "-	-	-	-	-" << endl;
-				MCEDecomMarkee->dump(llvm::outs(), decomAST);
+
 			}
 		}
 	}
