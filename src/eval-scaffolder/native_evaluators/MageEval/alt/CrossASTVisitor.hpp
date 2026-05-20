@@ -150,16 +150,25 @@ class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
 				Stmt* s1 = const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>());
 				Stmt* s2 = const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>());
 				auto result = seContext.IsEquivalent(s1, s2);
-				cout << "== result:" << result << endl;
+				cout << "== result stmt:" << result << endl;
+				MCEOracleParent->dump(llvm::outs(), oracleAST);
+				cout << endl;
+				MCEDecomParent->dump(llvm::outs(), decomAST);
 			} else if(MCEOracleMarkee->get<Decl>() && MCEDecomMarkee->get<Decl>()){
-				cout << "== result:decl" << endl;
+				cout << "== result decl:" << endl;
+				Decl* d1 = const_cast<Decl*>(MCEOracleMarkee->get<Decl>());
+				Decl* d2 = const_cast<Decl*>(MCEDecomMarkee->get<Decl>());
+				auto result = seContext.IsEquivalent(d1, d2);
+				cout << "== result:" << result << endl;
+				MCEOracleParent->dump(llvm::outs(), oracleAST);
+				cout << endl;
+				MCEDecomParent->dump(llvm::outs(), decomAST);
 			} else {
-				cout << "== result:else" << endl;
+				cout << "== result else:" << endl;
 				MCEOracleParent->dump(llvm::outs(), oracleAST);
 				cout << endl;
 				MCEDecomParent->dump(llvm::outs(), decomAST);
 				cout << "-	-	-	-	-" << endl;
-
 			}
 		}
 	}
