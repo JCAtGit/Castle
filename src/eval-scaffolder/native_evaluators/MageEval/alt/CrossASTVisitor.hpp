@@ -12,7 +12,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/ASTStructuralEquivalence.h"
 
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "../ast-mechanism/ast-helper.hpp"
 
 using namespace nlohmann;
@@ -24,17 +24,22 @@ class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
 	json& markerFormat;
 	ASTContext &oracleAST, &decomAST;
 	SourceManager &oracleSM, &decomSM;
+		
+	unordered_map<int64_t, CallExpr*> decomMarkerMap;
+	unordered_map<int64_t, CallExpr*> oracleMarkerMap;
 	
-	unordered_map<int64_t, CallExpr*> decomMap;
-	unordered_map<int64_t, CallExpr*> oracleMap;
+	unordered_map<int64_t, CompoundStmt*> decomMarkerParentMap;
+	unordered_map<int64_t, CompoundStmt*> oracleMarkerParentMap;
+
 	
 	int proc_mode = 0; // 0 = oracle, 1 = decom
 	void (CrossASTVisitor::*selectedProcessor)(Stmt *S);
 	ASTContext* selectedAST;
 	SourceManager* selectedSM;
 	string selectedMessage;
-	unordered_map<int64_t, CallExpr*>* selectedASTMap;
-	
+	unordered_map<int64_t, CallExpr*>* 		selectedMarkerMap;
+	unordered_map<int64_t, CompoundStmt*>* 	selectedMarkerParentMap;
+
 	StructuralEquivalenceContext::NonEquivalentDeclSet NonEquivalentDecls;
 	StructuralEquivalenceContext seContext;
 
@@ -50,9 +55,9 @@ class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
 		    decomAST,
 		    NonEquivalentDecls,
 		    StructuralEquivalenceKind::Default,
-		    /*StrictTypeSpelling=*/false,
-		    /*Complain=*/true, // Structural errors emit straight to your TextDiagnosticPrinter
-		    /*ErrorOnTagTypeMismatch=*/true
+		    false, 						/*StrictTypeSpelling=*/
+		    true, 								// Complain, structural errors emit straight to your TextDiagnosticPrinter
+		    true 					/*ErrorOnTagTypeMismatch=*/
 		)
 	)
 	{}
@@ -63,14 +68,16 @@ class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
 			selectedProcessor = &CrossASTVisitor::indexProcessor;
 			selectedAST = &decomAST;
 			selectedSM = &decomSM;
-			selectedASTMap = &decomMap;
+			selectedMarkerMap = &decomMarkerMap;
+			selectedMarkerParentMap = &decomMarkerParentMap;
 			selectedMessage = "decomIndexProcessor";
 			break;
 			case 1:
 			selectedProcessor = &CrossASTVisitor::indexProcessor;
 			selectedAST = &oracleAST;
 			selectedSM = &oracleSM;
-			selectedASTMap = &oracleMap;
+			selectedMarkerMap = &oracleMarkerMap;
+			selectedMarkerParentMap = &oracleMarkerParentMap;
 			selectedMessage = "oracleIndexProcessor";
 			break;			
 			default:
@@ -92,34 +99,66 @@ class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
 			if (!IL) {return;}
 			llvm::APInt Value = IL->getValue();
 		    int64_t intValue = Value.getSExtValue();
+			(*selectedMarkerMap)[intValue] = markerCE;
 			
-			(*selectedASTMap)[intValue] = markerCE;
+			// Build parents cache for markerCE.
+			auto markerCEParents = selectedAST->getParents(*markerCE);
+			auto markerCEParent = markerCEParents[0];
+			auto markerCEParentStmt = markerCEParent.get<CompoundStmt>();
+			(*selectedMarkerParentMap)[intValue] = const_cast<CompoundStmt*>(markerCEParentStmt);
 			
-			auto parents = selectedAST->getParents(*markerCE);
-			auto parent = parents[0];
-			auto parentStmt = parent.get<CompoundStmt>();
-	
-			cout << DC->getNameInfo().getName().getAsString() << " : " << intValue << " : " << parents.size() <<endl; 
-//			if(!parentStmt){return;}
-//			auto siblings = getChildrenNodes(parentStmt);
+			cout << DC->getNameInfo().getName().getAsString() << " : " << intValue << " : " << markerCEParents.size() << endl; 
+//			if(!markerCEParentStmt){return;}
+//			auto siblings = getChildrenNodes(markerCEParentStmt);
 //			int markerIndex = findNodeSiblingIndex(siblings, DynTypedNode::create(*markerCE));
+//			
+//			// Build parents cache for markedNode.
 //			auto markedNode = getNextSiblingFromList(siblings, markerIndex);
+//			auto markedNodeParents = selectedAST->getParents(*markedNode);
 		}
 	}
 	
 	void evalProcessor(){
-		cout << "OracleMap:" << oracleMap.size() << " - DecomMap:" << decomMap.size() << endl; 
+		cout << "OracleMap:" << oracleMarkerMap.size() << " - DecomMap:" << decomMarkerMap.size() << endl; 
+		cout << "OracleParentMap:" << oracleMarkerParentMap.size() << " - DecomParentMap:" << decomMarkerParentMap.size() << endl; 
 
-		for(auto& [markerID, markerCE]:oracleMap){
-			auto markerCEOracle = markerCE;
-			if(decomMap.find(markerID) == decomMap.end()){
+		for(auto& [markerID, markerCE]: oracleMarkerMap){
+			if(decomMarkerMap.find(markerID) == decomMarkerMap.end()){
 				cout << "ID:" << markerID << " missing" << endl; 
 				continue; // maybe do something else too
-			}			
+			}	
 			cout << "ID:" << markerID << " present" << endl; 
-			auto markerCEDecom = decomMap[markerID];
+			auto MCEOracle = markerCE;
+			auto MCEOracleParent = oracleMarkerParentMap.at(markerID);
+			auto MCEOracleSiblings = getChildrenNodes(MCEOracleParent);
+			auto MCEOracleSibIndex = findNodeSiblingIndex(MCEOracleSiblings, DynTypedNode::create(*MCEOracle));
+			auto MCEOracleMarkee = getNextSiblingFromList(MCEOracleSiblings, MCEOracleSibIndex);
+
+			auto MCEDecom = decomMarkerMap.at(markerID);
+			auto MCEDecomParent = decomMarkerParentMap[0];
+			auto MCEDecomSiblings = getChildrenNodes(MCEDecomParent);
+			auto MCEDecomSibIndex = findNodeSiblingIndex(MCEDecomSiblings, DynTypedNode::create(*MCEDecom));
+			auto MCEDecomMarkee = getNextSiblingFromList(MCEDecomSiblings, MCEDecomSibIndex);
 			
-			
+//			if(!MCEDecomMarkee){
+//				cout << "MCEDecomMarkee is NULL" << endl;
+//			} else {
+//				cout << "MCEDecomMarkee is not NULL" << endl;
+//			}
+//			
+			if(MCEOracleMarkee->get<Stmt>() && MCEDecomMarkee->get<Stmt>()){
+				Stmt* s1 = const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>());
+				Stmt* s2 = const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>());
+				auto result = seContext.IsEquivalent(s1, s2);
+				cout << "== result:" << result << endl;
+			} else if(MCEOracleMarkee->get<Decl>() && MCEDecomMarkee->get<Decl>()){
+				cout << "== result:decl" << endl;
+			} else {
+				cout << "== result:else" << endl;
+				MCEOracleMarkee->dump(llvm::outs(), oracleAST);
+				cout << "-	-	-	-	-" << endl;
+				MCEDecomMarkee->dump(llvm::outs(), decomAST);
+			}
 		}
 	}
 	
@@ -128,6 +167,5 @@ class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
 		(this->*selectedProcessor)(S);
 		return true;
 	}
-	
 };
 
