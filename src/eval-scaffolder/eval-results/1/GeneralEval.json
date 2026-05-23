@@ -1,5 +1,8 @@
 {
 	"ASTNode":{
+		"ASTNode":{
+					
+		},
 		"MappedEval":{
 				
 		},
@@ -8,10 +11,6 @@
 		},
 		"Instances":{
 			
-		},
-		"ASTNode":{
-			
-		}
-	},
-	
+		}	
+	}
 }

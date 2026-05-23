@@ -3,7 +3,9 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTTypeTraits.h"
 #include "clang/AST/ParentMapContext.h"
@@ -12,16 +14,18 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/ASTStructuralEquivalence.h"
 
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_os_ostream.h"
+#include "llvm/Support/raw_ostream.h"
 #include "../ast-mechanism/ast-helper.hpp"
 
 using namespace nlohmann;
 using namespace clang;
 using namespace std;
 
-class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
+class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	private:
-	json& markerFormat;
+	json &markerFormat, &genEval, &specEval, &markerEval, &humanEval;
 	ASTContext &oracleAST, &decomAST;
 	SourceManager &oracleSM, &decomSM;
 		
@@ -31,41 +35,43 @@ class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
 	unordered_map<int64_t, CompoundStmt*> decomMarkerParentMap;
 	unordered_map<int64_t, CompoundStmt*> oracleMarkerParentMap;
 
-	
 	int proc_mode = 0; // 0 = oracle, 1 = decom
-	void (CrossASTVisitor::*selectedProcessor)(Stmt *S);
+	void (CrossASTGatherer::*selectedProcessor)(Stmt *S);
 	ASTContext* selectedAST;
 	SourceManager* selectedSM;
 	string selectedMessage;
 	unordered_map<int64_t, CallExpr*>* 		selectedMarkerMap;
 	unordered_map<int64_t, CompoundStmt*>* 	selectedMarkerParentMap;
-
-	StructuralEquivalenceContext::NonEquivalentDeclSet NonEquivalentDecls;
-	StructuralEquivalenceContext seContext;
+	unordered_map<CallExpr*, CallExpr*> 	markerParentMarkerMap;
+	
+	StructuralEquivalenceContext::NonEquivalentDeclSet neds;
+	StructuralEquivalenceContext sec;
 
 	public:	
-	CrossASTVisitor(json& markerFormat, ASTContext &oracleAST, ASTContext &decomAST): 
-	markerFormat(markerFormat),	oracleAST(oracleAST), decomAST(decomAST),
+	CrossASTGatherer(
+		json& markerFormat, json&genEval, json& specEval, json& markerEval, json& humanEval,
+		ASTContext &oracleAST, ASTContext &decomAST): 
+	markerFormat(markerFormat),	genEval(genEval), specEval(specEval), markerEval(markerEval), humanEval(humanEval),
+	oracleAST(oracleAST), decomAST(decomAST),
 	
 	oracleSM(oracleAST.getSourceManager()), decomSM(decomAST.getSourceManager()), 
-	seContext(
+	sec(
 		StructuralEquivalenceContext(
 			oracleAST.getLangOpts(),
 		    oracleAST,
 		    decomAST,
-		    NonEquivalentDecls,
+		    neds,
 		    StructuralEquivalenceKind::Default,
 		    false, 						/*StrictTypeSpelling=*/
 		    true, 								// Complain, structural errors emit straight to your TextDiagnosticPrinter
 		    true 					/*ErrorOnTagTypeMismatch=*/
 		)
-	)
-	{}
+	){}
 	
 	void selectMode(int proc_mode){
 		switch (proc_mode) {
 			case 0:
-			selectedProcessor = &CrossASTVisitor::indexProcessor;
+			selectedProcessor = &CrossASTGatherer::indexProcessor;
 			selectedAST = &decomAST;
 			selectedSM = &decomSM;
 			selectedMarkerMap = &decomMarkerMap;
@@ -73,7 +79,7 @@ class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
 			selectedMessage = "decomIndexProcessor";
 			break;
 			case 1:
-			selectedProcessor = &CrossASTVisitor::indexProcessor;
+			selectedProcessor = &CrossASTGatherer::indexProcessor;
 			selectedAST = &oracleAST;
 			selectedSM = &oracleSM;
 			selectedMarkerMap = &oracleMarkerMap;
@@ -101,15 +107,17 @@ class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
 		    int64_t intValue = Value.getSExtValue();
 			(*selectedMarkerMap)[intValue] = markerCE;
 			
-			// Build parents cache for markerCE.
+			// Build parent map for markerCE.
 			auto markerCEParents = selectedAST->getParents(*markerCE);
 			auto markerCEParent = markerCEParents[0];
 			auto markerCEParentStmt = markerCEParent.get<CompoundStmt>();
 			(*selectedMarkerParentMap)[intValue] = const_cast<CompoundStmt*>(markerCEParentStmt);
 			
-			cout << DC->getNameInfo().getName().getAsString() << " : " << intValue << " : " << markerCEParents.size() << endl; 
+//			cout << DC->getNameInfo().getName().getAsString() << " : " << intValue << " : " << markerCEParents.size() << endl; 
+			
+//			// Get parent marker of markerCE.
 //			if(!markerCEParentStmt){return;}
-//			auto siblings = getChildrenNodes(markerCEParentStmt);
+//				auto siblings = getChildrenNodes(markerCEParentStmt);
 //			int markerIndex = findNodeSiblingIndex(siblings, DynTypedNode::create(*markerCE));
 //			
 //			// Build parents cache for markedNode.
@@ -140,43 +148,121 @@ class CrossASTVisitor: public RecursiveASTVisitor<CrossASTVisitor> {
 			auto MCEDecomSibIndex = findNodeSiblingIndex(MCEDecomSiblings, DynTypedNode::create(*MCEDecom));
 			auto MCEDecomMarkee = getNextSiblingFromList(MCEDecomSiblings, MCEDecomSibIndex);
 			
-//			if(!MCEDecomMarkee){
-//				cout << "MCEDecomMarkee is NULL" << endl;
-//			} else {
-//				cout << "MCEDecomMarkee is not NULL" << endl;
-//			}
-//			
+//			if(!MCEDecomMarkee){cout << "MCEDecomMarkee is NULL" << endl;} 
+//			else {cout << "MCEDecomMarkee is not NULL" << endl;}
+	
 			if(MCEOracleMarkee->get<Stmt>() && MCEDecomMarkee->get<Stmt>()){
 				Stmt* s1 = const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>());
 				Stmt* s2 = const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>());
-				auto result = seContext.IsEquivalent(s1, s2);
-				cout << "== result stmt:" << result << endl;
-				MCEOracleParent->dump(llvm::outs(), oracleAST);
-				cout << endl;
-				MCEDecomParent->dump(llvm::outs(), decomAST);
+				auto result = sec.IsEquivalent(s1, s2);
+				llvm::outs() << "== result stmt:" << result << "|" << MCEOracleMarkee->getNodeKind() << " - " << MCEDecomMarkee->getNodeKind() <<  '\n';
+//				MCEOracleParent->dump(llvm::outs(), oracleAST);
+//				cout << endl;
+//				MCEDecomParent->dump(llvm::outs(), decomAST);
 			} else if(MCEOracleMarkee->get<Decl>() && MCEDecomMarkee->get<Decl>()){
 				cout << "== result decl:" << endl;
 				Decl* d1 = const_cast<Decl*>(MCEOracleMarkee->get<Decl>());
 				Decl* d2 = const_cast<Decl*>(MCEDecomMarkee->get<Decl>());
-				auto result = seContext.IsEquivalent(d1, d2);
+				auto result = sec.IsEquivalent(d1, d2);
 				cout << "== result:" << result << endl;
-				MCEOracleParent->dump(llvm::outs(), oracleAST);
-				cout << endl;
-				MCEDecomParent->dump(llvm::outs(), decomAST);
+//				MCEOracleParent->dump(llvm::outs(), oracleAST);
+//				cout << endl;
+//				MCEDecomParent->dump(llvm::outs(), decomAST);
 			} else {
 				cout << "== result else:" << endl;
-				MCEOracleParent->dump(llvm::outs(), oracleAST);
-				cout << endl;
-				MCEDecomParent->dump(llvm::outs(), decomAST);
-				cout << "-	-	-	-	-" << endl;
+//				MCEOracleParent->dump(llvm::outs(), oracleAST);
+//				cout << endl;
+//				MCEDecomParent->dump(llvm::outs(), decomAST);
 			}
+			
+			string makerIDString = std::to_string(markerID);
+			genEval[makerIDString]["oracle"]["ASTNode"] = MCEOracleMarkee->getNodeKind().asStringRef();
+			genEval[makerIDString]["oracle"]["children"] = json::array();
+			genEval[makerIDString]["oracle"]["properties"] = json::object();;
+
+			genEval[makerIDString]["decom"]["ASTNode"] = MCEOracleMarkee->getNodeKind().asStringRef();
+			genEval[makerIDString]["decom"]["children"] = json::array();
+			genEval[makerIDString]["decom"]["properties"] = json::object();;
+			
+			evalSRDecider(const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>()), &(genEval[makerIDString]["oracle"][MCEOracleMarkee->getNodeKind().asStringRef()]));
+			evalSRDecider(const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>()), &(genEval[makerIDString]["decom"][MCEOracleMarkee->getNodeKind().asStringRef()]));
 		}
 	}
 	
 	// Evaluates by traversing through the oracle and then mapping onto the target.
-	bool VisitStmt(Stmt *S) {
-		(this->*selectedProcessor)(S);
-		return true;
+	bool VisitStmt(Stmt *S) {(this->*selectedProcessor)(S);return true;}
+		
+	const std::unordered_set<Stmt::StmtClass> traversalSkipList = {
+		Stmt::IfStmtClass,
+		Stmt::WhileStmtClass,
+		Stmt::ForStmtClass,
+		Stmt::SwitchStmtClass,
+//		Stmt::CallExprClass,
+		Stmt::CompoundStmtClass
+	};
+	
+	void evalSRDecider(Stmt *node, json *findings){
+		switch(node->getStmtClass()){
+			default: generalStmtRecorder(node, findings); break;
+			case Stmt::DeclStmtClass: declStmtRecorder(node, findings); break;
+		}
+	}
+
+	void generalStmtRecorder(Stmt *node, json *findings){
+		auto stmtChildren = node->children();
+		for(auto childNode:stmtChildren){
+			if (!childNode) {continue;}
+			if(traversalSkipList.find(childNode->getStmtClass()) != traversalSkipList.end()){continue;}
+			string nodeClassString = childNode->getStmtClassName();
+			json child;
+			child["ASTNode"] = nodeClassString;
+			child["children"] = json::array();
+			child["properties"] = json::object();
+			(*findings)["children"].push_back(child);
+			json &storedChild = (*findings)["children"].back();
+			evalSRDecider(childNode, &storedChild);
+		}
+	}
+	
+	void declStmtRecorder(Stmt *node, json *findings){
+		auto cast_node = llvm::cast<clang::DeclStmt>(node);
+		auto declChildren = cast_node->decls();
+		for(auto declChild : declChildren){
+			if(!declChild){continue;}
+			string nodeClassString = declChild->getDeclKindName();
+			json child = {};
+			child["ASTNode"] = nodeClassString;
+			child["children"] = json::array();
+			child["properties"] = json::object();
+			(*findings)["children"].push_back(child);
+			json &storedChild = (*findings)["children"].back();
+			evalDRDecider(declChild, &storedChild);
+		}
+	}
+
+
+	void evalDRDecider(Decl *node, json *findings){
+		switch(node->getKind()){
+			default: generalDeclRecorder(node, findings); break;
+			case Decl::Var: declVarRecorder(node, findings); break;
+		}
+	}
+	
+	// entry should give diagnostic effects
+	void generalDeclRecorder(Decl *node, json *findings){}
+	
+	void declVarRecorder(Decl *node, json *findings){	
+		auto cast_node = llvm::cast<VarDecl>(node);
+		auto cn_init = cast_node->getInit();
+		if(cn_init){
+			string nodeClassString = cn_init->getType().getAsString();
+			json child = {};
+			child["ASTNode"] = nodeClassString;
+			child["children"] = json::array();
+			child["properties"] = json::object();
+			(*findings)["children"].push_back(child);
+			json &storedChild = (*findings)["children"].back();
+		}
 	}
 };
 

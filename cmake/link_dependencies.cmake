@@ -35,8 +35,6 @@ set(LLVM_LINK_COMPONENTS
   Support
 )
 
-
-
 link_directories(/usr/lib64/llvm21/lib64)
 include_directories(/usr/lib64/llvm21/include)
 #include_directories(${picosha2_SOURCE_DIR})

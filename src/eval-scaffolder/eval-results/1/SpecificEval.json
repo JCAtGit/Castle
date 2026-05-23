@@ -1,5 +1,6 @@
 
 {
+	"Comments":"Paargewijze vergelijking, voorbeeld: als (ASTNode0, ASTNode1), dan worden zitten de resultaten in json[ASTNode0][ASTNode1]"
 	"ASTNode0":{
 		"ASTNode0":{
 			"Instances":[["SomeFilePath0", "MarkerID0", "Loc?"]],
@@ -10,7 +11,7 @@
 		"ASTNode0":{
 		
 		},
-		"ASTNode0":{
+		"ASTNode1":{
 		
 		}
 	}

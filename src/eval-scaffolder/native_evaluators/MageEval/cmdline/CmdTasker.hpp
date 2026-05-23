@@ -8,12 +8,10 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
 #include "../../../../../include/helper.hpp"
-#include "../alt/CrossASTVisitor.hpp"
-
 #include "../ast-mechanism/DecomFindingsGatherer.hpp"
 #include "../ast-mechanism/OracleFindingsGatherer.hpp"
 #include "../ast-mechanism/GatheredFindingsEvaluator.hpp"
-#include "../alt/CrossASTVisitor.hpp"
+#include "../pre-eval/CrossASTGatherer.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -21,7 +19,7 @@ using namespace std;
 class CmdTasker{
 	private:		
 		filesystem::path inputPath, oracleDir, outputPath, mrkrFormatsPath;
-		json markerFormats, evalResults;
+		json markerFormats, genEval, specEval, markerEval, humanEval;
 		json selectedFormat;
 
 		const vector<std::string> args = {
@@ -30,7 +28,8 @@ class CmdTasker{
 			"-Xclang",
 	        "-frecovery-ast",
 			"-Xclang",
-	        "-frecovery-ast-type"
+	        "-frecovery-ast-type",
+			"-ferror-limit=1"
 	    };
 		
 		void loadMarkerFormats(){
@@ -69,7 +68,7 @@ class CmdTasker{
 //			oracleFinder.addMatcher(callExpr().bind("ofgCallExpr"), &ofg);
 //			oracleFinder.matchAST(astOracleUnit->getASTContext());
 
-			CrossASTVisitor CAVisitor(selectedFormat, astOracleUnit->getASTContext(), astDecomUnit->getASTContext());
+			CrossASTGatherer CAVisitor(selectedFormat,genEval, specEval, markerEval, humanEval, astOracleUnit->getASTContext(), astDecomUnit->getASTContext());
 			CAVisitor.selectMode(0);
 			CAVisitor.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
 			CAVisitor.selectMode(1);
@@ -87,10 +86,24 @@ class CmdTasker{
 		loadMarkerFormats();
 		selectedFormat = markerFormats["0"];
 	}
+	
+	void saveJsonToFile(const std::string& path, const json& data) {
+	    std::ofstream file(path);
+	    if (!file.is_open()) {
+	        std::cerr << "Error: Could not open file for writing: " << path << "\n";
+	        return;
+	    }
+	    file << data.dump(4);  // pretty print with 4 spaces indentation
+	    std::cout << "Saved to "<<  path << "\n" << data.dump(4) << "\n";
+	}
 		
 	void startEvaluationProcesses(){
-		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << endl;
+		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
 		processFile();
+		cout << "Saving results to json" << "\n";
+		saveJsonToFile(outputPath.string() + ".json", genEval);
+		cout << "Starting eval" << "\n";
+		
 	}
 };
 	

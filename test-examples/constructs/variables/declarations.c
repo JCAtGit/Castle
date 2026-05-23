@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
   // Const/volatile qualifiers
   const int READONLY = 100;
   volatile int status;
-  const char *msg = "constant string";
+  const char *msg0 = "constant string";
 
   // Static/extern
   static int counter = 0;
