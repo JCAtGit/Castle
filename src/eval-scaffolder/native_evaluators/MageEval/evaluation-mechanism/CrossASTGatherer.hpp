@@ -147,32 +147,20 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			auto MCEDecomSiblings = getChildrenNodes(MCEDecomParent);
 			auto MCEDecomSibIndex = findNodeSiblingIndex(MCEDecomSiblings, DynTypedNode::create(*MCEDecom));
 			auto MCEDecomMarkee = getNextSiblingFromList(MCEDecomSiblings, MCEDecomSibIndex);
-			
-//			if(!MCEDecomMarkee){cout << "MCEDecomMarkee is NULL" << endl;} 
-//			else {cout << "MCEDecomMarkee is not NULL" << endl;}
 	
 			if(MCEOracleMarkee->get<Stmt>() && MCEDecomMarkee->get<Stmt>()){
 				Stmt* s1 = const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>());
 				Stmt* s2 = const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>());
 				auto result = sec.IsEquivalent(s1, s2);
 				llvm::outs() << "== result stmt:" << result << "|" << MCEOracleMarkee->getNodeKind() << " - " << MCEDecomMarkee->getNodeKind() <<  '\n';
-//				MCEOracleParent->dump(llvm::outs(), oracleAST);
-//				cout << endl;
-//				MCEDecomParent->dump(llvm::outs(), decomAST);
 			} else if(MCEOracleMarkee->get<Decl>() && MCEDecomMarkee->get<Decl>()){
 				cout << "== result decl:" << endl;
 				Decl* d1 = const_cast<Decl*>(MCEOracleMarkee->get<Decl>());
 				Decl* d2 = const_cast<Decl*>(MCEDecomMarkee->get<Decl>());
 				auto result = sec.IsEquivalent(d1, d2);
 				cout << "== result:" << result << endl;
-//				MCEOracleParent->dump(llvm::outs(), oracleAST);
-//				cout << endl;
-//				MCEDecomParent->dump(llvm::outs(), decomAST);
 			} else {
 				cout << "== result else:" << endl;
-//				MCEOracleParent->dump(llvm::outs(), oracleAST);
-//				cout << endl;
-//				MCEDecomParent->dump(llvm::outs(), decomAST);
 			}
 			
 			string makerIDString = std::to_string(markerID);
@@ -184,8 +172,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			genEval[makerIDString]["decom"]["children"] = json::array();
 			genEval[makerIDString]["decom"]["properties"] = json::object();;
 			
-			evalSRDecider(const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>()), &(genEval[makerIDString]["oracle"][MCEOracleMarkee->getNodeKind().asStringRef()]));
-			evalSRDecider(const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>()), &(genEval[makerIDString]["decom"][MCEDecomMarkee->getNodeKind().asStringRef()]));
+			evalSRDecider(const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>()), &(genEval[makerIDString]["oracle"]));
+			evalSRDecider(const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>()), &(genEval[makerIDString]["decom"]));
 		}
 	}
 	

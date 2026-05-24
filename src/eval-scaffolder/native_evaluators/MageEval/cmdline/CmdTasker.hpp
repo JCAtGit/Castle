@@ -95,7 +95,7 @@ class CmdTasker{
 	        return;
 	    }
 	    file << data.dump(4);  // pretty print with 4 spaces indentation
-	    std::cout << "Saved to "<<  path << "\n" << data.dump(4) << "\n";
+//	    std::cout << "Saved to "<<  path << "\n" << data.dump(4) << "\n";
 	}
 		
 	void startEvaluationProcesses(){
@@ -105,7 +105,7 @@ class CmdTasker{
 		CrossASTEvaluator CAEvaluator(findings, eval, dev, outputPath);
 		CAEvaluator.startEval();
 		cout << "Saving results to json" << "\n";
-//		saveJsonToFile(outputPath.string() + "_findings.json", findings);
+		saveJsonToFile(outputPath.string() + "_findings.json", findings);
 		saveJsonToFile(outputPath.string() + "_eval.json", eval);
 		saveJsonToFile(outputPath.string() + "_dev.json", dev);
 	}
