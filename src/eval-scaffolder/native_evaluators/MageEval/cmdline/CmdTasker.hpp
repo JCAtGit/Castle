@@ -19,7 +19,7 @@ using namespace std;
 class CmdTasker{
 	private:		
 		filesystem::path inputPath, oracleDir, outputPath, mrkrFormatsPath;
-		json markerFormats, genEval, specEval, markerEval, humanEval;
+		json markerFormats, findings, specEval, markerEval, humanEval;
 		json selectedFormat;
 
 		const vector<std::string> args = {
@@ -68,7 +68,7 @@ class CmdTasker{
 //			oracleFinder.addMatcher(callExpr().bind("ofgCallExpr"), &ofg);
 //			oracleFinder.matchAST(astOracleUnit->getASTContext());
 
-			CrossASTGatherer CAVisitor(selectedFormat,genEval, specEval, markerEval, humanEval, astOracleUnit->getASTContext(), astDecomUnit->getASTContext());
+			CrossASTGatherer CAVisitor(selectedFormat,findings, specEval, markerEval, humanEval, astOracleUnit->getASTContext(), astDecomUnit->getASTContext());
 			CAVisitor.selectMode(0);
 			CAVisitor.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
 			CAVisitor.selectMode(1);
@@ -101,7 +101,7 @@ class CmdTasker{
 		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
 		processFile();
 		cout << "Saving results to json" << "\n";
-		saveJsonToFile(outputPath.string() + ".json", genEval);
+		saveJsonToFile(outputPath.string() + ".json", findings);
 		cout << "Starting eval" << "\n";
 		
 	}

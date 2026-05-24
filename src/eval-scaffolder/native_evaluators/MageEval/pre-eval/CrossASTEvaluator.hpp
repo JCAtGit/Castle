@@ -26,32 +26,82 @@ using namespace std;
 
 class CrossASTEvaluator{
 	public:
-	CrossASTEvaluator(json &findings): findings(findings){}
+	CrossASTEvaluator(
+		json &findings,
+		json &eval,
+		json &dev_report,
+		string& outputPath
+	): findings(findings), eval(eval), dev_report(dev_report), outputPath(outputPath)
+	{}
 	
 
-	using EvalFnPtr = void(CrossASTEvaluator::*)(const string &, json &);
+	using EvalFnPtr = bool(CrossASTEvaluator::*)(const string &, json &, json &);
 	unordered_map<string, EvalFnPtr> fnSelector = {
 		{"CallExpr", &CrossASTEvaluator::processCallExpr},
 		{"DeclStmt", &CrossASTEvaluator::processDeclStmt},
 		{"VarDecl", &CrossASTEvaluator::processVarDecl}
 	};
-		
+	
 	void startEval(){
-		for(auto [key, val] : findings.items()){
-			auto it = fnSelector.find(val["ASTNode"].get<std::string>());
-            if (it != fnSelector.end()) {
-                (this->*(it->second))(key, val);
-            } else {
-				// report and record
+		// key markerID
+		for(auto [markerID, finding] : findings.items()){
+			evalTraverse(markerID, finding["oracle"], finding["decom"]);
+		}
+	}
+	
+	void evalTraverse(const string &markerID, json &findingsOracle, json &findingsDecom){
+		auto it = fnSelector.find(findingsOracle["ASTNode"].get<string>());
+		bool ct;
+	   	if (it != fnSelector.end()) {
+            ct = (this->*(it->second))(findingsOracle, findingsDecom);
+        } else {
+			// report and record
+			dev_report["ASTNode"][findingsOracle["ASTNode"].get<string>()] = "TODO";
+		}
+		if(ct){
+			for(size_t i = 0; i < min(findingsOracle["children"].size(),findingsDecom["children"].size()); ++i){
+				evalTraverse(markerID, findingsOracle["children"][i], findingsDecom["children"][i]);
 			}
 		}
 	}
+	
 	private:
 	json &findings;
+	json &eval;
+	json &dev_report;
+	string& outputPath;
 	
-	void processCallExpr(const string &, json &){}
-	void processDeclStmt(const string &, json &){}
-	void processVarDecl(const string &, json &){}
-
+	bool processCallExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
+		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
+			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
+			return true;
+		} else {
+			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
+			return false;
+		}
+	}
+	
+	bool processDeclStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
+		if(findingsDecom["ASTNode"] != findingsOracle["ASTNode"]){
+					
+		}
+	}
+	
+	bool processVarDecl(const string &markerID, json &findingsOracle,json &findingsDecom){
+		
+	}
+	
+	bool processIfStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
+		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
+			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
+			return true;
+		} else if(findingsDecom["ASTNode"] != "SwitchStmt"){
+			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Potential";
+			return true;
+		} else {
+			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
+			return false;
+		}
+	}
 };
 
