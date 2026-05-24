@@ -180,12 +180,12 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			genEval[makerIDString]["oracle"]["children"] = json::array();
 			genEval[makerIDString]["oracle"]["properties"] = json::object();;
 
-			genEval[makerIDString]["decom"]["ASTNode"] = MCEOracleMarkee->getNodeKind().asStringRef();
+			genEval[makerIDString]["decom"]["ASTNode"] = MCEDecomMarkee->getNodeKind().asStringRef();
 			genEval[makerIDString]["decom"]["children"] = json::array();
 			genEval[makerIDString]["decom"]["properties"] = json::object();;
 			
 			evalSRDecider(const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>()), &(genEval[makerIDString]["oracle"][MCEOracleMarkee->getNodeKind().asStringRef()]));
-			evalSRDecider(const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>()), &(genEval[makerIDString]["decom"][MCEOracleMarkee->getNodeKind().asStringRef()]));
+			evalSRDecider(const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>()), &(genEval[makerIDString]["decom"][MCEDecomMarkee->getNodeKind().asStringRef()]));
 		}
 	}
 	

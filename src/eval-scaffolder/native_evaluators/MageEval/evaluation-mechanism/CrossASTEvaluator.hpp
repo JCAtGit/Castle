@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -30,7 +31,7 @@ class CrossASTEvaluator{
 		json &findings,
 		json &eval,
 		json &dev_report,
-		string& outputPath
+		filesystem::path &outputPath
 	): findings(findings), eval(eval), dev_report(dev_report), outputPath(outputPath)
 	{}
 	
@@ -53,7 +54,7 @@ class CrossASTEvaluator{
 		auto it = fnSelector.find(findingsOracle["ASTNode"].get<string>());
 		bool ct;
 	   	if (it != fnSelector.end()) {
-            ct = (this->*(it->second))(findingsOracle, findingsDecom);
+            ct = (this->*(it->second))(markerID, findingsOracle, findingsDecom);
         } else {
 			// report and record
 			dev_report["ASTNode"][findingsOracle["ASTNode"].get<string>()] = "TODO";
@@ -69,7 +70,7 @@ class CrossASTEvaluator{
 	json &findings;
 	json &eval;
 	json &dev_report;
-	string& outputPath;
+	filesystem::path &outputPath;
 	
 	bool processCallExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
 		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
@@ -82,21 +83,31 @@ class CrossASTEvaluator{
 	}
 	
 	bool processDeclStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
-		if(findingsDecom["ASTNode"] != findingsOracle["ASTNode"]){
-					
+		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
+			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
+			return true;
+		} else {
+			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
+			return false;
 		}
 	}
 	
 	bool processVarDecl(const string &markerID, json &findingsOracle,json &findingsDecom){
-		
+		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
+			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
+			return true;
+		} else {
+			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
+			return false;
+		}
 	}
 	
 	bool processIfStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
 		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
 			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
 			return true;
-		} else if(findingsDecom["ASTNode"] != "SwitchStmt"){
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Potential";
+		} else if(findingsDecom["ASTNode"] == "SwitchStmt"){
+			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Overlap";
 			return true;
 		} else {
 			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
