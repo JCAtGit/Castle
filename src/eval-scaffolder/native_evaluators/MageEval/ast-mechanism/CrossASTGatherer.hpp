@@ -259,6 +259,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return true;
 	}
 
+	// voor FunctionDecl aparte entries maken op basis van CallExpr
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
 		(*findings)["properties"]["type"] = cast_node->getType().getAsString();
@@ -269,9 +270,33 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		}
 		auto DCName = DC->getNameInfo().getName().getAsString();
 		if(DCName == markerFormat["name"].get<string>()){
-			(*findings)["properties"]["markee"] = "lost";
+			(*findings)["properties"]["markee_existence"] = "lost";
 			return false;
 		}
+		(*findings)["properties"]["isVariadic"] = DC->isVariadic();
+		(*findings)["properties"]["num_params"] = DC->getNumParams();
+		(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
+		(*findings)["properties"]["param_types"] = json::array();
+
+		for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
+			QualType T = cast_node->getArg(i)->getType();
+		    json typeInfo;
+		    typeInfo["type"] = T.getAsString();
+		    typeInfo["is_const"] = T.isConstQualified();
+		    typeInfo["is_pointer"] = T->isPointerType();
+			((*findings)["properties"]["param_types"]).push_back(typeInfo);
+		}
+
+//		for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
+//			const Expr *Arg = cast_node->getArg(i);
+//			QualType ArgType = Arg->getType();
+//		      
+//	      	// You can also see if it's a literal, reference, etc.
+//	     	if (isa<IntegerLiteral>(Arg->IgnoreImpCasts())) {
+//	          // Argument is an integer constant
+//	     	}
+//	  	}
+		
 		return true;
 	}
 	
@@ -279,7 +304,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 
 	// entry should give diagnostic effects
 	bool generalDeclRecorder(Decl *node, json *findings){
-		(*findings)["TODO"] = true;
+		(*findings)["properties"]["TODO"] = true;
 		return false;
 	}
 
