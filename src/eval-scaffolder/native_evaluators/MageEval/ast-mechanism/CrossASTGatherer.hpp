@@ -14,7 +14,9 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/ASTStructuralEquivalence.h"
 
+#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/raw_ostream.h"
 #include "../ast-mechanism/ast-helper.hpp"
 
@@ -43,9 +45,16 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	unordered_map<int64_t, CompoundStmt*>* 	selectedMarkerParentMap;
 	unordered_map<CallExpr*, CallExpr*> 	markerParentMarkerMap;
 	
+	// Structural equivalence functionality
 	StructuralEquivalenceContext::NonEquivalentDeclSet neds;
 	StructuralEquivalenceContext sec;
 
+	stringstream DiagnosticStream;
+	unique_ptr<llvm::raw_os_ostream> RawStream;
+	shared_ptr<DiagnosticOptions> DiagOpts;
+	unique_ptr<TextDiagnosticPrinter> DiagClient;
+	IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
+	
 	public:	
 	CrossASTGatherer(
 		json& markerFormat, json&genEval, json& specEval, json& markerEval, json& humanEval,
@@ -65,7 +74,35 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		    true, 								// Complain, structural errors emit straight to your TextDiagnosticPrinter
 		    true 					/*ErrorOnTagTypeMismatch=*/
 		)
-	){}
+	),
+	DiagnosticStream(),
+	RawStream(std::make_unique<llvm::raw_os_ostream>(DiagnosticStream)),
+	DiagOpts(std::make_shared<DiagnosticOptions>()),
+	DiagClient(std::make_unique<TextDiagnosticPrinter>(*RawStream, *DiagOpts)),
+	Diags(new DiagnosticsEngine(
+		IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
+		*DiagOpts.get(),
+		DiagClient.release()))
+	{
+	}
+	
+	// Method to retrieve captured diagnostics
+  	std::string getDiagnostics() const {
+    	return DiagnosticStream.str();
+  	}
+  
+  	// Method to print captured diagnostics to cout
+  	void printDiagnosticsToCout() {
+    	std::cout << "\n=== Captured Diagnostics ===\n";
+    	std::cout << DiagnosticStream.str();
+    	std::cout << "===========================\n";
+  	}
+  
+  	// Clear captured diagnostics
+  	void clearDiagnostics() {
+    	DiagnosticStream.str("");
+    	DiagnosticStream.clear();
+ 	}
 	
 	void selectMode(int proc_mode){
 		switch (proc_mode) {
@@ -263,7 +300,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	// voor FunctionDecl aparte entries maken op basis van CallExpr
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
-		(*findings)["properties"]["type"] = cast_node->getType().getAsString();
+		(*findings)["properties"]["type"] = cast_node->getType().getAsString(); // return type
 		auto DC = cast_node->getDirectCallee();
 		if(!DC){
 			(*findings)["properties"]["direct_callee"] = "unknown";
@@ -278,6 +315,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		(*findings)["properties"]["num_params"] = DC->getNumParams();
 		(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
 		(*findings)["properties"]["params"] = json::array();
+		(*findings)["properties"]["args"] = json::array();
 
 		// If you also want parameter types (requires direct callee)
         for (unsigned i = 0; i < DC->getNumParams(); ++i) {
@@ -297,8 +335,41 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		    argTypeInfo["is_pointer"] = T->isPointerType();
 			((*findings)["properties"]["args"]).push_back(argTypeInfo);
 		}
+		return false;
+	}
+	
+	bool forStmtRecorder(Stmt *node, json *findings){
+		auto cast_node = llvm::cast<ForStmt>(node);
 		
-		return true;
+//		json props;
+//		    
+//	    // Part 1: Initialization
+//	    if (Stmt *Init = FS->getInit()) {
+//	        props["init"] = serializeStmt(Init);  // or your custom processing
+//	    }
+//	    
+//	    // Part 2: Condition variable (C99 style)
+//	    if (VarDecl *CondVar = FS->getConditionVariable()) {
+//	        props["cond_var"] = {
+//	            {"name", CondVar->getNameAsString()},
+//	            {"type", CondVar->getType().getAsString()}
+//	        };
+//	    }
+//	    
+//	    // Part 3: Condition expression
+//	    if (Expr *Cond = FS->getCond()) {
+//	        props["condition"] = serializeExpr(Cond);
+//	    }
+//	    
+//	    // Part 4: Increment
+//	    if (Stmt *Inc = FS->getInc()) {
+//	        props["increment"] = serializeStmt(Inc);
+//	    }
+//	    
+//	    // DO NOT process the body (FS->getBody() or the last child)
+//	    (*findings)["properties"] = props;
+		
+		return false;
 	}
 	
 	/* 		Declaration processors 	*/

@@ -1,123 +1,128 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTStructuralEquivalence.h"
 #include "clang/AST/Decl.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
-#include "clang/Frontend/ASTUnit.h"
-#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/FileSystemOptions.h"
+#include "clang/Basic/LangOptions.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/TargetOptions.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "clang/Serialization/PCHContainerOperations.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/TargetParser/Host.h"
 #include <iostream>
 #include <memory>
-#include <vector>
-
 using namespace clang;
 
-// Helper function to extract the first target structure definition found in a parsed file
-RecordDecl *getFirstRecordDecl(ASTContext &Context) {
-  TranslationUnitDecl *TUD = Context.getTranslationUnitDecl();
-  for (Decl *D : TUD->decls()) {
-    if (auto *RD = dyn_cast<RecordDecl>(D)) {
-      // Return only actual struct definitions (skip lone declarations like "struct X;")
-      if (RD->isThisDeclarationADefinition()) {
-        return RD;
-      }
-    }
-  }
-  return nullptr;
-}
+// Struct to act as an RAII container preventing managers from going out of scope prematurely
+struct CompleteASTEnvironment {
+  std::unique_ptr<FileManager> FileMgr;
+  std::unique_ptr<SourceManager> SourceMgr;
+  std::unique_ptr<IdentifierTable> Idents;
+  std::unique_ptr<SelectorTable> Sels;
+  std::unique_ptr<Builtin::Context> Builtins;
+  std::shared_ptr<TargetInfo> Target;
+  std::unique_ptr<ASTContext> Context;
+};
 
-// Configures and uses ASTUnit to compile a file path dynamically into an AST
-std::unique_ptr<ASTUnit> parseFileToAST(const std::string &FilePath, 
-                                        std::shared_ptr<DiagnosticOptions> DiagOpts, // <-- Pass DiagOpts down
-                                        IntrusiveRefCntPtr<DiagnosticsEngine> Diags) {
-  
-  std::shared_ptr<PCHContainerOperations> PCHOps = std::make_shared<PCHContainerOperations>();
-  
-  // Set up mock compiler arguments for parsing standard C++17 source files
-  std::vector<const char *> Args = {
-	  "-Xclang -ast-dump", 
-      "-std=c++17",           
-      "-fsyntax-only",        
-      FilePath.c_str()
-  };
+// Fixed Factory function that safely registers target architectures and prevents null pointer crashes
+std::unique_ptr<CompleteASTEnvironment> createASTEnvironment(
+    LangOptions &LangOpts,
+    std::shared_ptr<TargetOptions> TargetOpts,
+    IntrusiveRefCntPtr<DiagnosticsEngine> Diags) {
 
-  // Clang 21 Signature Fix: Inject both DiagOpts AND Diags as parameters 4 & 5
-  std::unique_ptr<ASTUnit> AST = ASTUnit::LoadFromCommandLine(
-      Args.data(), Args.data() + Args.size(),
-      PCHOps, 
-      DiagOpts, // Parameter 4: std::shared_ptr<DiagnosticOptions>
-      Diags,    // Parameter 5: IntrusiveRefCntPtr<DiagnosticsEngine>
-      ""        // Parameter 6: StringRef ResourceFilesPath
+  auto Env = std::make_unique<CompleteASTEnvironment>();
+  
+  auto FileOpts = FileSystemOptions();
+  Env->FileMgr = std::make_unique<FileManager>(FileOpts);
+  Env->SourceMgr = std::make_unique<SourceManager>(*Diags, *Env->FileMgr);
+  Env->Builtins = std::make_unique<Builtin::Context>();
+  Env->Idents = std::make_unique<IdentifierTable>(LangOpts);
+  Env->Sels = std::make_unique<SelectorTable>();
+
+  // Allocate target infrastructure
+  Env->Target = std::shared_ptr<TargetInfo>(TargetInfo::CreateTargetInfo(*Diags, *TargetOpts));
+
+  // Initialize the 6-argument Clang 21 context
+  Env->Context = std::make_unique<ASTContext>(
+      LangOpts, 
+      *Env->SourceMgr, 
+      *Env->Idents, 
+      *Env->Sels, 
+      *Env->Builtins, 
+      TranslationUnitKind::TU_Complete
   );
 
-  // Return Wrap Fix: Explicitly wrap with std::move to satisfy GCC 15 toolchain rules
-  return std::move(AST);
+  // CRITICAL FIX: Manually link the target info layout and initialize underlying types
+  Env->Context->InitBuiltinTypes(*Env->Target);
+
+  return Env;
 }
 
+// Helper to quickly generate a test RecordDecl (struct) containing one typed field
+RecordDecl *createTestRecord(ASTContext &Context, StringRef StructName, 
+                             StringRef FieldName, QualType FieldType) {
+  
+  TranslationUnitDecl *TUD = Context.getTranslationUnitDecl();
+  
+  RecordDecl *RD = RecordDecl::Create(
+      Context, TagTypeKind::Struct, TUD, 
+      SourceLocation(), SourceLocation(), &Context.Idents.get(StructName));
+  RD->startDefinition();
 
-int main(int argc, char *argv[]) {
-  // 1. Ensure the user provided two source files to execute a comparison against
-  if (argc < 3) {
-    std::cerr << "Usage: " << argv[0] << " <file1.cpp> <file2.cpp>\n";
-    return 1;
-  }
+  FieldDecl *FD = FieldDecl::Create(
+      Context, RD, SourceLocation(), SourceLocation(), 
+      &Context.Idents.get(FieldName), FieldType, nullptr, 
+      /*BitWidth=*/nullptr, /*Mutable=*/false, InClassInitStyle::ICIS_NoInit);
+  
+  FD->setAccess(AccessSpecifier::AS_public);
+  RD->addDecl(FD);
+  RD->completeDefinition();
 
-  std::string File1 = argv[1];
-  std::string File2 = argv[2];
+  return RD;
+}
 
-  // 2. Setup the global diagnostic pipeline to capture compilation failures and structural errors
+int main() {
+  LangOptions LangOpts;
+  LangOpts.CPlusPlus = true; 
+
   auto DiagOpts = std::make_shared<DiagnosticOptions>();
   auto DiagClient = std::make_unique<TextDiagnosticPrinter>(llvm::errs(), *DiagOpts);
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
-      new DiagnosticsEngine(DiagID, *DiagOpts, DiagClient.release()));
+      new DiagnosticsEngine(DiagID, *DiagOpts.get(), DiagClient.release()));
 
-  std::cout << "[Parser] Parsing File 1: " << File1 << "\n";
-  auto ASTUnit1 = parseFileToAST(File1, DiagOpts, Diags); // <-- Added DiagOpts
+  auto TargetOpts = std::make_shared<TargetOptions>();
+  TargetOpts->Triple = llvm::sys::getDefaultTargetTriple();
 
-  std::cout << "[Parser] Parsing File 2: " << File2 << "\n";
-  auto ASTUnit2 = parseFileToAST(File2, DiagOpts, Diags); // <-- Added DiagOpts
+  std::cout << "[Setup] Creating isolated environments...\n";
+  auto Env1 = createASTEnvironment(LangOpts, TargetOpts, Diags);
+  auto Env2 = createASTEnvironment(LangOpts, TargetOpts, Diags);
 
+  std::cout << "[Setup] Creating structurally differing fields...\n";
+  // struct Target { int data; }
+  RecordDecl *RD1 = createTestRecord(*Env1->Context, "Target", "data", Env1->Context->IntTy);
+  // struct Target { float data; } (Type Mismatch!)
+  RecordDecl *RD2 = createTestRecord(*Env2->Context, "Target", "data", Env2->Context->FloatTy);
 
-  if (!ASTUnit1 || !ASTUnit2) {
-    std::cerr << "[Error] One or both files failed to parse cleanly into Clang's AST.\n";
-    return 1;
-  }
+  std::cout << "[Execution] Running StructuralEquivalenceContext with Complain=true...\n\n";
 
-  // 3. Extract the target Context boundaries from each parsed file layout
-  ASTContext &Ctx1 = ASTUnit1->getASTContext();
-  ASTContext &Ctx2 = ASTUnit2->getASTContext();
-
-  // 4. Retrieve the comparative top-level structural definitions
-  RecordDecl *RD1 = getFirstRecordDecl(Ctx1);
-  RecordDecl *RD2 = getFirstRecordDecl(Ctx2);
-  
-  if (!RD1 || !RD2) {
-    std::cerr << "[Error] Could not locate a valid 'struct' or 'class' definition in both files.\n";
-    return 1;
-  }
-
-  std::cout << "[Structural Matcher] Comparing definitions of '" << RD1->getNameAsString() 
-            << "' vs '" << RD2->getNameAsString() << "' with Complain=true...\n\n";
-
-  // 5. Execute structural comparison
   StructuralEquivalenceContext::NonEquivalentDeclSet NonEquivalentDecls;
-  StructuralEquivalenceContext StructuralCtx(
-      Ctx1.getLangOpts(),
-      Ctx1,
-      Ctx2,
+  StructuralEquivalenceContext Ctx(
+      Env1->Context->getLangOpts(),
+      *Env1->Context,
+      *Env2->Context,
       NonEquivalentDecls,
       StructuralEquivalenceKind::Default,
       /*StrictTypeSpelling=*/false,
-      /*Complain=*/true, // Structural errors emit straight to your TextDiagnosticPrinter
-      /*ErrorOnTagTypeMismatch=*/true
+      /*Complain=*/true, 
+      /*ErrorOnTagTypeMismatch=*/false
   );
 
-  bool equivalent = StructuralCtx.IsEquivalent(RD1, RD2);
-  std::cout << "\n[Result] Structural verification finished. Equivalent: " 
+  bool equivalent = Ctx.IsEquivalent(RD1, RD2);
+  std::cout << "\n[Result] Verification concluded. Equivalent: " 
             << (equivalent ? "TRUE" : "FALSE") << "\n";
 
   return 0;
