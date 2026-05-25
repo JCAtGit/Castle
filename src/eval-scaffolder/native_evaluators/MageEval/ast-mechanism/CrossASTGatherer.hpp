@@ -48,12 +48,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	// Structural equivalence functionality
 	StructuralEquivalenceContext::NonEquivalentDeclSet neds;
 	StructuralEquivalenceContext sec;
-
-	stringstream DiagnosticStream;
-	unique_ptr<llvm::raw_os_ostream> RawStream;
-	shared_ptr<DiagnosticOptions> DiagOpts;
-	unique_ptr<TextDiagnosticPrinter> DiagClient;
-	IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
 	
 	public:	
 	CrossASTGatherer(
@@ -70,39 +64,12 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		    decomAST,
 		    neds,
 		    StructuralEquivalenceKind::Default,
-		    false, 						/*StrictTypeSpelling=*/
+		    false, 								/*StrictTypeSpelling=*/
 		    true, 								// Complain, structural errors emit straight to your TextDiagnosticPrinter
-		    true 					/*ErrorOnTagTypeMismatch=*/
+		    true								/*ErrorOnTagTypeMismatch=*/
 		)
-	),
-	DiagnosticStream(),
-	RawStream(std::make_unique<llvm::raw_os_ostream>(DiagnosticStream)),
-	DiagOpts(std::make_shared<DiagnosticOptions>()),
-	DiagClient(std::make_unique<TextDiagnosticPrinter>(*RawStream, *DiagOpts)),
-	Diags(new DiagnosticsEngine(
-		IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
-		*DiagOpts.get(),
-		DiagClient.release()))
-	{
-	}
-	
-	// Method to retrieve captured diagnostics
-  	std::string getDiagnostics() const {
-    	return DiagnosticStream.str();
-  	}
-  
-  	// Method to print captured diagnostics to cout
-  	void printDiagnosticsToCout() {
-    	std::cout << "\n=== Captured Diagnostics ===\n";
-    	std::cout << DiagnosticStream.str();
-    	std::cout << "===========================\n";
-  	}
-  
-  	// Clear captured diagnostics
-  	void clearDiagnostics() {
-    	DiagnosticStream.str("");
-    	DiagnosticStream.clear();
- 	}
+	)
+	{}
 	
 	void selectMode(int proc_mode){
 		switch (proc_mode) {
@@ -176,12 +143,15 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 				Stmt* s2 = const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>());
 				auto result = sec.IsEquivalent(s1, s2);
 				llvm::outs() << "== result stmt:" << result << "|" << MCEOracleMarkee->getNodeKind() << " - " << MCEDecomMarkee->getNodeKind() <<  '\n';
+				cout << "Diagnostics: " << DiagnosticStream.str() << "\n";
+
 			} else if(MCEOracleMarkee->get<Decl>() && MCEDecomMarkee->get<Decl>()){
 				cout << "== result decl:" << endl;
 				Decl* d1 = const_cast<Decl*>(MCEOracleMarkee->get<Decl>());
 				Decl* d2 = const_cast<Decl*>(MCEDecomMarkee->get<Decl>());
 				auto result = sec.IsEquivalent(d1, d2);
 				cout << "== result:" << result << endl;
+				cout << "Diagnostics: " << DiagnosticStream.str() << "\n";
 			} else {
 				cout << "== result else:" << endl;
 			}
@@ -194,7 +164,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			genEval[makerIDString]["decom"]["ASTNode"] = MCEDecomMarkee->getNodeKind().asStringRef();
 			genEval[makerIDString]["decom"]["children"] = json::array();
 			genEval[makerIDString]["decom"]["properties"] = json::object();;
-			
+						
 			evalSRDeciderP(const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>()), &(genEval[makerIDString]["oracle"]));
 			evalSRDeciderP(const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>()), &(genEval[makerIDString]["decom"]));
 		}

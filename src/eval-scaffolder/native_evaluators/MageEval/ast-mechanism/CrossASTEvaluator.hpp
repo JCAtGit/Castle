@@ -36,21 +36,6 @@ class CrossASTEvaluator{
 	): findings(findings), eval(eval), dev_report(dev_report), outputPath(outputPath)
 	{
 		dev_report["Missed"] = json::array();
-		
-		// Create a string stream to capture output
-		  std::stringstream DiagnosticStream;
-		  llvm::raw_os_ostream RawStream(DiagnosticStream);
-		  
-		  // Create a TextDiagnosticPrinter that writes to our stream
-		  auto DiagOpts = std::make_shared<DiagnosticOptions>();
-		  auto DiagClient = std::make_unique<TextDiagnosticPrinter>(RawStream, *DiagOpts);
-		  IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-		  IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
-		      new DiagnosticsEngine(DiagID, *DiagOpts.get(), DiagClient.release()));
-		  
-		  // Create your environments and run comparison...
-		  auto Env1 = createASTEnvironment(LangOpts, TargetOpts, Diags);
-		  auto Env2 = createASTEnvironment(LangOpts, TargetOpts, Diags);
 	}
 	
 
