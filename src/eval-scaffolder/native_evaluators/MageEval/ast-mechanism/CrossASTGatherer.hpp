@@ -10,6 +10,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/Stmt.h"
+#include "clang/AST/Type.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/ASTStructuralEquivalence.h"
 
@@ -276,26 +277,26 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		(*findings)["properties"]["isVariadic"] = DC->isVariadic();
 		(*findings)["properties"]["num_params"] = DC->getNumParams();
 		(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
-		(*findings)["properties"]["param_types"] = json::array();
+		(*findings)["properties"]["params"] = json::array();
 
+		// If you also want parameter types (requires direct callee)
+        for (unsigned i = 0; i < DC->getNumParams(); ++i) {
+			QualType T = DC->getParamDecl(i)->getType();
+			json paramTypeInfo;
+			paramTypeInfo["type"] = T.getAsString();
+		    paramTypeInfo["is_const"] = T.isConstQualified();
+		    paramTypeInfo["is_pointer"] = T->isPointerType();
+            (*findings)["properties"]["params"].push_back(DC->getParamDecl(i)->getType().getAsString());
+        }
+		
 		for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
 			QualType T = cast_node->getArg(i)->getType();
-		    json typeInfo;
-		    typeInfo["type"] = T.getAsString();
-		    typeInfo["is_const"] = T.isConstQualified();
-		    typeInfo["is_pointer"] = T->isPointerType();
-			((*findings)["properties"]["param_types"]).push_back(typeInfo);
+		    json argTypeInfo;
+		    argTypeInfo["type"] = T.getAsString();
+		    argTypeInfo["is_const"] = T.isConstQualified();
+		    argTypeInfo["is_pointer"] = T->isPointerType();
+			((*findings)["properties"]["args"]).push_back(argTypeInfo);
 		}
-
-//		for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
-//			const Expr *Arg = cast_node->getArg(i);
-//			QualType ArgType = Arg->getType();
-//		      
-//	      	// You can also see if it's a literal, reference, etc.
-//	     	if (isa<IntegerLiteral>(Arg->IgnoreImpCasts())) {
-//	          // Argument is an integer constant
-//	     	}
-//	  	}
 		
 		return true;
 	}
