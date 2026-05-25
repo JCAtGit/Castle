@@ -2,20 +2,18 @@
 
 #include <iostream>
 #include <nlohmann/json.hpp>
-#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/ASTTypeTraits.h"
-#include "clang/AST/ParentMapContext.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/Stmt.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/ASTStructuralEquivalence.h"
 
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/raw_ostream.h"
 #include "../ast-mechanism/ast-helper.hpp"
 
@@ -71,7 +69,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	void selectMode(int proc_mode){
 		switch (proc_mode) {
 			case 0:
-			selectedProcessor = &CrossASTGatherer::indexProcessor;
 			selectedAST = &decomAST;
 			selectedSM = &decomSM;
 			selectedMarkerMap = &decomMarkerMap;
@@ -79,7 +76,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			selectedMessage = "decomIndexProcessor";
 			break;
 			case 1:
-			selectedProcessor = &CrossASTGatherer::indexProcessor;
 			selectedAST = &oracleAST;
 			selectedSM = &oracleSM;
 			selectedMarkerMap = &oracleMarkerMap;
@@ -112,21 +108,10 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			auto markerCEParent = markerCEParents[0];
 			auto markerCEParentStmt = markerCEParent.get<CompoundStmt>();
 			(*selectedMarkerParentMap)[intValue] = const_cast<CompoundStmt*>(markerCEParentStmt);
-			
-//			cout << DC->getNameInfo().getName().getAsString() << " : " << intValue << " : " << markerCEParents.size() << endl; 
-			
-//			// Get parent marker of markerCE.
-//			if(!markerCEParentStmt){return;}
-//				auto siblings = getChildrenNodes(markerCEParentStmt);
-//			int markerIndex = findNodeSiblingIndex(siblings, DynTypedNode::create(*markerCE));
-//			
-//			// Build parents cache for markedNode.
-//			auto markedNode = getNextSiblingFromList(siblings, markerIndex);
-//			auto markedNodeParents = selectedAST->getParents(*markedNode);
 		}
 	}
 	
-	void evalProcessor(){
+	void gatherFindings(){
 		cout << "OracleMap:" << oracleMarkerMap.size() << " - DecomMap:" << decomMarkerMap.size() << endl; 
 		cout << "OracleParentMap:" << oracleMarkerParentMap.size() << " - DecomParentMap:" << decomMarkerParentMap.size() << endl; 
 
@@ -172,13 +157,13 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			genEval[makerIDString]["decom"]["children"] = json::array();
 			genEval[makerIDString]["decom"]["properties"] = json::object();;
 			
-			evalSRDecider(const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>()), &(genEval[makerIDString]["oracle"]));
-			evalSRDecider(const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>()), &(genEval[makerIDString]["decom"]));
+			evalSRDeciderP(const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>()), &(genEval[makerIDString]["oracle"]));
+			evalSRDeciderP(const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>()), &(genEval[makerIDString]["decom"]));
 		}
 	}
 	
 	// Evaluates by traversing through the oracle and then mapping onto the target.
-	bool VisitStmt(Stmt *S) {(this->*selectedProcessor)(S);return true;}
+	bool VisitStmt(Stmt *S) {indexProcessor(S); return true;}
 		
 	const std::unordered_set<Stmt::StmtClass> traversalSkipList = {
 		Stmt::IfStmtClass,
@@ -188,69 +173,121 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 //		Stmt::CallExprClass,
 		Stmt::CompoundStmtClass
 	};
-	
-	void evalSRDecider(Stmt *node, json *findings){
-		switch(node->getStmtClass()){
-			default: generalStmtRecorder(node, findings); break;
-			case Stmt::DeclStmtClass: declStmtRecorder(node, findings); break;
+
+	// experimental
+	void evalSRDeciderP(Stmt *node, json *findings){
+		bool ct;
+		switch(node->getStmtClass()){	// decide node recorder 
+			default: 						ct = generalStmtRecorder(node, findings); break;
+			case Stmt::DeclStmtClass: 		ct = declStmtRecorder(node, findings); break;
+			case Stmt::RecoveryExprClass: 	ct = recoveryExprRecorder(node, findings); break;
+			case Stmt::CallExprClass:		ct = callExprRecorder(node, findings); break;
+//			case Stmt::IntegerLiteralClass: break;
+		}
+		if(!ct){return;}
+		switch(node->getStmtClass()){	// and	decide traversal continuation
+			default:{
+				auto stmtChildren = node->children();
+				for(auto childNode:stmtChildren){
+					if (!childNode) {continue;}
+					if(traversalSkipList.find(childNode->getStmtClass()) != traversalSkipList.end()){continue;}
+					string nodeClassString = childNode->getStmtClassName();
+					json child;
+					child["ASTNode"] = nodeClassString;
+					child["children"] = json::array();
+					child["properties"] = json::object();
+					(*findings)["children"].push_back(child);
+					json &storedChild = (*findings)["children"].back();
+					evalSRDeciderP(childNode, &storedChild);
+				}
+				break;
+			}
+			case Stmt::DeclStmtClass: {
+				auto declChildren = llvm::cast<DeclStmt>(node)->decls();
+				for(auto childNode:declChildren){
+					if (!childNode) {continue;}
+					string nodeClassString = childNode->getDeclKindName();
+					json child;
+					child["ASTNode"] = nodeClassString;
+					child["children"] = json::array();
+					child["properties"] = json::object();
+					(*findings)["children"].push_back(child);
+					json &storedChild = (*findings)["children"].back();
+					evalDRDeciderP(childNode, &storedChild);
+					break;
+				}
+			}
 		}
 	}
 
-	void generalStmtRecorder(Stmt *node, json *findings){
-		auto stmtChildren = node->children();
-		for(auto childNode:stmtChildren){
-			if (!childNode) {continue;}
-			if(traversalSkipList.find(childNode->getStmtClass()) != traversalSkipList.end()){continue;}
-			string nodeClassString = childNode->getStmtClassName();
-			json child;
-			child["ASTNode"] = nodeClassString;
-			child["children"] = json::array();
-			child["properties"] = json::object();
-			(*findings)["children"].push_back(child);
-			json &storedChild = (*findings)["children"].back();
-			evalSRDecider(childNode, &storedChild);
-		}
-	}
-	
-	void declStmtRecorder(Stmt *node, json *findings){
-		auto cast_node = llvm::cast<clang::DeclStmt>(node);
-		auto declChildren = cast_node->decls();
-		for(auto declChild : declChildren){
-			if(!declChild){continue;}
-			string nodeClassString = declChild->getDeclKindName();
-			json child = {};
-			child["ASTNode"] = nodeClassString;
-			child["children"] = json::array();
-			child["properties"] = json::object();
-			(*findings)["children"].push_back(child);
-			json &storedChild = (*findings)["children"].back();
-			evalDRDecider(declChild, &storedChild);
-		}
-	}
-
-
-	void evalDRDecider(Decl *node, json *findings){
+	void evalDRDeciderP(Decl *node, json *findings){
+		bool ct;
 		switch(node->getKind()){
 			default: generalDeclRecorder(node, findings); break;
-			case Decl::Var: declVarRecorder(node, findings); break;
+			case Decl::Var: 	ct = declVarRecorder(node, findings); break;
+		}
+		// and	decide traversal continuation
+		if(!ct){return;}
+		switch(node->getKind()){
+			default:{break;}
+			case Decl::Var:	
+			auto cast_node = llvm::cast<VarDecl>(node);
+			auto ExprStmtChild = cast_node->getInit();
+			if(!ExprStmtChild){
+				(*findings)["properties"]["vGetInit"] = "null";
+			} else {
+				(*findings)["properties"]["vGetInit"] = ExprStmtChild->getStmtClassName();
+				json child;
+				child["ASTNode"] = cast_node->getKind();
+				child["children"] = json::array();
+				child["properties"] = json::object();
+				(*findings)["children"].push_back(child);
+				json &storedChild = (*findings)["children"].back();
+				evalSRDeciderP(ExprStmtChild, &storedChild);
+			}
+			break;
 		}
 	}
 	
-	// entry should give diagnostic effects
-	void generalDeclRecorder(Decl *node, json *findings){}
-	
-	void declVarRecorder(Decl *node, json *findings){	
-		auto cast_node = llvm::cast<VarDecl>(node);
-		auto cn_init = cast_node->getInit();
-		if(cn_init){
-			string nodeClassString = cn_init->getType().getAsString();
-			json child = {};
-			child["ASTNode"] = nodeClassString;
-			child["children"] = json::array();
-			child["properties"] = json::object();
-			(*findings)["children"].push_back(child);
-			json &storedChild = (*findings)["children"].back();
+	/* 		Statement processors 	*/
+	bool generalStmtRecorder(Stmt *node, json *findings){return true;}
+	bool declStmtRecorder(Stmt *node, json *findings){return true;}
+
+	bool recoveryExprRecorder(Stmt *node, json *findings){
+		auto cast_node = llvm::cast<RecoveryExpr>(node);
+		(*findings)["properties"]["type"] = cast_node->getType().getAsString();
+		return true;
+	}
+
+	bool callExprRecorder(Stmt *node, json *findings){
+		auto cast_node = llvm::cast<CallExpr>(node);
+		(*findings)["properties"]["type"] = cast_node->getType().getAsString();
+		auto DC = cast_node->getDirectCallee();
+		if(!DC){
+			(*findings)["properties"]["direct_callee"] = "unknown";
+			return false;
 		}
+		auto DCName = DC->getNameInfo().getName().getAsString();
+		if(DCName == markerFormat["name"].get<string>()){
+			(*findings)["properties"]["markee"] = "lost";
+			return false;
+		}
+		return true;
+	}
+	
+	/* 		Declaration processors 	*/
+
+	// entry should give diagnostic effects
+	bool generalDeclRecorder(Decl *node, json *findings){
+		(*findings)["TODO"] = true;
+		return false;
+	}
+
+	bool declVarRecorder(Decl *node, json *findings){
+		auto cast_node = llvm::cast<VarDecl>(node);
+		(*findings)["properties"]["type"] = cast_node->getType().getAsString();
+		// if parent context is necessary we do it here else we return true
+		return false;
 	}
 };
 

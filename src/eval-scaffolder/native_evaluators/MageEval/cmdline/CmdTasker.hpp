@@ -8,11 +8,8 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
 #include "../../../../../include/helper.hpp"
-#include "../ast-mechanism/DecomFindingsGatherer.hpp"
-#include "../ast-mechanism/OracleFindingsGatherer.hpp"
-#include "../ast-mechanism/GatheredFindingsEvaluator.hpp"
-#include "../evaluation-mechanism/CrossASTGatherer.hpp"
-#include "../evaluation-mechanism/CrossASTEvaluator.hpp"
+#include "../ast-mechanism/CrossASTEvaluator.hpp"
+#include "../ast-mechanism/CrossASTGatherer.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -55,26 +52,13 @@ class CmdTasker{
 			unordered_map<int, json> decomFindings;
 			unordered_map<int, json> oracleFindings;
 			unordered_map<int, json> evalResults;
-			DecomFindingsGatherer dfg(selectedFormat, astDecomUnit->getASTContext());
-			OracleFindingsGatherer ofg(selectedFormat, astOracleUnit->getASTContext());
-			GatheredFindingsEvaluator gfe;			
-			
-			// Gebruik andere actions voor FunctionDecls
-//		    MatchFinder decomFinder, oracleFinder;
-//			cout << "DecomMatcher" << endl;
-//		    decomFinder.addMatcher(callExpr().bind("dfgCallExpr"), &dfg);
-//			decomFinder.matchAST(astDecomUnit->getASTContext());
-//
-//			cout << "OracleMatcher" << endl;
-//			oracleFinder.addMatcher(callExpr().bind("ofgCallExpr"), &ofg);
-//			oracleFinder.matchAST(astOracleUnit->getASTContext());
 
 			CrossASTGatherer CAGatherer(selectedFormat,findings, eval, dev, humanEval, astOracleUnit->getASTContext(), astDecomUnit->getASTContext());
 			CAGatherer.selectMode(0);
 			CAGatherer.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
 			CAGatherer.selectMode(1);
 			CAGatherer.TraverseDecl(astOracleUnit->getASTContext().getTranslationUnitDecl());
-			CAGatherer.evalProcessor();
+			CAGatherer.gatherFindings();
 		}
 	
 	public:

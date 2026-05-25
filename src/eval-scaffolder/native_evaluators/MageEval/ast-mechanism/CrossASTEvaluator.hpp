@@ -61,14 +61,13 @@ class CrossASTEvaluator{
 			// report and record
 			eval[markerID][findingsOracle["ASTNode"].get<string>()] = "TODO";
 			dev_report["ASTNode"][findingsOracle["ASTNode"].get<string>()] = "TODO";
-			dev_report["Missed"].push_back(markerID);
+			dev_report["Unevaluated"].push_back(markerID);
 			return;
 		}
-		if(ct){
-			for(size_t i = 0; i < findingsOracle["children"].size(); ++i){
-				json decomChild = (i < findingsDecom["children"].size()) ? findingsDecom["children"][i] : json();
-				evalTraverse(markerID, findingsOracle["children"][i], decomChild);
-			}
+		if(!ct){return;}
+		for(size_t i = 0; i < findingsOracle["children"].size(); ++i){
+			json decomChild = (i < findingsDecom["children"].size()) ? findingsDecom["children"][i] : json();
+			evalTraverse(markerID, findingsOracle["children"][i], decomChild);
 		}
 	}
 	
@@ -136,6 +135,10 @@ class CrossASTEvaluator{
 	
 	bool processImplicitCastExpr(){
 		return false;
+	}
+	
+	bool processRecoveryExpr(){
+		return true;
 	}
 };
 
