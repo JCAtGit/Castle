@@ -47,7 +47,6 @@ class CrossASTEvaluator{
 	};
 	
 	void startEval(){
-		// key markerID
 		for(auto [markerID, finding] : findings.items()){
 			evalTraverse(markerID, finding["oracle"], finding["decom"]);
 		}

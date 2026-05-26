@@ -68,4 +68,3 @@ std::optional<DynTypedNode> findPrevSiblingCall(const llvm::SmallVectorImpl<DynT
     }
     return std::nullopt;
 }
-

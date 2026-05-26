@@ -14,18 +14,10 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(sha3)
 
-# Fetch the header‑only library picosha2
-#FetchContent_Declare(
-#    picosha2
-#    GIT_REPOSITORY https://github.com/okdshin/PicoSHA2.git
-#    GIT_TAG        master
-#)
-#FetchContent_MakeAvailable(picosha2)
-
 FetchContent_Declare(
     CLI11
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
-    GIT_TAG v2.4.1    # Using a specific version is a good practice
+    GIT_TAG v2.4.1
 )
 FetchContent_MakeAvailable(CLI11)
 

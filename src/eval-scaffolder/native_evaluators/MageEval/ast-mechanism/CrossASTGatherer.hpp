@@ -19,6 +19,8 @@
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/raw_ostream.h"
 #include "../ast-mechanism/ast-helper.hpp"
+#include "clang/Tooling/ASTDiff/ASTDiff.h"
+#include "clang/Tooling/ASTDiff/ASTDiffInternal.h"
 
 using namespace nlohmann;
 using namespace clang;
@@ -64,9 +66,9 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		    decomAST,
 		    neds,
 		    StructuralEquivalenceKind::Default,
-		    false, 								/*StrictTypeSpelling=*/
+		    false, 						//StrictTypeSpelling
 		    true, 								// Complain, structural errors emit straight to your TextDiagnosticPrinter
-		    true								/*ErrorOnTagTypeMismatch=*/
+		    true					//ErrorOnTagTypeMismatch
 		)
 	)
 	{}
@@ -126,6 +128,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 				continue; // maybe do something else too
 			}	
 			cout << "ID:" << markerID << " present" << endl; 
+			
 			auto MCEOracle = markerCE;
 			auto MCEOracleParent = oracleMarkerParentMap.at(markerID);
 			auto MCEOracleSiblings = getChildrenNodes(MCEOracleParent);
@@ -141,17 +144,16 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			if(MCEOracleMarkee->get<Stmt>() && MCEDecomMarkee->get<Stmt>()){
 				Stmt* s1 = const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>());
 				Stmt* s2 = const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>());
+
 				auto result = sec.IsEquivalent(s1, s2);
 				llvm::outs() << "== result stmt:" << result << "|" << MCEOracleMarkee->getNodeKind() << " - " << MCEDecomMarkee->getNodeKind() <<  '\n';
-				cout << "Diagnostics: " << DiagnosticStream.str() << "\n";
-
 			} else if(MCEOracleMarkee->get<Decl>() && MCEDecomMarkee->get<Decl>()){
 				cout << "== result decl:" << endl;
 				Decl* d1 = const_cast<Decl*>(MCEOracleMarkee->get<Decl>());
 				Decl* d2 = const_cast<Decl*>(MCEDecomMarkee->get<Decl>());
+
 				auto result = sec.IsEquivalent(d1, d2);
 				cout << "== result:" << result << endl;
-				cout << "Diagnostics: " << DiagnosticStream.str() << "\n";
 			} else {
 				cout << "== result else:" << endl;
 			}
@@ -174,11 +176,14 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	bool VisitStmt(Stmt *S) {indexProcessor(S); return true;}
 		
 	const std::unordered_set<Stmt::StmtClass> traversalSkipList = {
+//		Stmt::ImplicitCastExprClass,
+//		Stmt::DeclRefExprClass,
+		Stmt::CallExprClass,
 		Stmt::IfStmtClass,
 		Stmt::WhileStmtClass,
+		Stmt::DoStmtClass,
 		Stmt::ForStmtClass,
 		Stmt::SwitchStmtClass,
-//		Stmt::CallExprClass,
 		Stmt::CompoundStmtClass
 	};
 
@@ -190,6 +195,9 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			case Stmt::DeclStmtClass: 		ct = declStmtRecorder(node, findings); break;
 			case Stmt::RecoveryExprClass: 	ct = recoveryExprRecorder(node, findings); break;
 			case Stmt::CallExprClass:		ct = callExprRecorder(node, findings); break;
+			case Stmt::ForStmtClass:		ct = forStmtRecorder(node, findings); break;
+			case Stmt::WhileStmtClass:		ct = whileStmtRecorder(node,findings); break;
+			case Stmt::DoStmtClass:			ct = doStmtRecorder(node, findings); break;
 //			case Stmt::IntegerLiteralClass: break;
 		}
 		if(!ct){return;}
@@ -270,7 +278,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	// voor FunctionDecl aparte entries maken op basis van CallExpr
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
-		(*findings)["properties"]["type"] = cast_node->getType().getAsString(); // return type
+		(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
 		auto DC = cast_node->getDirectCallee();
 		if(!DC){
 			(*findings)["properties"]["direct_callee"] = "unknown";
@@ -278,7 +286,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		}
 		auto DCName = DC->getNameInfo().getName().getAsString();
 		if(DCName == markerFormat["name"].get<string>()){
-			(*findings)["properties"]["markee_existence"] = "lost";
+			(*findings)["properties"]["has_markee"] = false;
 			return false;
 		}
 		(*findings)["properties"]["isVariadic"] = DC->isVariadic();
@@ -310,37 +318,102 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	
 	bool forStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<ForStmt>(node);
+		auto forInitStmt = cast_node->getInit();
+		if(forInitStmt){
+			(*findings)["properties"]["has_init"] = true;
+			switch(forInitStmt->getStmtClass()){
+				default: 
+					(*findings)["properties"]["is_expr"] = true;
+				break;
+				case Stmt::DeclStmtClass:{
+					(*findings)["properties"]["is_expr"] = false;
+					(*findings)["properties"]["init_types"] = json::array();
+					auto forInitDeclStmt = llvm::cast<DeclStmt>(forInitStmt);
+					auto forInitVarDecls = forInitDeclStmt->decls();
+					for(auto uncast_varDecl: forInitVarDecls){
+						auto cast_varDecl = llvm::cast<VarDecl>(uncast_varDecl);
+						(*findings)["properties"]["init_types"].push_back(cast_varDecl->getType().getAsString());
+					}
+					break;
+				}
+			}
+		} else {
+			(*findings)["properties"]["has_init"] = false;
+		}
 		
-//		json props;
-//		    
-//	    // Part 1: Initialization
-//	    if (Stmt *Init = FS->getInit()) {
-//	        props["init"] = serializeStmt(Init);  // or your custom processing
-//	    }
-//	    
-//	    // Part 2: Condition variable (C99 style)
-//	    if (VarDecl *CondVar = FS->getConditionVariable()) {
-//	        props["cond_var"] = {
-//	            {"name", CondVar->getNameAsString()},
-//	            {"type", CondVar->getType().getAsString()}
-//	        };
-//	    }
-//	    
-//	    // Part 3: Condition expression
-//	    if (Expr *Cond = FS->getCond()) {
-//	        props["condition"] = serializeExpr(Cond);
-//	    }
-//	    
-//	    // Part 4: Increment
-//	    if (Stmt *Inc = FS->getInc()) {
-//	        props["increment"] = serializeStmt(Inc);
-//	    }
-//	    
-//	    // DO NOT process the body (FS->getBody() or the last child)
-//	    (*findings)["properties"] = props;
+		auto condVar = cast_node->getConditionVariable();
+		if(condVar){
+			(*findings)["properties"]["has_cond_var"] = true;
+			(*findings)["properties"]["cond_var_type"] = condVar->getType().getAsString();
+		} else {
+			(*findings)["properties"]["has_cond_var"] = false;
+		}
+		
+		auto conditionExpr = cast_node->getCond();
+		if(conditionExpr){
+			(*findings)["properties"]["has_cond_expr"] = true;
+			(*findings)["properties"]["cond_expr_type"] = conditionExpr->getType().getAsString();
+		} else {
+			(*findings)["properties"]["has_cond_expr"] = false;
+		}
+		
+		auto incExpr = cast_node->getInc();
+		if(incExpr){
+			(*findings)["properties"]["has_incr"] = true;
+			(*findings)["properties"]["incr_expr_type"] = incExpr->getType().getAsString();
+		} else {
+			(*findings)["properties"]["has_incr"] = false;
+		}
+		return false;
+	}
+	
+	bool whileStmtRecorder(Stmt *node, json *findings){
+		auto cast_node = llvm::cast<WhileStmt>(node);
+		
+		auto condVar = cast_node->getConditionVariable();
+		if(condVar){
+			(*findings)["properties"]["has_cond_var"] = true;
+			(*findings)["properties"]["cond_var_type"] = condVar->getType().getAsString();
+		} else {
+			(*findings)["properties"]["has_cond_var"] = false;
+		}
+		
+		auto conditionExpr = cast_node->getCond();
+		if(conditionExpr){
+			(*findings)["properties"]["has_cond_expr"] = true;
+			(*findings)["properties"]["cond_expr_type"] = conditionExpr->getType().getAsString();
+		} else {
+			(*findings)["properties"]["has_cond_expr"] = false;
+		}
 		
 		return false;
 	}
+	
+	bool doStmtRecorder(Stmt *node, json *findings){
+		auto cast_node = llvm::cast<DoStmt>(node);
+		auto conditionExpr = cast_node->getCond();
+		if(conditionExpr){
+			(*findings)["properties"]["has_cond_expr"] = true;
+			(*findings)["properties"]["cond_expr_type"] = conditionExpr->getType().getAsString();
+		} else {
+			(*findings)["properties"]["has_cond_expr"] = false;
+		}
+		return false;
+	}
+	
+	bool ifStmtRecorder(Stmt *node, json *findings){
+		auto cast_node = llvm::cast<IfStmt>(node);
+		auto conditionExpr = cast_node->getCond();
+		if(conditionExpr){
+			(*findings)["properties"]["has_cond_expr"] = true;
+			(*findings)["properties"]["cond_expr_type"] = conditionExpr->getType().getAsString();
+		} else {
+			(*findings)["properties"]["has_cond_expr"] = false;
+		}
+		return false;
+	}
+	
+//	bool binaryOperator
 	
 	/* 		Declaration processors 	*/
 

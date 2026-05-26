@@ -111,6 +111,8 @@ int main(int argc, char **argv) {
   for (int i = 0, j = 10; i < j; i++, j--) {
     swap(&array[i], &array[j]);
   }
+  
+  for (int i = 0, j = 1, k = 2, l = 3; i < j; i++, j--) {}
 
   // 11. Declaring loop variable outside
   int k;

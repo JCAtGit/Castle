@@ -19,12 +19,6 @@ class CmdTasker{
 		filesystem::path inputPath, oracleDir, outputPath, mrkrFormatsPath;
 		json markerFormats, findings, eval, dev, humanEval;
 		json selectedFormat;
-
-		// 
-		std::stringstream DiagnosticStream;
-	  	std::unique_ptr<llvm::raw_os_ostream> RawStream;
-	  	std::shared_ptr<clang::DiagnosticOptions> DiagOpts;
-	  	std::unique_ptr<clang::TextDiagnosticPrinter> DiagClient;
 		
 		const vector<std::string> args = {
 	        "-xc",
@@ -33,7 +27,6 @@ class CmdTasker{
 	        "-frecovery-ast",
 			"-Xclang",
 	        "-frecovery-ast-type",
-			"-ferror-limit=1"
 	    };
 		
 		void loadMarkerFormats(){
@@ -50,31 +43,12 @@ class CmdTasker{
 		  	}
 		}
 		
-		void processFile(){
-			
-			
+		void processFile(){			
 			string fileDecomData = file2string(inputPath);
 			string fileOracleData = file2string(oracleDir / inputPath.filename()); // TODO: oraclePath is an dir, which must be changed
-//			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputPath.filename().c_str());
-//			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
-			
-			auto astDecomUnit = 	clang::tooling::buildASTFromCodeWithArgs(
-		        fileDecomData, args, inputPath.filename().c_str(), 
-				"clang",
-		        std::make_shared<clang::PCHContainerOperations>(),
-		        clang::tooling::getClangStripDependencyFileAdjuster(),
-		        clang::tooling::FileContentMappings(),
-		        DiagClient.get()
-		    );
-			auto astOracleUnit =	clang::tooling::buildASTFromCodeWithArgs(
-		        fileOracleData, args, oracleDir.string() + inputPath.filename().string(), 
-				"clang",
-		        std::make_shared<clang::PCHContainerOperations>(),
-		        clang::tooling::getClangStripDependencyFileAdjuster(),
-		        clang::tooling::FileContentMappings(),
-		        DiagClient.get()
-		    );
-			
+			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputPath.filename().c_str());
+			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
+						
 			unordered_map<int, json> decomFindings;
 			unordered_map<int, json> oracleFindings;
 			unordered_map<int, json> evalResults;
@@ -92,10 +66,7 @@ class CmdTasker{
 			inputPath(inputPath), 		// file or dir
 			oracleDir(oracleDir), 		// when iterating over files, looks for same name in oracle path
 			outputPath(outputPath),
-			mrkrFormatsPath(mrkrFormatsPath),
-			RawStream(std::make_unique<llvm::raw_os_ostream>(DiagnosticStream)),
-	      	DiagOpts(std::make_shared<clang::DiagnosticOptions>()),
-	      	DiagClient(std::make_unique<clang::TextDiagnosticPrinter>(*RawStream, *DiagOpts))
+			mrkrFormatsPath(mrkrFormatsPath)
 	{
 		loadMarkerFormats();
 		selectedFormat = markerFormats["0"];
