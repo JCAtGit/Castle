@@ -13,14 +13,9 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/ASTStructuralEquivalence.h"
-
-#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/raw_ostream.h"
 #include "../ast-mechanism/ast-helper.hpp"
-#include "clang/Tooling/ASTDiff/ASTDiff.h"
-#include "clang/Tooling/ASTDiff/ASTDiffInternal.h"
 
 using namespace nlohmann;
 using namespace clang;
@@ -28,7 +23,7 @@ using namespace std;
 
 class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	private:
-	json &markerFormat, &genEval, &specEval, &markerEval, &humanEval;
+	json &markerFormat, &findings, &specEval, &markerEval, &humanEval;
 	ASTContext &oracleAST, &decomAST;
 	SourceManager &oracleSM, &decomSM;
 		
@@ -53,9 +48,9 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	
 	public:	
 	CrossASTGatherer(
-		json& markerFormat, json&genEval, json& specEval, json& markerEval, json& humanEval,
+		json& markerFormat, json& findings, json& specEval, json& markerEval, json& humanEval,
 		ASTContext &oracleAST, ASTContext &decomAST): 
-	markerFormat(markerFormat),	genEval(genEval), specEval(specEval), markerEval(markerEval), humanEval(humanEval),
+	markerFormat(markerFormat),	findings(findings), specEval(specEval), markerEval(markerEval), humanEval(humanEval),
 	oracleAST(oracleAST), decomAST(decomAST),
 	
 	oracleSM(oracleAST.getSourceManager()), decomSM(decomAST.getSourceManager()), 
@@ -159,16 +154,16 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			}
 			
 			string makerIDString = std::to_string(markerID);
-			genEval[makerIDString]["oracle"]["ASTNode"] = MCEOracleMarkee->getNodeKind().asStringRef();
-			genEval[makerIDString]["oracle"]["children"] = json::array();
-			genEval[makerIDString]["oracle"]["properties"] = json::object();;
+			findings[makerIDString]["oracle"]["ASTNode"] = MCEOracleMarkee->getNodeKind().asStringRef();
+			findings[makerIDString]["oracle"]["children"] = json::array();
+			findings[makerIDString]["oracle"]["properties"] = json::object();;
 
-			genEval[makerIDString]["decom"]["ASTNode"] = MCEDecomMarkee->getNodeKind().asStringRef();
-			genEval[makerIDString]["decom"]["children"] = json::array();
-			genEval[makerIDString]["decom"]["properties"] = json::object();;
+			findings[makerIDString]["decom"]["ASTNode"] = MCEDecomMarkee->getNodeKind().asStringRef();
+			findings[makerIDString]["decom"]["children"] = json::array();
+			findings[makerIDString]["decom"]["properties"] = json::object();;
 						
-			evalSRDeciderP(const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>()), &(genEval[makerIDString]["oracle"]));
-			evalSRDeciderP(const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>()), &(genEval[makerIDString]["decom"]));
+			evalSRDeciderP(const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>()), &(findings[makerIDString]["oracle"]));
+			evalSRDeciderP(const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>()), &(findings[makerIDString]["decom"]));
 		}
 	}
 	
@@ -178,6 +173,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	const std::unordered_set<Stmt::StmtClass> traversalSkipList = {
 //		Stmt::ImplicitCastExprClass,
 //		Stmt::DeclRefExprClass,
+		Stmt::BinaryOperatorClass,
 		Stmt::CallExprClass,
 		Stmt::IfStmtClass,
 		Stmt::WhileStmtClass,
@@ -198,6 +194,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			case Stmt::ForStmtClass:		ct = forStmtRecorder(node, findings); break;
 			case Stmt::WhileStmtClass:		ct = whileStmtRecorder(node,findings); break;
 			case Stmt::DoStmtClass:			ct = doStmtRecorder(node, findings); break;
+			case Stmt::IfStmtClass:			ct = ifStmtRecorder(node,findings); break;
+			case Stmt::BinaryOperatorClass:	ct = binaryOperatorRecorder(node,findings); break;
 //			case Stmt::IntegerLiteralClass: break;
 		}
 		if(!ct){return;}
@@ -266,8 +264,16 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	}
 	
 	/* 		Statement processors 	*/
-	bool generalStmtRecorder(Stmt *node, json *findings){return true;}
-	bool declStmtRecorder(Stmt *node, json *findings){return true;}
+	bool generalStmtRecorder(Stmt *node, json *findings){
+		if (!isa<Expr>(node)) {
+			auto cast_node = llvm::cast<Expr>(node);
+			(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
+		}
+		return true;
+	}
+	bool declStmtRecorder(Stmt *node, json *findings){
+		return true;
+	}
 
 	bool recoveryExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<RecoveryExpr>(node);
@@ -279,6 +285,12 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
 		(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
+		
+		if (!isa<Expr>(node)) {
+			auto cast_node = llvm::cast<Expr>(node);
+			(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
+		}
+		
 		auto DC = cast_node->getDirectCallee();
 		if(!DC){
 			(*findings)["properties"]["direct_callee"] = "unknown";
@@ -313,7 +325,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		    argTypeInfo["is_pointer"] = T->isPointerType();
 			((*findings)["properties"]["args"]).push_back(argTypeInfo);
 		}
-		return false;
+		return true;
 	}
 	
 	bool forStmtRecorder(Stmt *node, json *findings){
@@ -323,7 +335,11 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			(*findings)["properties"]["has_init"] = true;
 			switch(forInitStmt->getStmtClass()){
 				default: 
-					(*findings)["properties"]["is_expr"] = true;
+					(*findings)["properties"]["is_expr"] = isa<Expr>(node);
+					if (isa<Expr>(node)) {
+						auto cast_node = llvm::cast<Expr>(node);
+						(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
+					}			
 				break;
 				case Stmt::DeclStmtClass:{
 					(*findings)["properties"]["is_expr"] = false;
@@ -364,7 +380,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		} else {
 			(*findings)["properties"]["has_incr"] = false;
 		}
-		return false;
+		return true;
 	}
 	
 	bool whileStmtRecorder(Stmt *node, json *findings){
@@ -386,7 +402,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			(*findings)["properties"]["has_cond_expr"] = false;
 		}
 		
-		return false;
+		return true;
 	}
 	
 	bool doStmtRecorder(Stmt *node, json *findings){
@@ -398,7 +414,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		} else {
 			(*findings)["properties"]["has_cond_expr"] = false;
 		}
-		return false;
+		return true;
 	}
 	
 	bool ifStmtRecorder(Stmt *node, json *findings){
@@ -410,24 +426,31 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		} else {
 			(*findings)["properties"]["has_cond_expr"] = false;
 		}
-		return false;
+		return true;
 	}
 	
-//	bool binaryOperator
+	bool binaryOperatorRecorder(Stmt *node, json *findings){
+		auto cast_node = llvm::cast<BinaryOperator>(node);
+		if (!isa<Expr>(node)) {
+			auto cast_node = llvm::cast<Expr>(node);
+			(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
+		}
+		return true;
+	}
 	
 	/* 		Declaration processors 	*/
 
 	// entry should give diagnostic effects
 	bool generalDeclRecorder(Decl *node, json *findings){
 		(*findings)["properties"]["TODO"] = true;
-		return false;
+		return true;
 	}
 
 	bool declVarRecorder(Decl *node, json *findings){
 		auto cast_node = llvm::cast<VarDecl>(node);
 		(*findings)["properties"]["type"] = cast_node->getType().getAsString();
 		// if parent context is necessary we do it here else we return true
-		return false;
+		return true;
 	}
 };
 

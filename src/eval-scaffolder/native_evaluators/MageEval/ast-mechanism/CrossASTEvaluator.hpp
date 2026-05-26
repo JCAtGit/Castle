@@ -30,10 +30,10 @@ class CrossASTEvaluator{
 	public:
 	CrossASTEvaluator(
 		json &findings,
-		json &eval,
+		json &findings_eval,
 		json &dev_report,
 		filesystem::path &outputPath
-	): findings(findings), eval(eval), dev_report(dev_report), outputPath(outputPath)
+	): findings(findings), findings_eval(findings_eval), dev_report(dev_report), outputPath(outputPath)
 	{
 		dev_report["Missed"] = json::array();
 	}
@@ -59,7 +59,7 @@ class CrossASTEvaluator{
             ct = (this->*(it->second))(markerID, findingsOracle, findingsDecom);
         } else {
 			// report and record
-			eval[markerID][findingsOracle["ASTNode"].get<string>()] = "TODO";
+			findings_eval[markerID][findingsOracle["ASTNode"].get<string>()] = "TODO";
 			dev_report["ASTNode"][findingsOracle["ASTNode"].get<string>()] = "TODO";
 			dev_report["Unevaluated"].push_back(markerID);
 			return;
@@ -73,62 +73,62 @@ class CrossASTEvaluator{
 	
 	private:
 	json &findings;
-	json &eval;
+	json &findings_eval;
 	json &dev_report;
 	filesystem::path &outputPath;
 	
 	bool processCallExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
 		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
 			return true;
 		} else {
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
 			return false;
 		}
 	}
 	
 	bool processDeclStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
 		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
 			return true;
 		} else {
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
 			return false;
 		}
 	}
 	
 	bool processVarDecl(const string &markerID, json &findingsOracle,json &findingsDecom){
 		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
 			return true;
 		} else {
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
 			return false;
 		}
 	}
 	
 	bool processIfStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
 		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
 			return true;
 		} else if(findingsDecom["ASTNode"] == "SwitchStmt"){
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Overlap";
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Overlap";
 			return true;
 		} else {
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
 			return false;
 		}
 	}
 	
 	bool processForStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
 		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
 			return true;
 		} else if(findingsDecom["ASTNode"] == "WhileStmt"){
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Overlap";
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Overlap";
 			return true;
 		} else {
-			eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
 			return false;
 		}
 	}

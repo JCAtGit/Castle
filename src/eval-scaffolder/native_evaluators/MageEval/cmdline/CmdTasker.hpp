@@ -17,7 +17,7 @@ using namespace std;
 class CmdTasker{
 	private:		
 		filesystem::path inputPath, oracleDir, outputPath, mrkrFormatsPath;
-		json markerFormats, findings, eval, dev, humanEval;
+		json markerFormats, findings, findings_eval, dev, humanEval;
 		json selectedFormat;
 		
 		const vector<std::string> args = {
@@ -53,7 +53,7 @@ class CmdTasker{
 			unordered_map<int, json> oracleFindings;
 			unordered_map<int, json> evalResults;
 			
-			CrossASTGatherer CAGatherer(selectedFormat,findings, eval, dev, humanEval, astOracleUnit->getASTContext(), astDecomUnit->getASTContext());
+			CrossASTGatherer CAGatherer(selectedFormat,findings, findings_eval, dev, humanEval, astOracleUnit->getASTContext(), astDecomUnit->getASTContext());
 			CAGatherer.selectMode(0);
 			CAGatherer.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
 			CAGatherer.selectMode(1);
@@ -86,11 +86,11 @@ class CmdTasker{
 		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
 		processFile();
 		cout << "Starting eval" << "\n";
-		CrossASTEvaluator CAEvaluator(findings, eval, dev, outputPath);
+		CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
 		CAEvaluator.startEval();
 		cout << "Saving results to json" << "\n";
 		saveJsonToFile(outputPath.string() + "_findings.json", findings);
-		saveJsonToFile(outputPath.string() + "_eval.json", eval);
+		saveJsonToFile(outputPath.string() + "_eval.json", findings_eval);
 		saveJsonToFile(outputPath.string() + "_dev.json", dev);
 	}
 };
