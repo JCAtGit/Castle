@@ -28,7 +28,7 @@
 			"run_bin_as_shell":false,
 			"static_pre_flags":[],
 			"static_options":[
-				{"-fno-color-diagnostics":""},{"-Xclang":""},{"-ast-dump":""},{"-fsyntax-only":""}
+				{"-fno-color-diagnostics":""},{"-Xclang":""},{"-ast-dump":""},{"-fsyntax-only":""},{"-ferror-limit=1":""}
 			],
 			"outputFlag":">",
 			"redirectNull": false,
@@ -43,7 +43,7 @@
 				{"-xc++":""}
 			],
 			"static_options":[
-				{"-fno-color-diagnostics":""},{"-Xclang":""}, {"-ast-dump":""}
+				{"-fno-color-diagnostics":""},{"-Xclang":""}, {"-ast-dump":""},{"-fsyntax-only":""},{"-ferror-limit=1":""}
 			],
 			"outputFlag":">",
 			"redirectNull": false,

@@ -138,12 +138,29 @@ class CrossASTEvaluator{
 		}
 	}
 	
+	bool processWhileStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
+		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
+			return true;
+		} else if(findingsDecom["ASTNode"] == "ForStmt"){
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Overlap";
+			return true;
+		} else {
+			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
+			return false;
+		}
+	}
+	
+	bool processDoStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
+		return false;
+	}
+	
 	bool processImplicitCastExpr(){
 		return false;
 	}
 	
 	bool processRecoveryExpr(){
-		return true;
+		return false;
 	}
 };
 

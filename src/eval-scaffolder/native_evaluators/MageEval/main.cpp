@@ -3,7 +3,7 @@
 #include "../MageEval/cmdline/CmdTasker.hpp"
 
 int main(int argc, char **argv) {
-	CLI::App app{"SingleFileOracleF0Eval"};
+	CLI::App app{"MageEval"};
 	
 	std::string inputPath;
 	app.add_option("inputPath", inputPath, "input path to evaluate")
@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 
 	// TODO: integrate option into implementation
 	std::string astMode = "-xc"; 
-	app.add_option("--astMode", astMode, "AST mode used for heuristics (must be '-xc' or '-xc++')")
+	app.add_option("--astMode", astMode, "TODO: AST mode used for heuristics ('-xc' or '-xc++')")
 	    ->check(CLI::IsMember({"-xc", "-xc++"}));
 
 	CLI11_PARSE(app, argc, argv);

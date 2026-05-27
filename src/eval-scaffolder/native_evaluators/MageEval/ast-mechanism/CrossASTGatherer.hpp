@@ -271,7 +271,15 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		}
 		return true;
 	}
+	
 	bool declStmtRecorder(Stmt *node, json *findings){
+		auto cast_node = llvm::cast<DeclStmt>(node);
+		(*findings)["properties"]["single_decl"] = cast_node->isSingleDecl();
+		auto decls = cast_node->decls();
+		for(auto uncast_varDecl: decls){
+			auto cast_varDecl = llvm::cast<VarDecl>(uncast_varDecl);
+			(*findings)["properties"]["init_types"].push_back(cast_varDecl->getType().getAsString());
+		}
 		return true;
 	}
 
@@ -345,6 +353,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 					(*findings)["properties"]["is_expr"] = false;
 					(*findings)["properties"]["init_types"] = json::array();
 					auto forInitDeclStmt = llvm::cast<DeclStmt>(forInitStmt);
+					(*findings)["properties"]["single_decl"] = forInitDeclStmt->isSingleDecl();
 					auto forInitVarDecls = forInitDeclStmt->decls();
 					for(auto uncast_varDecl: forInitVarDecls){
 						auto cast_varDecl = llvm::cast<VarDecl>(uncast_varDecl);

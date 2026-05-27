@@ -23,10 +23,11 @@ class CmdTasker{
 		const vector<std::string> args = {
 	        "-xc++", // xc++ or xc makes a huge difference and is work consideration
 			"-w",
-			"-Xclang",
-	        "-frecovery-ast",
-			"-Xclang",
-	        "-frecovery-ast-type",
+//			"-Xclang",
+//	        "-frecovery-ast",
+//			"-Xclang",
+//	        "-frecovery-ast-type",
+			"-ferror-limit=1"
 	    };
 		
 		void loadMarkerFormats(){
