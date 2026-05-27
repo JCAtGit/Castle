@@ -21,7 +21,7 @@ class CmdTasker{
 		json selectedFormat;
 		
 		const vector<std::string> args = {
-	        "-xc",
+	        "-xc++", // xc++ or xc makes a huge difference and is work consideration
 			"-w",
 			"-Xclang",
 	        "-frecovery-ast",
@@ -78,8 +78,8 @@ class CmdTasker{
 	        std::cerr << "Error: Could not open file for writing: " << path << "\n";
 	        return;
 	    }
-	    file << data.dump(4);  // pretty print with 4 spaces indentation
-//	    std::cout << "Saved to "<<  path << "\n" << data.dump(4) << "\n";
+	    file << data.dump(2);  // pretty print with indentation
+//	    std::cout << "Saved to "<<  path << "\n" << data.dump(2) << "\n";
 	}
 		
 	void startEvaluationProcesses(){

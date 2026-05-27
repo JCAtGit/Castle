@@ -43,8 +43,25 @@ class CmdTasker{
 			}
 		}
 		
+		/**
+		 * Volgorde options maakt soms uit, dus let hierop bij de config.
+		 */
+		void addStaticPreFlags(std::string& command, json& dt_config_data){
+			for(auto option:dt_config_data["static_pre_flags"]){
+				for (auto& [flag, value] : option.items()) {
+	                command = command + " " + flag;
+	                // If the value is a non‑empty string, append it as an argument
+	                if (value.is_string() && !value.get<std::string>().empty()) {
+	                    command = command + " " + value.get<std::string>();
+	                } // Handle other types (numbers, bool)
+	            }
+			}
+		}
+		
 		void processPath(filesystem::path filepath, json& it_config_data){
-			string command = it_config_data["binPath"].get<string>() 	+ " " + filepath.c_str() + " ";		// binPath
+			string command = it_config_data["binPath"].get<string>();
+			addStaticPreFlags(command, it_config_data);
+			command = command + " " + filepath.c_str() + " ";		// binPath
 			addStaticFlags(command, it_config_data);
 			command += 	" " + 
 						it_config_data["outputFlag"].get<string>() 		+ " " + 							// outputPath

@@ -21,6 +21,11 @@ int main(int argc, char **argv) {
 	app.add_option("--mrkrFormatsPath", mrkrFormatsPath, "Instrumentation config used for heuristics")
 		->required();
 
+	// TODO: integrate option into implementation
+	std::string astMode = "-xc"; 
+	app.add_option("--astMode", astMode, "AST mode used for heuristics (must be '-xc' or '-xc++')")
+	    ->check(CLI::IsMember({"-xc", "-xc++"}));
+
 	CLI11_PARSE(app, argc, argv);
 
 	CmdTasker cmdTskr(inputPath, oracleDir, outputPath, mrkrFormatsPath);

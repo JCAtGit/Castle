@@ -123,7 +123,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 				continue; // maybe do something else too
 			}	
 			cout << "ID:" << markerID << " present" << endl; 
-			
+						
 			auto MCEOracle = markerCE;
 			auto MCEOracleParent = oracleMarkerParentMap.at(markerID);
 			auto MCEOracleSiblings = getChildrenNodes(MCEOracleParent);
