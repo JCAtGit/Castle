@@ -27,6 +27,7 @@ using namespace nlohmann;
 using namespace clang;
 using namespace std;
 
+// assumes oracle to be free of major errors and to be compilable.
 class CrossASTEvaluator{
 	public:
 	CrossASTEvaluator(
@@ -83,27 +84,22 @@ class CrossASTEvaluator{
 	filesystem::path &outputPath;
 	
 	bool processCallExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
-		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
-			if(findingsOracle["properties"]["has_direct_callee"] && findingsDecom["properties"]["has_direct_callee"]){
-				findings_eval[markerID][findingsOracle.at("ASTNode")]["has_direct_callee"] = true; // TODO
-			}
-			
-			return false;
-		} else {
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
-			return false;
-		}
+		json markerFindingsResult = json::object();
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+//		if(!findingsDecom["properties"]["has_markee"]){return false;}
+		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && findingsDecom["ASTNode"] == findingsOracle["ASTNode"]);
+		markerFindingsResult["name_preserved"] = (findingsOracle["properties"]["direct_callee_name"] == findingsDecom["properties"]["direct_callee_name"]);
+		markerFindingsResult["parity_params_count"] = (findingsOracle["properties"]["num_params"] == findingsDecom["properties"]["num_params"]);
+		markerFindingsResult["parity_args_count"] = (findingsOracle["properties"]["num_args"] == findingsDecom["properties"]["num_args"]);
+		markerFindingsResult["_variadicity"] = (findingsOracle["properties"]["isVariadic"] == findingsDecom["properties"]["isVariadic"]);
+
+		return false;
 	}
 	
 	bool processDeclStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
-		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
-			return true;
-		} else {
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
-			return false;
-		}
+		json markerFindingsResult = json::object();
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+	
 	}
 	
 	bool processVarDecl(const string &markerID, json &findingsOracle,json &findingsDecom){

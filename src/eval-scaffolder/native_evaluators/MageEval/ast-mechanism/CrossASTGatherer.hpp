@@ -199,6 +199,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 //			case Stmt::IntegerLiteralClass: break;
 		}
 		if(!ct){return;}
+		json child;
+
 		switch(node->getStmtClass()){	// and	decide traversal continuation
 			default:{
 				auto stmtChildren = node->children();
@@ -234,13 +236,13 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		}
 	}
 
+	// misschien niet nodig
 	void evalDRDeciderP(Decl *node, json *findings){
 		bool ct;
 		switch(node->getKind()){
 			default: generalDeclRecorder(node, findings); break;
 			case Decl::Var: 	ct = declVarRecorder(node, findings); break;
 		}
-		// and	decide traversal continuation
 		if(!ct){return;}
 		switch(node->getKind()){
 			default:{break;}
@@ -332,6 +334,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	
 	bool forStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<ForStmt>(node);
+		(*findings)["properties"]["has_markee"] = true;
+
 		auto forInitStmt = cast_node->getInit();
 		if(forInitStmt){
 			(*findings)["properties"]["has_init"] = true;
@@ -391,7 +395,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	
 	bool whileStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<WhileStmt>(node);
-		
+		(*findings)["properties"]["has_markee"] = true;
+
 		auto condVar = cast_node->getConditionVariable();
 		if(condVar){
 			(*findings)["properties"]["has_cond_var"] = true;
@@ -413,6 +418,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	
 	bool doStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<DoStmt>(node);
+		(*findings)["properties"]["has_markee"] = true;
+
 		auto conditionExpr = cast_node->getCond();
 		if(conditionExpr){
 			(*findings)["properties"]["has_cond_expr"] = true;
@@ -425,6 +432,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	
 	bool ifStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<IfStmt>(node);
+		(*findings)["properties"]["has_markee"] = true;
+
 		auto conditionExpr = cast_node->getCond();
 		if(conditionExpr){
 			(*findings)["properties"]["has_cond_expr"] = true;
@@ -439,6 +448,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	/* 			Statements Recorders - Expr		*/
 	bool binaryOperatorRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<BinaryOperator>(node);
+		(*findings)["properties"]["has_markee"] = true;
+
 		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
 		(*findings)["properties"]["operator"] = cast_node->getOpcodeStr();
 		(*findings)["properties"]["operator_opcode"] = cast_node->getOpcode();
