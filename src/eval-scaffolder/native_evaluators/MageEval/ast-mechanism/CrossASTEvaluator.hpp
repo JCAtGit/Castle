@@ -49,9 +49,9 @@ class CrossASTEvaluator{
 	
 	void startEval(){
 		auto markerFindings = findings.items();
-		for(size_t i = 0; i<findings.size(); i++){
-			
-		}
+//		for(size_t i = 0; i<findings.size(); i++){ // check marker survival?
+//			
+//		}
 		for(auto [markerID, finding] : findings.items()){
 			evalTraverse(markerID, finding["oracle"], finding["decom"]);
 		}
@@ -85,7 +85,11 @@ class CrossASTEvaluator{
 	bool processCallExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
 		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
 			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
-			return true;
+			if(findingsOracle["properties"]["has_direct_callee"] && findingsDecom["properties"]["has_direct_callee"]){
+				findings_eval[markerID][findingsOracle.at("ASTNode")]["has_direct_callee"] = true; // TODO
+			}
+			
+			return false;
 		} else {
 			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
 			return false;

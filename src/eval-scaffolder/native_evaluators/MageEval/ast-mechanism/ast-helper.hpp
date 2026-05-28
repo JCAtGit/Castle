@@ -4,10 +4,11 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ParentMapContext.h"
 #include "clang/AST/Stmt.h"
-#include <iostream>
+#include <nlohmann/json.hpp>
 
 using namespace clang;
 using namespace std;
+using namespace nlohmann;
 
 size_t findNodeSiblingIndex(const llvm::SmallVectorImpl<DynTypedNode> &siblings, const DynTypedNode &node) {
     for (size_t i = 0; i < siblings.size(); ++i) {
@@ -24,14 +25,14 @@ llvm::SmallVector<DynTypedNode, 16> getChildrenNodes(const Stmt *parent) {
     return children;
 }
 
-std::optional<DynTypedNode> getNextSiblingFromList(
+optional<DynTypedNode> getNextSiblingFromList(
     const llvm::SmallVectorImpl<DynTypedNode> &siblings, size_t idx) {
     if (idx + 1 < siblings.size())
         return siblings[idx + 1];
     return std::nullopt;
 }
 
-std::optional<DynTypedNode> getPrevSiblingFromList(
+optional<DynTypedNode> getPrevSiblingFromList(
     const llvm::SmallVectorImpl<DynTypedNode> &siblings, size_t idx) {
     if (idx > 0)
         return siblings[idx - 1];
@@ -39,7 +40,7 @@ std::optional<DynTypedNode> getPrevSiblingFromList(
 }
 
 // Search forward from index i for a CallExpr calling the same function
-std::optional<DynTypedNode> findNextSiblingCall(const llvm::SmallVectorImpl<DynTypedNode> &children,
+optional<DynTypedNode> findNextSiblingCall(const llvm::SmallVectorImpl<DynTypedNode> &children,
                                           size_t startIdx,
                                           const FunctionDecl *targetCallee) {
     for (size_t i = startIdx + 1; i < children.size(); ++i) {
@@ -54,7 +55,7 @@ std::optional<DynTypedNode> findNextSiblingCall(const llvm::SmallVectorImpl<DynT
 }
 
 // Similarly for previous
-std::optional<DynTypedNode> findPrevSiblingCall(const llvm::SmallVectorImpl<DynTypedNode> &children,
+optional<DynTypedNode> findPrevSiblingCall(const llvm::SmallVectorImpl<DynTypedNode> &children,
                                           size_t startIdx,
                                           const FunctionDecl *targetCallee) {
     for (size_t i = startIdx; i > 0; --i) {
@@ -68,3 +69,14 @@ std::optional<DynTypedNode> findPrevSiblingCall(const llvm::SmallVectorImpl<DynT
     }
     return std::nullopt;
 }
+
+void recordTypeInfo(const QualType& T, json& storage){
+	json paramTypeInfo;
+	paramTypeInfo["type"] = T.getAsString();
+	paramTypeInfo["is_const"] = T.isConstQualified();
+	paramTypeInfo["is_pointer"] = T->isPointerType();
+	storage.push_back(
+		paramTypeInfo
+	);	
+}
+

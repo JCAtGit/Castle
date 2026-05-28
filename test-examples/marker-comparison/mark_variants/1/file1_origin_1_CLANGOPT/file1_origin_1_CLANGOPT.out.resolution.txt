@@ -1,4 +1,0 @@
-/tmp/file1_origin-a15103.o
--r=/tmp/file1_origin-a15103.o,identity,pl
--r=/tmp/file1_origin-a15103.o,main,plx
--r=/tmp/file1_origin-a15103.o,printf,

@@ -1,5 +1,0 @@
-/tmp/file1_origin-891dd0.o
--r=/tmp/file1_origin-891dd0.o,codemarker_alpha,pl
--r=/tmp/file1_origin-891dd0.o,identity,pl
--r=/tmp/file1_origin-891dd0.o,main,plx
--r=/tmp/file1_origin-891dd0.o,printf,
