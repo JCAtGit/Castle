@@ -1,9 +1,6 @@
 
 #pragma once
 
-#include <cstddef>
-#include <filesystem>
-#include <iostream>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
@@ -11,16 +8,9 @@
 #include <unordered_set>
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTTypeTraits.h"
-#include "clang/AST/ParentMapContext.h"
-#include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/AST/Stmt.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/ASTStructuralEquivalence.h"
 
-#include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/raw_os_ostream.h"
-#include "llvm/Support/raw_ostream.h"
 #include "../ast-mechanism/ast-helper.hpp"
 
 using namespace nlohmann;
@@ -39,13 +29,17 @@ class CrossASTEvaluator{
 	{
 		dev_report["Missed"] = json::array();
 	}
-	
 
 	using EvalFnPtr = bool(CrossASTEvaluator::*)(const string &, json &, json &);
 	unordered_map<string, EvalFnPtr> fnSelector = {
-//		{"CallExpr", &CrossASTEvaluator::processCallExpr},
+		{"CallExpr", &CrossASTEvaluator::processCallExpr},
 		{"DeclStmt", &CrossASTEvaluator::processDeclStmt},
-		{"VarDecl", &CrossASTEvaluator::processVarDecl}
+		{"IfStmt", &CrossASTEvaluator::processIfStmt},
+		{"ForStmt", &CrossASTEvaluator::processForStmt},
+		{"WhileStmt", &CrossASTEvaluator::processWhileStmt},
+		{"DoStmt", &CrossASTEvaluator::processDoStmt},
+		{"BinaryOperator", &CrossASTEvaluator::processBinaryOperator}
+//		{"VarDecl", &CrossASTEvaluator::processVarDecl}
 	};
 	
 	void startEval(){
@@ -61,7 +55,7 @@ class CrossASTEvaluator{
 	void evalTraverse(const string &markerID, json &findingsOracle, json &findingsDecom){
 		auto it = fnSelector.find(findingsOracle["ASTNode"].get<string>());
 		bool ct;
-	   	if (it != fnSelector.end()) {
+	   	if (it != fnSelector.end()) {// TODO: rework for slight speedup
             ct = (this->*(it->second))(markerID, findingsOracle, findingsDecom);
         } else {
 			// report and record
@@ -86,80 +80,83 @@ class CrossASTEvaluator{
 	bool processCallExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
 		json markerFindingsResult = json::object();
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
-//		if(!findingsDecom["properties"]["has_markee"]){return false;}
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && findingsDecom["ASTNode"] == findingsOracle["ASTNode"]);
+		
 		markerFindingsResult["name_preserved"] = (findingsOracle["properties"]["direct_callee_name"] == findingsDecom["properties"]["direct_callee_name"]);
 		markerFindingsResult["parity_params_count"] = (findingsOracle["properties"]["num_params"] == findingsDecom["properties"]["num_params"]);
 		markerFindingsResult["parity_args_count"] = (findingsOracle["properties"]["num_args"] == findingsDecom["properties"]["num_args"]);
 		markerFindingsResult["_variadicity"] = (findingsOracle["properties"]["isVariadic"] == findingsDecom["properties"]["isVariadic"]);
 
+		findings_eval[markerID] = markerFindingsResult;
 		return false;
 	}
 	
 	bool processDeclStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
 		json markerFindingsResult = json::object();
-		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
-	
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"].get<string>();
+		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
+//		
+		findings_eval[markerID] = markerFindingsResult;
+		return false;
+
 	}
 	
 	bool processVarDecl(const string &markerID, json &findingsOracle,json &findingsDecom){
-		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
-			return true;
-		} else {
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
-			return false;
-		}
+		json markerFindingsResult = json::object();
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && findingsDecom["ASTNode"] == findingsOracle["ASTNode"]);
+		return false;
+
 	}
 	
 	bool processIfStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
-		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
-			return true;
-		} else if(findingsDecom["ASTNode"] == "SwitchStmt"){
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Overlap";
-			return true;
-		} else {
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
-			return false;
-		}
+		json markerFindingsResult = json::object();
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && findingsDecom["ASTNode"] == findingsOracle["ASTNode"]);
+		return false;
+
 	}
 	
 	bool processForStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
-		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
-			return true;
-		} else if(findingsDecom["ASTNode"] == "WhileStmt"){
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Overlap";
-			return true;
-		} else {
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
-			return false;
-		}
+		json markerFindingsResult = json::object();
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && findingsDecom["ASTNode"] == findingsOracle["ASTNode"]);
+		return false;
+
 	}
 	
 	bool processWhileStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
-		if(findingsDecom["ASTNode"] == findingsOracle["ASTNode"]){
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Present";
-			return true;
-		} else if(findingsDecom["ASTNode"] == "ForStmt"){
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Overlap";
-			return true;
-		} else {
-			findings_eval[markerID][findingsOracle.at("ASTNode")]["has_construct"] = "Absent";
-			return false;
-		}
+		json markerFindingsResult = json::object();
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && findingsDecom["ASTNode"] == findingsOracle["ASTNode"]);
+		return false;
 	}
 	
 	bool processDoStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
+		json markerFindingsResult = json::object();
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && findingsDecom["ASTNode"] == findingsOracle["ASTNode"]);
 		return false;
 	}
 	
-	bool processImplicitCastExpr(){
+	bool processBinaryOperator(const string &markerID, json &findingsOracle,json &findingsDecom){
+		json markerFindingsResult = json::object();
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && findingsDecom["ASTNode"] == findingsOracle["ASTNode"]);
 		return false;
 	}
 	
-	bool processRecoveryExpr(){
+	bool processImplicitCastExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
+		json markerFindingsResult = json::object();
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && findingsDecom["ASTNode"] == findingsOracle["ASTNode"]);
+		return false;
+	}
+	
+	bool processRecoveryExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
+		json markerFindingsResult = json::object();
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && findingsDecom["ASTNode"] == findingsOracle["ASTNode"]);
 		return false;
 	}
 };

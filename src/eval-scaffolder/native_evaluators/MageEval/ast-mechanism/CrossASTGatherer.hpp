@@ -267,15 +267,19 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	
 	/* 		Statement Recorders - Non-Expr		*/
 	bool generalStmtRecorder(Stmt *node, json *findings){
+		(*findings)["properties"]["has_markee"] = false;
+
 		if (!isa<Expr>(node)) {
 			auto cast_node = llvm::cast<Expr>(node);
 			(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
 		}
-		return true;
+		return false;
 	}
 	
 	bool declStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<DeclStmt>(node);
+		(*findings)["properties"]["has_markee"] = true;
+		
 		(*findings)["properties"]["single_decl"] = cast_node->isSingleDecl();
 		auto decls = cast_node->decls();
 		for(auto uncast_varDecl: decls){
@@ -287,6 +291,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 
 	bool recoveryExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<RecoveryExpr>(node);
+		(*findings)["properties"]["has_markee"] = false;
+
 		recordTypeInfo(cast_node->getType(), (*findings)["properties"]["types"]);
 		for(auto reChild:cast_node->children()){
 			switch(reChild->getStmtClass()){
@@ -294,7 +300,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 				case Stmt::DeclRefExprClass: break;
 			}
 		}
-		return true;
+		return false;
 	}
 
 	// voor FunctionDecl aparte entries maken op basis van CallExpr
@@ -310,11 +316,14 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			return false;
 		}
 		(*findings)["properties"]["has_direct_callee"] = true;
+		
 		auto DCName = DC->getNameInfo().getName().getAsString();
 		if(DCName == markerFormat["name"].get<string>()){
 			(*findings)["properties"]["has_markee"] = false;
 			return false;
 		}
+		(*findings)["properties"]["has_markee"] = true;
+
 		(*findings)["properties"]["direct_callee_name"] = DCName;
 		(*findings)["properties"]["isVariadic"] = DC->isVariadic();
 		(*findings)["properties"]["num_params"] = DC->getNumParams();

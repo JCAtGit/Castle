@@ -86,8 +86,8 @@ class CmdTasker{
 	void startEvaluationProcesses(){
 		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
 		processFile();
-		cout << "Starting eval" << "\n";
 		CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
+		cout << "Starting eval" << "\n";
 		CAEvaluator.startEval();
 		cout << "Saving results to json" << "\n";
 		saveJsonToFile(outputPath.string() + "_findings.json", findings);
