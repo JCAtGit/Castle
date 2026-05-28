@@ -1,0 +1,11 @@
+build/
+.clangd
+.clang-format
+.project
+.cproject
+.vscode
+.settings
+.vs
+out/
+CMakeFiles/
+CMakeCache.txt

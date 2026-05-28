@@ -1,0 +1,77 @@
+{
+	"targets":[
+		{
+			"name":"example",
+			"tgtDir":"example",
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"static_options":[],
+			"outputFlag":"-o",
+			"redirectNull": true,
+			"active":false
+		},
+		{
+			"name":"csmith_mage",
+			"tgtDir":"/home/user/Desktop/CASTLE/CodebaseScaffolder/csmith/",
+			"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/Mage",
+			"run_bin_as_shell":false,
+			"static_pre_flags":[],
+			"static_options":[],
+			"outputFlag":"-o",
+			"redirectNull": true,
+			"active":false
+		},
+		{
+			"name":"csmith_mage_clangAST",
+			"tgtDir":"/home/user/Desktop/CASTLE/InstrumentationScaffolder/csmith_mage/",
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"static_pre_flags":[],
+			"static_options":[
+				{"-fno-color-diagnostics":""},{"-Xclang":""},{"-ast-dump":""},{"-fsyntax-only":""},{"-ferror-limit=1":""}
+			],
+			"outputFlag":">",
+			"redirectNull": false,
+			"active":false
+		},
+		{
+			"name":"csmith_mage_clang_ghidra_clangAST",
+			"tgtDir":"/home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_ghidra/",
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"static_pre_flags":[
+				{"-xc++":""}
+			],
+			"static_options":[
+				{"-fno-color-diagnostics":""},{"-Xclang":""}, {"-ast-dump":""},{"-fsyntax-only":""},{"-ferror-limit=1":""}
+			],
+			"outputFlag":">",
+			"redirectNull": false,
+			"active":true
+		},
+		{
+			"name":"csmith_mage_clang_ghidra_clangPreprocessor",
+			"tgtDir":"/home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_ghidra/",
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"static_options":[
+				{"-E":""}
+			],
+			"outputFlag":"-o",
+			"redirectNull": false,
+			"active":false
+		},
+		{
+			"name":"csmith_mage_clang_retdec_clangAST",
+			"tgtDir":"/home/user/Desktop/CASTLE/DeComScaffolder/csmith_mage_clang_retdec/",
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"static_options":[
+				{"-w":""},{"-fno-color-diagnostics":""},{"-Xclang":""},{"-ast-dump":""},{"-fsyntax-only":""}
+			],
+			"outputFlag":">",
+			"redirectNull": false,
+			"active":false
+		}
+	]
+}

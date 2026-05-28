@@ -1,0 +1,10 @@
+{
+	"timestamp":0,
+	"version":0,
+	"outputDir":"/home/user/Desktop/CASTLE/EvalScaffolder/",
+	"update_metadata": false,
+	"save_on_exit":false,
+	"dry_run":false,
+	"backup_before_save":false,
+	"markerFormatsPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/instrumentation-pipeline/instrumentation-config/formats.json"
+}

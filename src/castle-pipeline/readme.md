@@ -1,0 +1,2 @@
+Each scaffolder iterates over the entries in the tgt dir en unleashes the specified tool in binPath on the entry.
+Whether this entry is a file or folder, is something the tool should handle on its own.

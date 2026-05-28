@@ -1,0 +1,13 @@
+{
+	"SomeFilePath0":{
+		"MarkerID0":{
+			"oracleHasParentMarker, ignores main":false,
+			"oracleHasPrevSiblingMarker":false,
+			"oracleHasNextSiblingMarker":false,
+			
+			"decomHasMatchingParentMarker":false,
+			"decomHasMatchingAdjacentSiblingMarkerNodes":false,
+			"decomHasMatchingAdjacentSiblingMarkerNodesOrder":false
+		}
+	}
+}

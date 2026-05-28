@@ -1,0 +1,31 @@
+{
+	"targets":[
+		{
+			"name":"example",
+			"tgtDir":"example",
+			"optional":{},
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"outputFlag":"-o",
+			"active":false
+		},
+		{
+			"name":"csmith_clang",
+			"tgtDir":"/home/user/Desktop/CASTLE/CodeScaffolder/csmith",
+			"optional":{},
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"outputFlag":"-o",
+			"active":false
+		},
+		{
+			"name":"csmith_mage_clang",
+			"tgtDir":"/home/user/Desktop/CASTLE/InstrumentationScaffolder/csmith_mage/",
+			"optional":{},
+			"binPath":"/usr/bin/clang",
+			"run_bin_as_shell":false,
+			"outputFlag":"-o",
+			"active":true
+		}
+	]
+}
