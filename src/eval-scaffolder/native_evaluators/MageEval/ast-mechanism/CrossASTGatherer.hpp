@@ -119,10 +119,10 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 
 		for(auto& [markerID, markerCE]: oracleMarkerMap){
 			if(decomMarkerMap.find(markerID) == decomMarkerMap.end()){
-				cout << "ID:" << markerID << " missing" << endl; 
+//				cout << "ID:" << markerID << " missing" << endl; 
 				continue; // maybe do something else too
 			}	
-			cout << "ID:" << markerID << " present" << endl; 
+//			cout << "ID:" << markerID << " present" << endl; 
 						
 			auto MCEOracle = markerCE;
 			auto MCEOracleParent = oracleMarkerParentMap.at(markerID);
@@ -136,22 +136,22 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			auto MCEDecomSibIndex = findNodeSiblingIndex(MCEDecomSiblings, DynTypedNode::create(*MCEDecom));
 			auto MCEDecomMarkee = getNextSiblingFromList(MCEDecomSiblings, MCEDecomSibIndex);
 	
-			if(MCEOracleMarkee->get<Stmt>() && MCEDecomMarkee->get<Stmt>()){
-				Stmt* s1 = const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>());
-				Stmt* s2 = const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>());
-
-				auto result = sec.IsEquivalent(s1, s2);
-				llvm::outs() << "== result stmt:" << result << "|" << MCEOracleMarkee->getNodeKind() << " - " << MCEDecomMarkee->getNodeKind() <<  '\n';
-			} else if(MCEOracleMarkee->get<Decl>() && MCEDecomMarkee->get<Decl>()){
-				cout << "== result decl:" << endl;
-				Decl* d1 = const_cast<Decl*>(MCEOracleMarkee->get<Decl>());
-				Decl* d2 = const_cast<Decl*>(MCEDecomMarkee->get<Decl>());
-
-				auto result = sec.IsEquivalent(d1, d2);
-				cout << "== result:" << result << endl;
-			} else {
-				cout << "== result else:" << endl;
-			}
+//			if(MCEOracleMarkee->get<Stmt>() && MCEDecomMarkee->get<Stmt>()){
+//				Stmt* s1 = const_cast<Stmt*>(MCEOracleMarkee->get<Stmt>());
+//				Stmt* s2 = const_cast<Stmt*>(MCEDecomMarkee->get<Stmt>());
+//
+//				auto result = sec.IsEquivalent(s1, s2);
+//				llvm::outs() << "== result stmt:" << result << "|" << MCEOracleMarkee->getNodeKind() << " - " << MCEDecomMarkee->getNodeKind() <<  '\n';
+//			} else if(MCEOracleMarkee->get<Decl>() && MCEDecomMarkee->get<Decl>()){
+//				cout << "== result decl:" << endl;
+//				Decl* d1 = const_cast<Decl*>(MCEOracleMarkee->get<Decl>());
+//				Decl* d2 = const_cast<Decl*>(MCEDecomMarkee->get<Decl>());
+//
+//				auto result = sec.IsEquivalent(d1, d2);
+//				cout << "== result:" << result << endl;
+//			} else {
+//				cout << "== result else:" << endl;
+//			}
 			
 			string makerIDString = std::to_string(markerID);
 			findings[makerIDString]["oracle"]["ASTNode"] = MCEOracleMarkee->getNodeKind().asStringRef();
@@ -291,7 +291,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 
 	bool recoveryExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<RecoveryExpr>(node);
-		(*findings)["properties"]["has_markee"] = false;
+		(*findings)["properties"]["has_markee"] = true;
+		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
 
 		recordTypeInfo(cast_node->getType(), (*findings)["properties"]["types"]);
 		for(auto reChild:cast_node->children()){
@@ -306,6 +307,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	// voor FunctionDecl aparte entries maken op basis van CallExpr
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
+		(*findings)["properties"]["has_markee"] = false;
+
 		(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
 		(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
 		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
@@ -313,13 +316,13 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		auto DC = cast_node->getDirectCallee();
 		if(!DC){
 			(*findings)["properties"]["has_direct_callee"] = false;
+			// TODO: what if DC is null, then the eval will produce errors currently
 			return false;
 		}
 		(*findings)["properties"]["has_direct_callee"] = true;
 		
 		auto DCName = DC->getNameInfo().getName().getAsString();
 		if(DCName == markerFormat["name"].get<string>()){
-			(*findings)["properties"]["has_markee"] = false;
 			return false;
 		}
 		(*findings)["properties"]["has_markee"] = true;
