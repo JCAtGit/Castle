@@ -70,11 +70,23 @@ optional<DynTypedNode> findPrevSiblingCall(const llvm::SmallVectorImpl<DynTypedN
     return std::nullopt;
 }
 
-void recordTypeInfo(const QualType& T, json& storage){
+//void recordCTypeInfo(const Type& T, json& storage){
+//	json paramTypeInfo;
+//	paramTypeInfo["type"] = T.getCanonicalType().getAsString();
+//	paramTypeInfo["is_const"] = T.isConstQualified();
+//	paramTypeInfo["is_pointer"] = T->isPointerType();
+//	storage.push_back(
+//		paramTypeInfo
+//	);	
+//}
+
+void recordQTypeInfo(const QualType& T, json& storage){
 	json paramTypeInfo;
-	paramTypeInfo["type"] = T.getAsString();
-	paramTypeInfo["is_const"] = T.isConstQualified();
-	paramTypeInfo["is_pointer"] = T->isPointerType();
+	// Calling getAsString will also show dev defined types.
+	auto CT = T.getCanonicalType();
+	paramTypeInfo["type"] = CT.getAsString();
+	paramTypeInfo["is_const"] = CT.isConstQualified();
+	paramTypeInfo["is_pointer"] = CT->isPointerType();
 	storage.push_back(
 		paramTypeInfo
 	);	

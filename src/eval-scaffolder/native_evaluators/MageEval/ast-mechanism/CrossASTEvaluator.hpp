@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "clang/AST/ASTStructuralEquivalence.h"
-
 #include "../ast-mechanism/ast-helper.hpp"
 
 using namespace nlohmann;
@@ -36,7 +35,6 @@ class CrossASTEvaluator{
 		{"WhileStmt", &CrossASTEvaluator::processWhileStmt},
 		{"DoStmt", &CrossASTEvaluator::processDoStmt},
 		{"BinaryOperator", &CrossASTEvaluator::processBinaryOperator}
-//		{"VarDecl", &CrossASTEvaluator::processVarDecl}
 	};
 	
 	void startEval(){
@@ -84,29 +82,33 @@ class CrossASTEvaluator{
 		
 		if(markerFindingsResult["recovered_construct"]){
 			if(findingsDecom["properties"]["has_direct_callee"]){
-//				markerFindingsResult["name_preserved"] = (findingsOracle["properties"]["direct_callee_name"] == findingsDecom["properties"]["direct_callee_name"]);
+				markerFindingsResult["name_preserved"] = (findingsOracle["properties"]["direct_callee_name"] == findingsDecom["properties"]["direct_callee_name"]);
 				markerFindingsResult["parity_params_count"] = (findingsOracle["properties"]["num_params"] == findingsDecom["properties"]["num_params"]);
 				sort(findingsOracle["properties"]["param_types"].begin(),findingsOracle["properties"]["param_types"].end());
 				sort(findingsDecom["properties"]["param_types"].begin(),findingsDecom["properties"]["param_types"].end());
 				markerFindingsResult["parity_param_types"] = findingsOracle["properties"]["param_types"] == findingsDecom["properties"]["param_types"];
 				markerFindingsResult["parity_has_direct_callee"] = findingsOracle["properties"]["has_direct_callee"] == findingsDecom["properties"]["has_direct_callee"];
+			} else {
+				markerFindingsResult["name_preserved"] = false;
+				markerFindingsResult["parity_params_count"] = false;
+				markerFindingsResult["parity_param_types"] = false;
 			}
-			// TODO: type check kan nog fijndradiger
+			// TODO: type check kan misschien nog fijndradiger,
+			
 			markerFindingsResult["parity_args_count"] = (findingsOracle["properties"]["num_args"] == findingsDecom["properties"]["num_args"]);
 			sort(findingsOracle["properties"]["arg_types"].begin(),findingsOracle["properties"]["arg_types"].end());
 			sort(findingsDecom["properties"]["arg_types"].begin(),findingsDecom["properties"]["arg_types"].end());
 			markerFindingsResult["parity_arg_types"] = findingsOracle["properties"]["arg_types"] == findingsDecom["properties"]["arg_types"];
 
-			markerFindingsResult["parity_variadicity"] = (findingsOracle["properties"]["isVariadic"] == findingsDecom["properties"]["isVariadic"]);
+			markerFindingsResult["parity_variadicity"] = (findingsOracle["properties"]["is_variadic"] == findingsDecom["properties"]["is_variadic"]);
 			markerFindingsResult["parity_side_effects"] = (findingsOracle["properties"]["has_side_effects"] == findingsDecom["properties"]["has_side_effects"]);
-			markerFindingsResult["parity_direct_callee"] = (findingsOracle["properties"]["has_direct_callee"] == findingsDecom["properties"]["has_direct_callee"]);
+			markerFindingsResult["parity_has_direct_callee"] = (findingsOracle["properties"]["has_direct_callee"] == findingsDecom["properties"]["has_direct_callee"]);
 			
-			markerFindingsResult["parity_params_count"] = false;
-			markerFindingsResult["parity_param_types"] = false;
-			
-//			return false;
+			findings_eval[markerID] = markerFindingsResult;
+			return false;
 		}
 		// TODO, direct callee is niet vanzelfsprekend maar args kunnen nog afgeleid worden
+		markerFindingsResult["name_preserved"] = false;
 		markerFindingsResult["parity_params_count"] = false;
 		markerFindingsResult["parity_param_types"] = false;
 		markerFindingsResult["parity_args_count"] = false;
@@ -141,28 +143,16 @@ class CrossASTEvaluator{
 		return false;
 
 	}
-	
-	bool processVarDecl(const string &markerID, json &findingsOracle,json &findingsDecom){
-		json markerFindingsResult = json::object();
-		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
-		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
-		
-		if(markerFindingsResult["recovered_construct"]){
-			
-		}
 
-		
-		findings_eval[markerID] = markerFindingsResult;
-		return false;
-	}
-	
 	bool processIfStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
 		json markerFindingsResult = json::object();
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 		
 		if(markerFindingsResult["recovered_construct"]){
-				
+			markerFindingsResult["parity_cond_stmt_class"] = findingsOracle["properties"]["cond_stmt_class"] == findingsDecom["properties"]["cond_stmt_class"];
+		} else {
+			markerFindingsResult["parity_cond_stmt_class"] = false;
 		}
 		
 		findings_eval[markerID] = markerFindingsResult;
@@ -178,6 +168,8 @@ class CrossASTEvaluator{
 		if(markerFindingsResult["recovered_construct"]){
 			markerFindingsResult["parity_init_is_expr"] = findingsOracle["properties"]["init_is_expr"] == findingsDecom["properties"]["init_is_expr"];
 			
+		} else {
+					
 		}
 
 		findings_eval[markerID] = markerFindingsResult;
