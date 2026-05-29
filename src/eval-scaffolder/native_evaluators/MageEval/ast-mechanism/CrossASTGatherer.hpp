@@ -335,11 +335,11 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		(*findings)["properties"]["args"] = json::array();
 
         for (unsigned i = 0; i < DC->getNumParams(); ++i) {
-			recordTypeInfo(DC->getParamDecl(i)->getType(), (*findings)["properties"]["params"]);
+			recordTypeInfo(DC->getParamDecl(i)->getType(), (*findings)["properties"]["param_types"]);
         }
 		
 		for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
-			recordTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["args"]);
+			recordTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
 		}
 		return false;
 	}
@@ -358,7 +358,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 						auto cast_node = llvm::cast<Expr>(node);
 						(*findings)["properties"]["init_contains_errors"] = cast_node->containsErrors();
 						recordTypeInfo(cast_node->getType(), (*findings)["properties"]["init_expr_types"]);
-					}			
+					}
 				break;
 				case Stmt::DeclStmtClass:{
 					(*findings)["properties"]["init_is_expr"] = false;

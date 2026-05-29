@@ -82,24 +82,38 @@ class CrossASTEvaluator{
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 		
-		
-		// TODO
 		if(markerFindingsResult["recovered_construct"]){
 			if(findingsDecom["properties"]["has_direct_callee"]){
 //				markerFindingsResult["name_preserved"] = (findingsOracle["properties"]["direct_callee_name"] == findingsDecom["properties"]["direct_callee_name"]);
 				markerFindingsResult["parity_params_count"] = (findingsOracle["properties"]["num_params"] == findingsDecom["properties"]["num_params"]);
-				markerFindingsResult["parity_args_count"] = (findingsOracle["properties"]["num_args"] == findingsDecom["properties"]["num_args"]);
-				markerFindingsResult["parity_variadicity"] = (findingsOracle["properties"]["isVariadic"] == findingsDecom["properties"]["isVariadic"]);
-				markerFindingsResult["parity_side_effects"] = false;
-
-				return false;
+				sort(findingsOracle["properties"]["param_types"].begin(),findingsOracle["properties"]["param_types"].end());
+				sort(findingsDecom["properties"]["param_types"].begin(),findingsDecom["properties"]["param_types"].end());
+				markerFindingsResult["parity_param_types"] = findingsOracle["properties"]["param_types"] == findingsDecom["properties"]["param_types"];
+				markerFindingsResult["parity_has_direct_callee"] = findingsOracle["properties"]["has_direct_callee"] == findingsDecom["properties"]["has_direct_callee"];
 			}
+			// TODO: type check kan nog fijndradiger
+			markerFindingsResult["parity_args_count"] = (findingsOracle["properties"]["num_args"] == findingsDecom["properties"]["num_args"]);
+			sort(findingsOracle["properties"]["arg_types"].begin(),findingsOracle["properties"]["arg_types"].end());
+			sort(findingsDecom["properties"]["arg_types"].begin(),findingsDecom["properties"]["arg_types"].end());
+			markerFindingsResult["parity_arg_types"] = findingsOracle["properties"]["arg_types"] == findingsDecom["properties"]["arg_types"];
+
+			markerFindingsResult["parity_variadicity"] = (findingsOracle["properties"]["isVariadic"] == findingsDecom["properties"]["isVariadic"]);
+			markerFindingsResult["parity_side_effects"] = (findingsOracle["properties"]["has_side_effects"] == findingsDecom["properties"]["has_side_effects"]);
+			markerFindingsResult["parity_direct_callee"] = (findingsOracle["properties"]["has_direct_callee"] == findingsDecom["properties"]["has_direct_callee"]);
+			
+			markerFindingsResult["parity_params_count"] = false;
+			markerFindingsResult["parity_param_types"] = false;
+			
+//			return false;
 		}
-		
+		// TODO, direct callee is niet vanzelfsprekend maar args kunnen nog afgeleid worden
 		markerFindingsResult["parity_params_count"] = false;
+		markerFindingsResult["parity_param_types"] = false;
 		markerFindingsResult["parity_args_count"] = false;
+		markerFindingsResult["parity_arg_types"] = false;
 		markerFindingsResult["parity_variadicity"] = false;
 		markerFindingsResult["parity_side_effects"] = false;
+		markerFindingsResult["parity_has_direct_callee"] = false;
 
 		findings_eval[markerID] = markerFindingsResult;
 		return false;
@@ -109,6 +123,19 @@ class CrossASTEvaluator{
 		json markerFindingsResult = json::object();
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
+		
+		if(markerFindingsResult["recovered_construct"]){
+			markerFindingsResult["parity_single_decl"] = (findingsOracle["properties"]["single_decl"] == findingsDecom["properties"]["single_decl"]);
+			
+			sort(findingsOracle["properties"]["init_types"].begin(), findingsOracle["properties"]["init_types"].end());
+			sort(findingsDecom["properties"]["init_types"].begin(), findingsDecom["properties"]["init_types"].end());
+
+			markerFindingsResult["parity_init_types"] = findingsOracle["properties"]["init_types"] == findingsDecom["properties"]["init_types"];
+			return false;
+		}
+		
+		markerFindingsResult["parity_single_decl"] = false;
+		markerFindingsResult["parity_init_types"] = false;
 		
 		findings_eval[markerID] = markerFindingsResult;
 		return false;
@@ -135,7 +162,7 @@ class CrossASTEvaluator{
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 		
 		if(markerFindingsResult["recovered_construct"]){
-					
+				
 		}
 		
 		findings_eval[markerID] = markerFindingsResult;
@@ -149,7 +176,8 @@ class CrossASTEvaluator{
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 
 		if(markerFindingsResult["recovered_construct"]){
-					
+			markerFindingsResult["parity_init_is_expr"] = findingsOracle["properties"]["init_is_expr"] == findingsDecom["properties"]["init_is_expr"];
+			
 		}
 
 		findings_eval[markerID] = markerFindingsResult;
