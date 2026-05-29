@@ -406,7 +406,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		auto condVar = cast_node->getConditionVariable();
 		if(condVar){
 			(*findings)["properties"]["has_cond_var"] = true;
-			(*findings)["properties"]["condvar_stmt_class"] = condVar->getDeclKindName();
+			(*findings)["properties"]["cond_var_stmt_class"] = condVar->getDeclKindName();
 			recordQTypeInfo(condVar->getType(), (*findings)["properties"]["cond_var_types"]);
 		} else {
 			(*findings)["properties"]["has_cond_var"] = false;
