@@ -77,8 +77,12 @@ class CmdTasker{
 		void processDir(filesystem::path dirPath, json& it_config_data){
 			string command = it_config_data["binPath"].get<string>() + " " + dirPath.string();
 			if(!it_config_data["outputFlag"].get<string>().empty()){
-				command = command + " " + it_config_data["outputFlag"].get<string>() + " " + is_configData["outputDir"].get<string>();
+				command += " " + 
+				it_config_data["outputFlag"].get<string>() 	+ " " + 
+				is_configData["outputDir"].get<string>()	+
+				it_config_data["name"].get<string>() 		+ "/";
 			}
+			std::cout << command << "\n";
 			auto status = std::system(command.c_str());
 		}
 		

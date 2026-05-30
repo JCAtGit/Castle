@@ -32,6 +32,18 @@
 			"static_options":[{"--on-copy":""}],
 			"outputFlag":"-o",
 			"redirectNull": false,
+			"active":false,
+			"run_per_file":false		
+		},
+		{
+			"name":"test_mage",
+			"tgtDir":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/test-examples/constructs",
+			"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/Mage",
+			"run_bin_as_shell":false,
+			"static_pre_flags":[],
+			"static_options":[{"--on-copy":""}],
+			"outputFlag":"-o",
+			"redirectNull": false,
 			"active":true,
 			"run_per_file":false		
 		},
