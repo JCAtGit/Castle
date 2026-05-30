@@ -33,7 +33,7 @@ class CmdTasker{
 		cout << "Importing JSON configs.\n";
 	   	ifstream markerFormatsFile(mrkrFormatsPath);
 	   	if (!markerFormatsFile.is_open()) {
-	    	cerr << "Error: Could not open required config files, see the source json folder for details." << endl;
+	    	cerr << "Error: Could not open required config files, see the source json folder for details." << "\n";
 	   		return;
 	   	}
 	   	try {
@@ -41,7 +41,7 @@ class CmdTasker{
 //			cout << "JSON: " << markerFormats.dump(4) << endl;
 			markerFormatCfg = markerFormats["0"];
 	   	} catch (const json::parse_error& e) {
-	    	cerr << "Parse error: " << e.what() << endl;
+	    	cerr << "Parse error: " << e.what() << "\n";
 	    	return;
 	  	}
 	}
@@ -54,14 +54,14 @@ class CmdTasker{
 			if(taskQuantifier == 1){
 				for (const auto& entry : filesystem::directory_iterator(inputPath)) {
 					if (entry.path().extension() == ".c") {
-						cout << "Enqueued: " << entry.path() << endl;
+						cout << "Enqueued: " << entry.path() << "\n";
 						pathQueue.push_back(entry.path());
 					}
 			    }
 			} else {
 				for (const auto& entry : filesystem::recursive_directory_iterator(inputPath)) {
 					if (entry.path().extension() == ".c") {
-						cout << "Enqueued: " << entry.path() << endl;
+						cout << "Enqueued: " << entry.path() << "\n";
 						pathQueue.push_back(entry.path());
 					}
 			    }
@@ -76,20 +76,21 @@ class CmdTasker{
 	 */
 	void preprocessQueueItem(filesystem::path path2process, filesystem::path outputResultPath){
 		//"clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + "example0.c" + ">" + "example0_formatted.c";
-		std::string command = "clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + path2process.string() + " > " + outputResultPath.string();
-//		cout << command << endl;
+		
+		string command = "clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + path2process.string(); // als same dir input gefixt is dan deze weer aanpassen?
+//		cout << command << "\n";
 	    int status = std::system(command.c_str());
-//	    if (status == 0) {
-//			cout << "clang-format performed for:" + path2process.string() << endl;
-//	    } else {
-//			cout << "clang-format failed for:" + path2process.string() << endl;
-//	    }
+	    if (status == 0) {
+			cout << "clang-format performed for:" + path2process.string() << "\n";
+	    } else {
+			cout << "clang-format failed for:" + path2process.string() << "\n";
+	    }
 //				runMacroExpander(path2process, cfg);
 	}
 	
 	void processSingle(){
 		cout 	<< "Process Single Start. \n"				
-				<< "pathQueue items: " << pathQueue.size() << endl;
+				<< "pathQueue items: " << pathQueue.size() << "\n";
 				
 		preprocessQueueItem(inputPath, outputPath);
 		auto codeString = file2string(outputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
@@ -100,10 +101,10 @@ class CmdTasker{
 	
 	void processQueue(){
 		cout 	<< "Process Queue Start. \n"				
-				<< "pathQueue items: " << pathQueue.size() << endl;
+				<< "pathQueue items: " << pathQueue.size() << "\n";
 		
 		for(const auto& path2process : pathQueue){
-			cout << "Starting on " << path2process << endl;
+			cout << "Starting on " << path2process << "\n";
 			filesystem::path outPath = outputDir / rel_outputPath(inputDir, path2process);
 	
 			//Doe dit voordat AST unit ptr is aangemaakt. Prepare file for marking, this includes fixing dangling statements
@@ -123,7 +124,7 @@ class CmdTasker{
 	 * 	TODO: Change constant extraction mechanism
 	 */
 	void createMarkerDefinitionHeaderFile(){
-		cout << "Start instrumentation header file creation." << endl;
+		cout << "Start instrumentation header file creation." << "\n";
 		string content = markerFormatCfg["headerString"].get<string>();
 		string outFile = (outputDir / (markerFormatCfg["definitionFileName"].get<string>() + ".h")).string();
 		// Open the file; if it exists, it will be overwritten.
@@ -134,7 +135,7 @@ class CmdTasker{
 	    // Write the string to the file and optionally flush (the destructor will close the file automatically).
 	    out << content;
 	    out.flush();
-		cout << "Instrumentation header file written to: " << outFile << endl;
+		cout << "Instrumentation header file written to: " << outFile << "\n";
 	}
 	
 	public:
@@ -155,11 +156,11 @@ class CmdTasker{
 		cout << "Preparing paths. \n";
 		if(onCopy && (outputPath != inputPath)){
 			cout << "Performing onCopy procedure. \n";
-			std::cout << "inputPath: " << inputPath << "\n";
-			std::cout << "outputPath: " << outputPath << "\n";
+			cout << "inputPath: " << inputPath << "\n";
+			cout << "outputPath: " << outputPath << "\n";
 			filesystem::remove_all(outputPath);
-			filesystem::copy(inputPath, outputPath);
-			inputPath = outputPath;
+			std::filesystem::copy(inputPath, outputPath, std::filesystem::copy_options::recursive);
+//			inputPath = outputPath;
 		}	
 		if(filesystem::is_regular_file(inputPath)){
 			inputDir = inputPath.has_parent_path() ? inputPath.parent_path() : ".";
@@ -168,6 +169,7 @@ class CmdTasker{
 			inputDir = inputPath;
 			outputDir = outputPath;
 		} else {
+			cout << "Unknown pathtype \n";
 			return false;
 		}
 		return true;
