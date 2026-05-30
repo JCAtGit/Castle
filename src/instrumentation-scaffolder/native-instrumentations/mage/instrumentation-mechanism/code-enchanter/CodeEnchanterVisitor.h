@@ -55,8 +55,6 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		
 		string synthesizeMarkerDependencyString(filesystem::path inputPath, filesystem::path inputDir){
 			string relativeTrail = getDescend2BaseDirString(rel_outputPath(inputDir, inputPath));
-			cout << "SMDS= " << inputPath.string() << " : " << inputDir.string() << " : " << relativeTrail << "\n";
-
 			return headerInclusion + "\""+ relativeTrail + definitionFilename + ".h" + "\"\n";
 		}
 		

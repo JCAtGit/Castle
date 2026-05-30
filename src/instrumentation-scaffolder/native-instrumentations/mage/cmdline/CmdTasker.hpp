@@ -77,13 +77,13 @@ class CmdTasker{
 	void preprocessQueueItem(filesystem::path path2process, filesystem::path outputResultPath){
 		//"clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + "example0.c" + ">" + "example0_formatted.c";
 		std::string command = "clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + path2process.string() + " > " + outputResultPath.string();
-		cout << command << endl;
+//		cout << command << endl;
 	    int status = std::system(command.c_str());
-	    if (status == 0) {
-			cout << "clang-format performed for:" + path2process.string() << endl;
-	    } else {
-			cout << "clang-format failed for:" + path2process.string() << endl;
-	    }
+//	    if (status == 0) {
+//			cout << "clang-format performed for:" + path2process.string() << endl;
+//	    } else {
+//			cout << "clang-format failed for:" + path2process.string() << endl;
+//	    }
 //				runMacroExpander(path2process, cfg);
 	}
 	
@@ -93,7 +93,7 @@ class CmdTasker{
 				
 		preprocessQueueItem(inputPath, outputPath);
 		auto codeString = file2string(outputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
-		cout << "Enchanting " << inputPath.string() << endl;
+//		cout << "Enchanting " << inputPath.string() << endl;
 		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
 		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputPath.string());
 	}
@@ -111,7 +111,7 @@ class CmdTasker{
 			auto codeString = file2string(path2process);
 	
 			// TODO?: extract selection of action
-			cout << "Enchanting " << path2process.string() << endl;
+//			cout << "Enchanting " << path2process.string() << endl;
 			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(path2process, inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
 			clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, path2process.string());
 		}

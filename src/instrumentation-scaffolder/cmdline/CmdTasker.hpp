@@ -108,7 +108,7 @@ class CmdTasker{
 			filesystem::create_directories((is_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			cout << toolcfg["name"] << "\n";
 
-			if(toolcfg["run_per_file"]){
+			if(toolcfg["run_per_file"].get<bool>()){
 				for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
 					processPath(entry, toolcfg);
 				}
