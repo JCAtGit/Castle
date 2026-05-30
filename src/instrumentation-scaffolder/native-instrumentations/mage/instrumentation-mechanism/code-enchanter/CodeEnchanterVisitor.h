@@ -30,7 +30,6 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		vector<RecordedPPConstruct> recordedPPEventsEvents;
 		CompilerInstance& CI;
 		
-		Sema& sema;
 		SourceManager& SM;
 		ASTContext& context;
 
@@ -56,6 +55,8 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		
 		string synthesizeMarkerDependencyString(filesystem::path inputPath, filesystem::path inputDir){
 			string relativeTrail = getDescend2BaseDirString(rel_outputPath(inputDir, inputPath));
+			cout << "SMDS= " << inputPath.string() << " : " << inputDir.string() << " : " << relativeTrail << "\n";
+
 			return headerInclusion + "\""+ relativeTrail + definitionFilename + ".h" + "\"\n";
 		}
 		
@@ -64,7 +65,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 			CompilerInstance& ci, 	Rewriter& rewriter, 	syntax::TokenBuffer tokenBuffer, 		vector<RecordedPPConstruct>& recordedPPEventsEvents, 	json markerFormatCfg):
 			CI(ci),					rewriter(rewriter),		tokenBuffer(std::move(tokenBuffer)), 	recordedPPEventsEvents(recordedPPEventsEvents), 		markerFormatCfg(markerFormatCfg),
 			
-			context(ci.getASTContext()), sema(ci.getSema()), SM(ci.getASTContext().getSourceManager()){
+			context(ci.getASTContext()), SM(ci.getASTContext().getSourceManager()){
 				markerName 			= 	markerFormatCfg["name"].get<string>();
 				markerKeyword 		= 	markerFormatCfg["keyword"].get<string>();
 				markerType 			= 	markerFormatCfg["functionType"].get<string>();

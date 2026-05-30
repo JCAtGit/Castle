@@ -58,22 +58,30 @@ class CmdTasker{
 			}
 		}
 		
-		void processPath(filesystem::path filepath, json& it_config_data){
+		void processPath(filesystem::path filePath, json& it_config_data){
 			string command = it_config_data["binPath"].get<string>();
 			addStaticPreFlags(command, it_config_data);
-			command = command + " " + filepath.c_str() + " ";		// binPath
+			command = command + " " + filePath.c_str() + " ";		// binPath
 			addStaticFlags(command, it_config_data);
 			command += 	" " + 
 						it_config_data["outputFlag"].get<string>() 		+ " " + 							// outputPath
 						is_configData["outputDir"].get<string>() 		+ 									
 						it_config_data["name"].get<string>() 			+ "/" +
-						filepath.filename().string();
+						filePath.filename().string();
 			if(it_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 			if(it_config_data["redirectNull"].get<bool>()){command = command + " > /dev/null 2>&1";}
 			std::cout << command << "\n";
 			auto status = std::system(command.c_str());
 		}
 
+		void processDir(filesystem::path dirPath, json& it_config_data){
+			string command = it_config_data["binPath"].get<string>() + " " + dirPath.string();
+			if(!it_config_data["outputFlag"].get<string>().empty()){
+				command = command + " " + it_config_data["outputFlag"].get<string>() + " " + is_configData["outputDir"].get<string>();
+			}
+			auto status = std::system(command.c_str());
+		}
+		
 		void saveJsonToFile(const std::string& path, const json& data) {
 		    std::ofstream file(path);
 		    if (!file.is_open()) {
@@ -90,12 +98,18 @@ class CmdTasker{
 	
 	void startInstrumentationProcesses(){
 		cout << "Starting instrumentation processes and outputting to " << is_configData["outputDir"] << "\n";
+		
 		for(auto& toolcfg:it_configData["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
-			cout << toolcfg["name"] << "\n";
 			filesystem::create_directories((is_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
-			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
-				processPath(entry, toolcfg);
+			cout << toolcfg["name"] << "\n";
+
+			if(toolcfg["run_per_file"]){
+				for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
+					processPath(entry, toolcfg);
+				}
+			} else {
+				processDir(toolcfg["tgtDir"], toolcfg);
 			}
 			toolcfg["timestamp"] = time(NULL);
 		}

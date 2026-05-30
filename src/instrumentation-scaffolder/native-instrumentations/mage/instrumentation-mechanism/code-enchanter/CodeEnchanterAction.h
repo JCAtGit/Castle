@@ -16,14 +16,15 @@ class CodeMarkerAction: public ASTFrontendAction {
 	private:
 		filesystem::path inputPath, 	inputDir;
 		filesystem::path outputPath, 	outputDir;
+		filesystem::path path2process;
 		json markerFormatCfg;	
 		clang::Rewriter rewriter;	
 		vector<RecordedPPConstruct> ppEvents; 
 		std::unique_ptr<syntax::TokenCollector> tokenCollector; 
 		
 	public:
-		CodeMarkerAction(filesystem::path inputPath, filesystem::path inputDir, filesystem::path outputPath,filesystem::path outputDir, json& markerFormatCfg): 
-			inputPath(inputPath), inputDir(inputDir), outputPath(outputPath), outputDir(outputDir), markerFormatCfg(markerFormatCfg) {}
+		CodeMarkerAction(filesystem::path path2process, filesystem::path inputPath, filesystem::path inputDir, filesystem::path outputPath,filesystem::path outputDir, json& markerFormatCfg): 
+			path2process(path2process), inputPath(inputPath), inputDir(inputDir), outputPath(outputPath), outputDir(outputDir), markerFormatCfg(markerFormatCfg) {}
 		
 		/**
 		 * 	Setup van onderdelen:
@@ -50,7 +51,7 @@ class CodeMarkerAction: public ASTFrontendAction {
 	        tokenBuffer.indexExpandedTokens();
 			
 			auto visitor = std::make_unique<CodeMarkerVisitor>(CI, rewriter, std::move(tokenBuffer), ppEvents, markerFormatCfg);
-			visitor->insertMarkerDependency(inputPath, inputDir);
+			visitor->insertMarkerDependency(path2process, inputDir);
 			visitor->TraverseDecl(CI.getASTContext().getTranslationUnitDecl());
 			if(filesystem::is_regular_file(inputPath)){
 				visitor->commitToSingleFile(inputPath, outputPath);

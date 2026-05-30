@@ -94,7 +94,7 @@ class CmdTasker{
 		preprocessQueueItem(inputPath, outputPath);
 		auto codeString = file2string(outputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
 		cout << "Enchanting " << inputPath.string() << endl;
-		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
+		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
 		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputPath.string());
 	}
 	
@@ -112,7 +112,7 @@ class CmdTasker{
 	
 			// TODO?: extract selection of action
 			cout << "Enchanting " << path2process.string() << endl;
-			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
+			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(path2process, inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
 			clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, path2process.string());
 		}
 	}
