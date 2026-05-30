@@ -7,7 +7,18 @@
 			"binPath":"/usr/bin/clang",
 			"run_bin_as_shell":false,
 			"outputFlag":"-o",
-			"active":false
+			"active":false,
+			"run_per_file":false
+		},
+		{
+			"name":"rufus_mage_clang",
+			"tgtDir":"/home/user/Desktop/CASTLE/InstrumentationScaffolder/rufus_mage/",
+			"optional":{},
+			"binPath":"/home/user/Desktop/CASTLE/BuildScaffolder/scripts/rufus_build.sh",
+			"run_bin_as_shell":true,
+			"outputFlag":"-o",
+			"active":true,
+			"run_per_file":false
 		},
 		{
 			"name":"csmith_clang",
@@ -16,7 +27,8 @@
 			"binPath":"/usr/bin/clang",
 			"run_bin_as_shell":false,
 			"outputFlag":"-o",
-			"active":false
+			"active":false,
+			"run_per_file":true
 		},
 		{
 			"name":"csmith_mage_clang",
@@ -25,7 +37,8 @@
 			"binPath":"/usr/bin/clang",
 			"run_bin_as_shell":false,
 			"outputFlag":"-o",
-			"active":true
+			"active":false,
+			"run_per_file":true
 		}
 	]
 }

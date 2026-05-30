@@ -8,7 +8,8 @@
 			"static_options":[],
 			"outputFlag":"-o",
 			"redirectNull": true,
-			"active":false
+			"active":false,
+			"run_per_file":false
 		},
 		{
 			"name":"csmith_mage",
@@ -19,7 +20,20 @@
 			"static_options":[],
 			"outputFlag":"-o",
 			"redirectNull": true,
-			"active":false
+			"active":false,
+			"run_per_file":true
+		},
+		{
+			"name":"rufus_mage",
+			"tgtDir":"/home/user/Desktop/CASTLE/CodebaseScaffolder/rufus/",
+			"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/Mage",
+			"run_bin_as_shell":false,
+			"static_pre_flags":[],
+			"static_options":[{"--on-copy":""}],
+			"outputFlag":"-o",
+			"redirectNull": false,
+			"active":true,
+			"run_per_file":false		
 		},
 		{
 			"name":"csmith_mage_clangAST",
@@ -32,7 +46,8 @@
 			],
 			"outputFlag":">",
 			"redirectNull": false,
-			"active":false
+			"active":false,
+			"run_per_file":true
 		},
 		{
 			"name":"csmith_mage_clang_ghidra_clangAST",
@@ -47,7 +62,8 @@
 			],
 			"outputFlag":">",
 			"redirectNull": false,
-			"active":true
+			"active":false,
+			"run_per_file":true
 		},
 		{
 			"name":"csmith_mage_clang_ghidra_clangPreprocessor",
@@ -59,7 +75,8 @@
 			],
 			"outputFlag":"-o",
 			"redirectNull": false,
-			"active":false
+			"active":false,
+			"run_per_file":true
 		},
 		{
 			"name":"csmith_mage_clang_retdec_clangAST",
@@ -71,7 +88,8 @@
 			],
 			"outputFlag":">",
 			"redirectNull": false,
-			"active":false
+			"active":false,
+			"run_per_file":true
 		}
 	]
 }

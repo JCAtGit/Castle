@@ -269,7 +269,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 
 		if (!isa<Expr>(node)) {
 			auto cast_node = llvm::cast<Expr>(node);
-			(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
+//			(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
 		}
 		return false;
 	}
@@ -317,7 +317,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	bool recoveryExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<RecoveryExpr>(node);
 		(*findings)["properties"]["has_markee"] = true;
-		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
+//		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
 
 		recordQTypeInfo(cast_node->getType(), (*findings)["properties"]["types"]);
 		for(auto reChild:cast_node->children()){
@@ -379,22 +379,50 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			(*findings)["properties"]["init_stmt_class"] = forInitStmt->getStmtClassName();
 			switch(forInitStmt->getStmtClass()){
 				default: 
-					(*findings)["properties"]["init_is_expr"] = isa<Expr>(node);
-					if (isa<Expr>(node)) {
-						auto cast_node = llvm::cast<Expr>(node);
-						(*findings)["properties"]["init_contains_errors"] = cast_node->containsErrors();
+					if (isa<Expr>(forInitStmt)) {
+						auto cast_node = llvm::cast<Expr>(forInitStmt);
+//						(*findings)["properties"]["init_contains_errors"] = cast_node->containsErrors();
 						recordQTypeInfo(cast_node->getType(), (*findings)["properties"]["init_types"]);
+					} else {
+						// TODO: report to diagnostics
 					}
 				break;
 				case Stmt::DeclStmtClass:{
-					(*findings)["properties"]["init_is_expr"] = false;
 					(*findings)["properties"]["init_types"] = json::array();
 					auto forInitDeclStmt = llvm::cast<DeclStmt>(forInitStmt);
 					(*findings)["properties"]["init_single_decl"] = forInitDeclStmt->isSingleDecl();
 					auto forInitVarDecls = forInitDeclStmt->decls();
-					for(auto uncast_varDecl: forInitVarDecls){
-						auto cast_varDecl = llvm::cast<VarDecl>(uncast_varDecl);
-						recordQTypeInfo(cast_varDecl->getType(),(*findings)["properties"]["init_types"]);
+					for(auto uncast_decl: forInitVarDecls){
+						switch (uncast_decl->getKind()) {
+					        case clang::Decl::Var: {
+					            auto *VD = cast<clang::VarDecl>(uncast_decl);
+								recordQTypeInfo(VD->getType(), (*findings)["properties"]["init_types"]);
+					            break;
+					        }
+					        case clang::Decl::Function: {
+					            auto *FD = cast<clang::FunctionDecl>(uncast_decl);
+								recordQTypeInfo(FD->getType(), (*findings)["properties"]["init_types"]);
+					            break;
+					        }
+					        case clang::Decl::Typedef: {
+					            auto *TD = cast<clang::TypedefDecl>(uncast_decl);
+								recordQTypeInfo(TD->getUnderlyingType(), (*findings)["properties"]["init_types"]);
+					            break;
+					        }
+					        case clang::Decl::Record: {
+					            auto *RD = cast<clang::RecordDecl>(uncast_decl);
+								recordQTypeInfo(selectedAST->getTypeDeclType(RD), (*findings)["properties"]["init_types"]);
+					            break;
+					        }
+					        case clang::Decl::Enum: {
+					            auto *ED = cast<clang::EnumDecl>(uncast_decl);
+								recordQTypeInfo(selectedAST->getTypeDeclType(ED), (*findings)["properties"]["init_types"]);
+					            break;
+					        }
+					        default:
+					            // TODO: report to diagnostics
+					            break;
+					    	}
 					}
 					break;
 				}
@@ -416,7 +444,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		if(conditionExpr){
 			(*findings)["properties"]["has_cond_expr"] = true;
 			(*findings)["properties"]["cond_stmt_class"] = conditionExpr->getStmtClassName();
-			(*findings)["properties"]["cond_expr_has_errors"] = conditionExpr->containsErrors();
+//			(*findings)["properties"]["cond_expr_has_errors"] = conditionExpr->containsErrors();
 			recordQTypeInfo(conditionExpr->getType(), (*findings)["properties"]["cond_expr_types"]);
 		} else {
 			(*findings)["properties"]["has_cond_expr"] = false;
@@ -426,7 +454,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		if(incExpr){
 			(*findings)["properties"]["has_incr"] = true;
 			(*findings)["properties"]["incr_stmt_class"] = incExpr->getStmtClassName();
-			(*findings)["properties"]["incr_has_errors"] = conditionExpr->containsErrors();
+//			(*findings)["properties"]["incr_has_errors"] = conditionExpr->containsErrors();
 			recordQTypeInfo(incExpr->getType(), (*findings)["properties"]["incr_expr_types"]);
 		} else {
 			(*findings)["properties"]["has_incr"] = false;
@@ -449,7 +477,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		auto conditionExpr = cast_node->getCond();
 		if(conditionExpr){
 			(*findings)["properties"]["has_cond_expr"] = true;
-			(*findings)["properties"]["cond_expr_has_errors"] = conditionExpr->containsErrors();
+			(*findings)["properties"]["cond_stmt_class"] = conditionExpr->getStmtClassName();
+//			(*findings)["properties"]["cond_expr_has_errors"] = conditionExpr->containsErrors();
 			recordQTypeInfo(conditionExpr->getType(), (*findings)["properties"]["cond_expr_types"]);
 		} else {
 			(*findings)["properties"]["has_cond_expr"] = false;
@@ -460,10 +489,12 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	bool doStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<DoStmt>(node);
 		(*findings)["properties"]["has_markee"] = true;
-
+		
 		auto conditionExpr = cast_node->getCond();
 		if(conditionExpr){
 			(*findings)["properties"]["has_cond_expr"] = true;
+			(*findings)["properties"]["cond_stmt_class"] = conditionExpr->getStmtClassName();
+//			(*findings)["properties"]["cond_expr_has_errors"] = conditionExpr->containsErrors();
 			recordQTypeInfo(conditionExpr->getType(), (*findings)["properties"]["cond_expr_types"]);
 		} else {
 			(*findings)["properties"]["has_cond_expr"] = false;
@@ -490,19 +521,21 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	bool binaryOperatorRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<BinaryOperator>(node);
 		(*findings)["properties"]["has_markee"] = true;
+//		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
 
-		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
 		(*findings)["properties"]["operator"] = cast_node->getOpcodeStr();
 		(*findings)["properties"]["operator_opcode"] = cast_node->getOpcode();
 		recordQTypeInfo(cast_node->getType(), (*findings)["properties"]["operator_types"]);
 		
 		auto lhs_node =	cast_node->getLHS();
-		(*findings)["properties"]["LHS_contains_errors"] = lhs_node->containsErrors();
-		recordQTypeInfo(lhs_node->getType(), (*findings)["properties"]["LHS_types"]);
+		(*findings)["properties"]["lhs_stmt_class"] = lhs_node->getStmtClassName();
+//		(*findings)["properties"]["lhs_contains_errors"] = lhs_node->containsErrors();
+		recordQTypeInfo(lhs_node->getType(), (*findings)["properties"]["lhs_types"]);
 
 		auto rhs_node =	cast_node->getRHS();
-		(*findings)["properties"]["RHS_contains_errors"] = rhs_node->containsErrors();
-		recordQTypeInfo(rhs_node->getType(), (*findings)["properties"]["LHS_types"]);
+		(*findings)["properties"]["rhs_stmt_class"] = rhs_node->getStmtClassName();
+//		(*findings)["properties"]["rhs_contains_errors"] = rhs_node->containsErrors();
+		recordQTypeInfo(rhs_node->getType(), (*findings)["properties"]["rhs_types"]);
 
 		return false;
 	}

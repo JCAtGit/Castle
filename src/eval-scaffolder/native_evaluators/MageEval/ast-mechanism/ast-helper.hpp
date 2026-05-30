@@ -84,6 +84,7 @@ void recordQTypeInfo(const QualType& T, json& storage){
 	json paramTypeInfo;
 	// Calling getAsString will also show dev defined types.
 	auto CT = T.getCanonicalType();
+//	paramTypeInfo["type_class"] = CT->getTypeClassName();
 	paramTypeInfo["type"] = CT.getAsString();
 	paramTypeInfo["is_const"] = CT.isConstQualified();
 	paramTypeInfo["is_pointer"] = CT->isPointerType();

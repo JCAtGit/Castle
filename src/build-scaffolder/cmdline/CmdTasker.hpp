@@ -61,10 +61,18 @@ class CmdTasker{
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << "\n";
 			filesystem::create_directories((bs_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
-			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
-				if(entry.path().extension() == ".c"){
-					processPath(entry, toolcfg);
+			
+			if(toolcfg["run_per_file"].get<bool>()){
+				for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
+					if(entry.path().extension() == ".c"){
+						processPath(entry, toolcfg);
+					}
 				}
+			} else {
+				string command = toolcfg["binPath"].get<string>();
+				// TODO: add static flags
+				std::cout << command << "\n";
+				auto status = std::system(command.c_str());
 			}
 			toolcfg["timestamp"] = time(NULL);
 		}

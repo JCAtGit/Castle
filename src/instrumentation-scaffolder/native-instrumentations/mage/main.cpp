@@ -36,6 +36,7 @@ int main(int argc, char **argv) {
 	CmdTasker cmdTskr(inputPath, outputPath, mrkrFormatsPath, onCopy);
 	if(toggle){
 		// start instrumentation removal TODO
+		cout << "TODO: Toggle \n";
 	} else {
 		cmdTskr.insertInstrumentationEnhancement();
 	}

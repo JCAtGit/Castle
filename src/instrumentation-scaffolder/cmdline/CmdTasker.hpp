@@ -67,7 +67,7 @@ class CmdTasker{
 						it_config_data["outputFlag"].get<string>() 		+ " " + 							// outputPath
 						is_configData["outputDir"].get<string>() 		+ 									
 						it_config_data["name"].get<string>() 			+ "/" +
-						filepath.stem().c_str() 						+ ".c";
+						filepath.filename().string();
 			if(it_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 			if(it_config_data["redirectNull"].get<bool>()){command = command + " > /dev/null 2>&1";}
 			std::cout << command << "\n";
