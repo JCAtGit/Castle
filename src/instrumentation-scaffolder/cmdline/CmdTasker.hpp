@@ -76,12 +76,14 @@ class CmdTasker{
 
 		void processDir(filesystem::path dirPath, json& it_config_data){
 			string command = it_config_data["binPath"].get<string>() + " " + dirPath.string();
+			addStaticPreFlags(command, it_config_data);
 			if(!it_config_data["outputFlag"].get<string>().empty()){
 				command += " " + 
 				it_config_data["outputFlag"].get<string>() 	+ " " + 
 				is_configData["outputDir"].get<string>()	+
 				it_config_data["name"].get<string>() 		+ "/";
 			}
+			addStaticFlags(command, it_config_data);
 			std::cout << command << "\n";
 			auto status = std::system(command.c_str());
 		}
