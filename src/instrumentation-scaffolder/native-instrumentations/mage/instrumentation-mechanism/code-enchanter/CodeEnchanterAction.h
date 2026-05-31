@@ -18,27 +18,44 @@ class CodeMarkerAction: public ASTFrontendAction {
 		filesystem::path outputPath, 	outputDir;
 		filesystem::path path2process;
 		json markerFormatCfg;	
+		int& idCounter;
+		bool& nameEncodedMarkers;
+		
 		clang::Rewriter rewriter;	
 		vector<RecordedPPConstruct> ppEvents; 
-		std::unique_ptr<syntax::TokenCollector> tokenCollector; 
+		unique_ptr<syntax::TokenCollector> tokenCollector; 
 		
 	public:
-		CodeMarkerAction(filesystem::path path2process, filesystem::path inputPath, filesystem::path inputDir, filesystem::path outputPath,filesystem::path outputDir, json& markerFormatCfg): 
-			path2process(path2process), inputPath(inputPath), inputDir(inputDir), outputPath(outputPath), outputDir(outputDir), markerFormatCfg(markerFormatCfg) {}
+		CodeMarkerAction(
+			filesystem::path path2process, 
+			filesystem::path inputDir, filesystem::path outputPath,
+			filesystem::path outputDir, 
+			json& markerFormatCfg, 
+			int& idCounter,
+			bool& nameEncodedMarkers
+		): 
+			path2process(path2process), 
+			inputDir(inputDir), 
+			outputPath(outputPath), 
+			outputDir(outputDir), 
+			markerFormatCfg(markerFormatCfg), 
+			idCounter(idCounter),
+			nameEncodedMarkers(nameEncodedMarkers)
+			{}
 		
 		/**
 		 * 	Setup van onderdelen:
 		 * 	Aanmaak van de ASTConsumer, elk bestand krijgt een eigen instantie van de compiler mee die voor de verwerking zorgt.
 		 * 	etc.
 		 */
-		std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI, StringRef InFile) override {		
+		unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI, StringRef InFile) override {		
 			CI.getDiagnostics().setClient(new clang::IgnoringDiagConsumer(), true);
 			CI.getPreprocessor().addPPCallbacks(
-				std::make_unique<PPCallbacksRecorder>(ppEvents, CI.getSourceManager())
+				make_unique<PPCallbacksRecorder>(ppEvents, CI.getSourceManager())
 			);
 			rewriter.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
-			tokenCollector = std::make_unique<syntax::TokenCollector>(CI.getPreprocessor());						
-			return std::make_unique<ASTConsumer>();
+			tokenCollector = make_unique<syntax::TokenCollector>(CI.getPreprocessor());						
+			return make_unique<ASTConsumer>();
 		}
 	
 		/**
@@ -49,8 +66,15 @@ class CodeMarkerAction: public ASTFrontendAction {
 			CompilerInstance &CI = getCompilerInstance();
 	        syntax::TokenBuffer tokenBuffer = std::move(*tokenCollector).consume();
 	        tokenBuffer.indexExpandedTokens();
-			
-			auto visitor = std::make_unique<CodeMarkerVisitor>(CI, rewriter, std::move(tokenBuffer), ppEvents, markerFormatCfg);
+			auto visitor = std::make_unique<CodeMarkerVisitor>(
+				CI, 
+				rewriter, 
+				std::move(tokenBuffer), 
+				ppEvents, 
+				markerFormatCfg, 
+				idCounter,
+				nameEncodedMarkers
+			);
 			visitor->insertMarkerDependency(path2process, inputDir);
 			visitor->TraverseDecl(CI.getASTContext().getTranslationUnitDecl());
 			if(filesystem::is_regular_file(inputPath)){

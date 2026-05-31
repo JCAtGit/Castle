@@ -13,14 +13,13 @@ using namespace std;
 class CmdTasker{
 	private:
 	filesystem::path inputPath, outputPath, mrkrFormatsPath;
-	bool onCopy = false;
-	json markerFormats; 
+	bool onCopy = false, nameEncodedMarkers = false;
 	
+	int idCounter = 0;
 	json markerFormatCfg;
 	filesystem::path inputDir;
 	filesystem::path outputDir;
 	std::vector<filesystem::path> pathQueue;
-	int taskQuantifier = 0;
 	std::vector<std::string> toolArgs = {
 		"-xc", 							// Treat the input as C code
 		"-std=c11", 					// Use a specific C standard
@@ -37,9 +36,8 @@ class CmdTasker{
 	   		return;
 	   	}
 	   	try {
-	    	markerFormats = json::parse(markerFormatsFile);
-//			cout << "JSON: " << markerFormats.dump(4) << endl;
-			markerFormatCfg = markerFormats["0"];
+//			cout << "JSON: " << markerFormats.dump(2) << endl;
+			markerFormatCfg = json::parse(markerFormatsFile);;
 	   	} catch (const json::parse_error& e) {
 	    	cerr << "Parse error: " << e.what() << "\n";
 	    	return;
@@ -51,21 +49,12 @@ class CmdTasker{
 		if(filesystem::is_regular_file(inputPath)){
 			pathQueue.push_back(inputPath);
 		} else if(filesystem::is_directory(inputPath)){
-			if(taskQuantifier == 1){
-				for (const auto& entry : filesystem::directory_iterator(inputPath)) {
-					if (entry.path().extension() == ".c") {
-						cout << "Enqueued: " << entry.path() << "\n";
-						pathQueue.push_back(entry.path());
-					}
-			    }
-			} else {
-				for (const auto& entry : filesystem::recursive_directory_iterator(inputPath)) {
-					if (entry.path().extension() == ".c") {
-						cout << "Enqueued: " << entry.path() << "\n";
-						pathQueue.push_back(entry.path());
-					}
-			    }
-			}
+			for (const auto& entry : filesystem::recursive_directory_iterator(inputPath)) {
+				if (entry.path().extension() == ".c") {
+					cout << "Enqueued: " << entry.path() << "\n";
+					pathQueue.push_back(entry.path());
+				}
+		    }
 		}
 	}
 	
@@ -93,7 +82,7 @@ class CmdTasker{
 		preprocessQueueItem(inputPath);
 		auto codeString = file2string(inputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
 //		cout << "Enchanting " << inputPath.string() << endl;
-		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
+		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputDir, outputPath, outputDir, markerFormatCfg, idCounter, nameEncodedMarkers);
 		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputPath.string());
 	}
 	
@@ -113,7 +102,7 @@ class CmdTasker{
 	
 			// TODO?: extract selection of action
 //			cout << "Enchanting " << path2process.string() << endl;
-			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(path2process, inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
+			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(path2process, inputDir, outputPath, outputDir,markerFormatCfg, idCounter, nameEncodedMarkers);
 			clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, path2process.string());
 		}
 	}
@@ -139,10 +128,11 @@ class CmdTasker{
 	}
 	
 	public:
-	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath, bool onCopy): 
-		inputPath(inputPath), outputPath(outputPath), mrkrFormatsPath(mrkrFormatsPath), onCopy(onCopy) {
-		loadConfigs();		
-	}
+	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath, bool onCopy, bool nameEncodedMarkers): 
+		inputPath(inputPath), outputPath(outputPath), mrkrFormatsPath(mrkrFormatsPath), onCopy(onCopy), nameEncodedMarkers(nameEncodedMarkers)
+		{
+			loadConfigs();		
+		}	
 	
 	/**
 	 * 	Should accept only the following:
@@ -186,6 +176,7 @@ class CmdTasker{
 			processQueue();
 		}
 		createMarkerDefinitionHeaderFile();
+		// if declmarkermode, add all definitions to header
 	}
 	
 	void removeInstrumentationEnhancement(){
@@ -203,7 +194,6 @@ class CmdTasker{
 //				}
 //		    }
 		}
-
 		// if a dir is given we try to cleanse the dir recursively and remove any marker headers files we come across
 	}
 	

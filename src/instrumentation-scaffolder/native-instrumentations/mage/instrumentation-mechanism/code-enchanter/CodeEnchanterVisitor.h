@@ -35,7 +35,9 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		ASTContext& context;
 
 		json markerFormatCfg;
-		int markerID = 0;
+		int& idCounter;
+		bool& nameEncodedMarkers;
+		
 		string markerName;
 		string markerKeyword;
 		string markerType;
@@ -43,26 +45,40 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		string markerEndString = "; \n";
 		string headerInclusion;
 		string definitionFilename;
-		
-		virtual string synthesizeMarkerDeclarationString(){
-			return markerKeyword + markerType + markerName + markerSignature + markerEndString;
+
+		string synthesizeCallMarkerString(){
+			if(nameEncodedMarkers){
+				// TODO
+				return "";
+			} else {
+				string markerSigInstance = "(" + std::to_string(idCounter) + ")";
+				(idCounter)++;
+				return markerName + markerSigInstance + markerEndString;
+			}
 		}
 		
-		virtual string synthesizeCallMarkerString(){
-			string markerSigInstance = "(" + std::to_string(markerID) + ")";
-			(markerID)++;
-			return markerName + markerSigInstance + markerEndString;
-		}
-		
-		string synthesizeMarkerDependencyString(filesystem::path inputPath, filesystem::path inputDir){
+		string synthesizeInclusionDirective(filesystem::path inputPath, filesystem::path inputDir){
 			string relativeTrail = getDescend2BaseDirString(rel_outputPath(inputDir, inputPath));
 			return headerInclusion + "\""+ relativeTrail + definitionFilename + ".h" + "\"\n";
 		}
 		
 	public:
 		CodeMarkerVisitor(
-			CompilerInstance& ci, 	Rewriter& rewriter, 	syntax::TokenBuffer tokenBuffer, 		vector<RecordedPPConstruct>& recordedPPEventsEvents, 	json markerFormatCfg):
-			CI(ci),					rewriter(rewriter),		tokenBuffer(std::move(tokenBuffer)), 	recordedPPEventsEvents(recordedPPEventsEvents), 		markerFormatCfg(markerFormatCfg),
+			CompilerInstance& ci, 
+			Rewriter& rewriter, 
+			syntax::TokenBuffer tokenBuffer, 
+			vector<RecordedPPConstruct>& recordedPPEventsEvents, 
+			json& markerFormatCfg, 
+			int &idCounter,
+			bool& nameEncodedMarkers
+		):
+			CI(ci), 
+			rewriter(rewriter),	
+			tokenBuffer(std::move(tokenBuffer)), 
+			recordedPPEventsEvents(recordedPPEventsEvents), 
+			markerFormatCfg(markerFormatCfg), 
+			idCounter(idCounter),
+			nameEncodedMarkers(nameEncodedMarkers),
 			
 			context(ci.getASTContext()), SM(ci.getASTContext().getSourceManager()){
 				markerName 			= 	markerFormatCfg["name"].get<string>();
@@ -76,7 +92,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 			void insertMarkerDependency(filesystem::path inputPath, filesystem::path inputDir){
 				SourceLocation startLoc = SM.getLocForStartOfFile(SM.getMainFileID());
 				StringRef filePath = SM.getFilename(startLoc);
-				rewriter.InsertTextBefore(startLoc,synthesizeMarkerDependencyString(inputPath, inputDir));
+				rewriter.InsertTextBefore(startLoc,synthesizeInclusionDirective(inputPath, inputDir));
 			}
 			
 			void commitToSingleFile(filesystem::path inputPath, filesystem::path outputPath, filesystem::path outputDir){
@@ -103,7 +119,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 //				if (outPath.empty() || outPath == "." || outPath == "./" || ".") {
 //				    outPath = FilePath.str();
 //				} 
-				llvm::outs() << "Commit changes from: " << FilePath << " -> " << outPath << "\n";
+//				llvm::outs() << "Commit changes from: " << FilePath << " -> " << outPath << "\n";
 				if(!filesystem::exists(outPath)){
 					filesystem::create_directories(outPath.parent_path());
 				}
