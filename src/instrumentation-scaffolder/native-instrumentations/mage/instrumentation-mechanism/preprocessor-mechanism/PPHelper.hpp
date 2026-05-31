@@ -101,47 +101,104 @@ bool isPPSafeDeclMarking(PPEventVectors ppEV){
 // --------------------------------------------------------------
 // Attribute helpers
 // --------------------------------------------------------------
-void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter, const SourceManager &SM, const LangOptions &LangOpts) {
-    // Iterate over all attributes attached to the function.
-    for (const auto *Attr : FD->attrs()) {
-        // We are only interested in GNU attributes.
-        if (Attr->getSyntax() != AttributeCommonInfo::AS_GNU) {continue;}
+void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter,
+                           const SourceManager &SM, const LangOptions &LangOpts) {
+    // Already has optnone? Nothing to do.
+    if (FD->hasAttr<OptimizeNoneAttr>())
+        return;
 
-        SourceRange range = Attr->getRange();
-        if (range.isInvalid()) {continue;}
+    // Conflict: if always_inline is present, skip (or optionally remove it).
+    if (FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<NakedAttr>() ||
+	    FD->hasAttr<WeakAttr>() || FD->hasAttr<WeakRefAttr>())
+        return;
 
-        // Get the exact source code of the attribute as a string.
-        CharSourceRange charRange = Lexer::getAsCharRange(range, SM, LangOpts);
-        StringRef attrText = Lexer::getSourceText(charRange, SM, LangOpts);
-        if (attrText.empty()) {continue;}
+    // Get the function body and its opening brace.
+    Stmt *Body = FD->getBody();
+    if (!Body) return;
+    SourceLocation BraceLoc = Body->getBeginLoc();
+    if (BraceLoc.isInvalid()) return;
 
-        // Determine if the attribute list inside the parentheses is empty.
-        // We look for the pattern "(()" for the start of the list and "))" for the end.
-		std::string newAttrText;
-        if (attrText.find("()") != StringRef::npos) {
-            // Case 1: The attribute list is empty: " __attribute__(()) "
-            // We replace the whole attribute with a new one that contains 'optnone'.
-            newAttrText = "__attribute__((optnone))";
-        } else {
-            // Case 2: The attribute list is not empty.
-            // We need to insert 'optnone, ' inside the parentheses.
-            // Find the start of the argument list (the second '(').
-            size_t start = attrText.find('(');
-            if (start == StringRef::npos) continue;
-            start = attrText.find('(', start + 1);
-            if (start == StringRef::npos) continue;
+    // Macro‑safety check for a location.
+    auto isLocationSafe = [&](SourceLocation Loc) -> bool {
+        if (Loc.isInvalid()) return false;
+        CharSourceRange TokenRange = CharSourceRange::getTokenRange(Loc, Loc);
+        CharSourceRange FileRange = Lexer::makeFileCharRange(TokenRange, SM, LangOpts);
+        if (FileRange.isInvalid()) return false;
+        return FileRange.getBegin().isValid() && FileRange.getBegin().isFileID();
+    };
 
-            // Build the new attribute text.
-            newAttrText = attrText.str();
-            newAttrText.insert(start + 1, "optnone, ");
+    // Look for an existing GNU attribute that ends before the brace.
+    Attr *TargetAttr = nullptr;
+    for (auto *A : FD->attrs()) {
+        if (A->getSyntax() != AttributeCommonInfo::AS_GNU)
+            continue;
+        SourceRange R = A->getRange();
+        if (R.isInvalid()) continue;
+        if (!isLocationSafe(R.getBegin())) continue;
+        if (SM.isBeforeInTranslationUnit(R.getEnd(), BraceLoc)) {
+            TargetAttr = A;
+            break;
         }
-
-        // Replace the original attribute's source code with the new one.
-        Rewriter.ReplaceText(range, newAttrText);
-        return; // Assume we only modify the first GNU attribute found.
     }
 
-    // No GNU attribute found at all: create one from scratch.
-    Rewriter.InsertText(FD->getBeginLoc(), "__attribute__((optnone)) ");
+    if (TargetAttr) {
+        // We have an existing GNU attribute. We need to merge 'optnone' into its source text.
+        // This is where string manipulation is unavoidable because we are rewriting source.
+        SourceRange range = TargetAttr->getRange();
+        CharSourceRange charRange = Lexer::getAsCharRange(range, SM, LangOpts);
+        StringRef attrText = Lexer::getSourceText(charRange, SM, LangOpts);
+        if (attrText.empty()) return;
+
+        // Double‑check that the attribute doesn't already have optnone (just in case).
+        if (attrText.contains("optnone")) return;
+
+        // Build the new attribute text by inserting "optnone, " into the argument list.
+        std::string newAttrText;
+        if (attrText.find("()") != StringRef::npos) {
+            newAttrText = "__attribute__((optnone))";
+        } else {
+            size_t start = attrText.find('(');
+            if (start != StringRef::npos) {
+                start = attrText.find('(', start + 1);
+                if (start != StringRef::npos) {
+                    newAttrText = attrText.str();
+                    newAttrText.insert(start + 1, "optnone, ");
+                }
+            }
+        }
+        if (!newAttrText.empty() && isLocationSafe(range.getBegin())) {
+            Rewriter.ReplaceText(range, newAttrText);
+        }
+        return;
+    }
+
+    // No existing attribute before the brace: insert a new one.
+    if (!isLocationSafe(BraceLoc))
+        return;
+    Rewriter.InsertText(BraceLoc, " __attribute__((optnone)) ");
 }
 
+bool isLocationSafeForInsertion(SourceLocation Loc,
+                                const SourceManager &SM,
+                                const LangOptions &LangOpts) {
+    if (Loc.isInvalid())
+        return false;
+
+    // Create a single‑token range at this location.
+    CharSourceRange TokenRange = CharSourceRange::getTokenRange(Loc, Loc);
+
+    // Attempt to obtain the file character range.
+    CharSourceRange FileRange = Lexer::makeFileCharRange(TokenRange, SM, LangOpts);
+
+    // If the range is invalid, the location is inside a macro expansion,
+    // a macro argument, or otherwise not representable as a simple file range.
+    if (FileRange.isInvalid())
+        return false;
+
+    // Ensure the resulting location is actually in a file (not a buffer).
+    SourceLocation Begin = FileRange.getBegin();
+    if (Begin.isInvalid() || !Begin.isFileID())
+        return false;
+
+    return true;
+}

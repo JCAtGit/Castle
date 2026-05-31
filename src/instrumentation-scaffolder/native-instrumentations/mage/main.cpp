@@ -25,12 +25,16 @@ int main(int argc, char **argv) {
 	
 	int taskQuantifier;
 	app.add_option("--task-quantifier", taskQuantifier, "Determines if files will be queued 0=recursively or 1=locally");
-		
+	
 	std::string mrkrFormatsPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/castle-pipeline/instrumentation-config/formats.json";
-	app.add_option("--mrkr_cfg_dir", mrkrFormatsPath, "Marker config used for heuristics");
+	app.add_option("--marker_cfg_path", mrkrFormatsPath, "Marker config used for heuristics");
 	
 	bool toggle = false;
 	app.add_flag("-t, --toggle",toggle,  "Toggles marking and removal");
+	
+	bool preformat = false; // TODO
+	app.add_flag("-p, --preformat",preformat,  "preformats in place with clang-format");
+	
 	CLI11_PARSE(app, argc, argv);
 	
 	CmdTasker cmdTskr(inputPath, outputPath, mrkrFormatsPath, onCopy);

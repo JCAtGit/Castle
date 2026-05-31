@@ -96,13 +96,13 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 			}
 			
 			void commitToQueueFile(filesystem::path inputDir, filesystem::path outputDir){
-				cout << "Start commit phase" << "\n";
+//				cout << "Start commit phase" << "\n";
 				StringRef FilePath = SM.getFilename(SM.getLocForStartOfFile(SM.getMainFileID()));
 				filesystem::path outPath = outputDir / rel_outputPath(inputDir, FilePath.str());
 				if (outPath.empty() || outPath == "." || outPath == "./") {
 				    outPath = FilePath.str();
 				}
-				llvm::outs() << "Committing changes from: " << FilePath << " -> " << outPath << "\n";
+//				llvm::outs() << "Committing changes from: " << FilePath << " -> " << outPath << "\n";
 				if(!filesystem::exists(outPath)){
 					filesystem::create_directories(outPath.parent_path());
 				}
@@ -184,6 +184,10 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		 */
 		void processFunctionDecl(FunctionDecl* FD){
 			if(FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<MinSizeAttr>() || FD->hasAttr<OptimizeNoneAttr>()){return;}
+//			auto *optnoneAttr = clang::OptimizeNoneAttr::CreateImplicit(context, FD->getLocation());
+//			auto *noinlineAttr = clang::NoInlineAttr::CreateImplicit(context, FD->getLocation());
+//			FD->addAttr(optnoneAttr);
+//			FD->addAttr(noinlineAttr);
 			addOrCreateGNUOptnone(FD, rewriter, SM, CI.getLangOpts());			
 //			CI.getSema().AddOptnoneAttributeIfNoConflicts(FD, FD->getLocation());
 		}

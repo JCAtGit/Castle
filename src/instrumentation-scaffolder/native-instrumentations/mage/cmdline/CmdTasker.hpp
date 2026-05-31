@@ -80,11 +80,11 @@ class CmdTasker{
 		string command = "clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + path2process.string(); // als same dir input gefixt is dan deze weer aanpassen?
 //		cout << command << "\n";
 	    int status = std::system(command.c_str());
-	    if (status == 0) {
-			cout << "clang-format performed for:" + path2process.string() << "\n";
-	    } else {
-			cout << "clang-format failed for:" + path2process.string() << "\n";
-	    }
+//	    if (status == 0) {
+//			cout << "clang-format performed for:" + path2process.string() << "\n";
+//	    } else {
+//			cout << "clang-format failed for:" + path2process.string() << "\n";
+//	    }
 //				runMacroExpander(path2process, cfg);
 	}
 	
