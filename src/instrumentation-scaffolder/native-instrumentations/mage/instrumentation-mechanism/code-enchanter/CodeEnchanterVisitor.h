@@ -10,6 +10,7 @@
 #include "clang/Sema/Sema.h"
 #include "clang/AST/Attr.h"
 
+#include <filesystem>
 #include <vector>
 #include <string>
 #include "../../../../../include/helper.hpp"
@@ -78,7 +79,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 				rewriter.InsertTextBefore(startLoc,synthesizeMarkerDependencyString(inputPath, inputDir));
 			}
 			
-			void commitToSingleFile(filesystem::path inputPath, filesystem::path outputPath){
+			void commitToSingleFile(filesystem::path inputPath, filesystem::path outputPath, filesystem::path outputDir){
 				// returns empty if path is on same dir.
 				StringRef FilePath = SM.getFilename(SM.getLocForStartOfFile(SM.getMainFileID()));	
 				if(!filesystem::exists(outputPath)){
@@ -88,7 +89,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 				std::error_code EC;
 				llvm::raw_fd_ostream OutFile(outputPath.string(),EC, llvm::sys::fs::OF_Text);
 				if (EC) {
-					llvm::errs() << "Error opening output file: " << EC.message() << "\n";
+					llvm::errs() << "Error 1 opening output file: " << EC.message() << "\n";
 					return;
 				}
 				rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(OutFile);
@@ -99,23 +100,40 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 //				cout << "Start commit phase" << "\n";
 				StringRef FilePath = SM.getFilename(SM.getLocForStartOfFile(SM.getMainFileID()));
 				filesystem::path outPath = outputDir / rel_outputPath(inputDir, FilePath.str());
-				if (outPath.empty() || outPath == "." || outPath == "./") {
-				    outPath = FilePath.str();
-				}
-//				llvm::outs() << "Committing changes from: " << FilePath << " -> " << outPath << "\n";
+//				if (outPath.empty() || outPath == "." || outPath == "./" || ".") {
+//				    outPath = FilePath.str();
+//				} 
+				llvm::outs() << "Commit changes from: " << FilePath << " -> " << outPath << "\n";
 				if(!filesystem::exists(outPath)){
 					filesystem::create_directories(outPath.parent_path());
 				}
 				std::error_code EC;
 				llvm::raw_fd_ostream OutFile(outPath.string(),EC, llvm::sys::fs::OF_Text);
 				if (EC) {
-					llvm::errs() << "Error opening output file: " << EC.message()<< "\n";
+					llvm::errs() << "Error 2 opening output file: " << EC.message()<< "\n";
 					return;
 				}
 				rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(OutFile);
 				OutFile.close();	
 			}
 			
+		bool isStmtLocationSafe(Stmt *S, const SourceManager &SM, const LangOptions &LangOpts) {
+		    if (!S) return false;
+		    SourceLocation Begin = S->getBeginLoc();
+		    SourceLocation End = S->getEndLoc();
+		    if (Begin.isInvalid() || End.isInvalid()) return false;
+		    // If either location is a macro ID, the range might be unsafe.
+		    if (Begin.isMacroID() || End.isMacroID()) return false;
+
+		    // Get the full source range of the statement as a char range.
+		    CharSourceRange StmtRange = CharSourceRange::getTokenRange(Begin, End);
+		    CharSourceRange FileRange = Lexer::makeFileCharRange(StmtRange, SM, LangOpts);
+		    if (FileRange.isInvalid()) return false;
+
+		    // Ensure the range is in a file (not a macro expansion buffer).
+		    return FileRange.getBegin().isFileID();
+		}	
+		
 		bool VisitStmt(Stmt *S) {
 			if (SM.isInMainFile(S->getBeginLoc())){
 				//-- Start marker safety checks
@@ -125,12 +143,14 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 				//-- Section: Preprocessor directives check
 				auto detectedEvents = detectPPConstructsAroundStatement(S, tokenBuffer, SM, recordedPPEventsEvents);
 				if(!isPPSafeStmtMarking(detectedEvents)){return true;}
+				if (!isStmtLocationSafe(S, SM, CI.getLangOpts())) return true;
+
 				//--  Clang Macro expansion id check.
 				DynTypedNodeList Parents = context.getParents(*S);
 				for (const auto &Parent : Parents) {
 					if (Parent.getSourceRange().getBegin().isMacroID()) {return true;}
 				}
-				if(S->getBeginLoc().isMacroID()){return true;}
+				if(S->getBeginLoc().isMacroID() || S->getBeginLoc().isInvalid()){return true;}
 				//-- End safety checks;
 				switch (S->getStmtClass()) {
 					case Stmt::IfStmtClass: processIfStmt(cast<IfStmt>(S)); break;
@@ -165,7 +185,6 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 				switch (D->getKind()) {
 					case Decl::Function:
 					    processFunctionDecl(cast<FunctionDecl>(D)); break;
-					case Decl::Var: break;
 					default: break;
 					}
 				}
@@ -184,12 +203,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		 */
 		void processFunctionDecl(FunctionDecl* FD){
 			if(FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<MinSizeAttr>() || FD->hasAttr<OptimizeNoneAttr>()){return;}
-//			auto *optnoneAttr = clang::OptimizeNoneAttr::CreateImplicit(context, FD->getLocation());
-//			auto *noinlineAttr = clang::NoInlineAttr::CreateImplicit(context, FD->getLocation());
-//			FD->addAttr(optnoneAttr);
-//			FD->addAttr(noinlineAttr);
 			addOrCreateGNUOptnone(FD, rewriter, SM, CI.getLangOpts());			
-//			CI.getSema().AddOptnoneAttributeIfNoConflicts(FD, FD->getLocation());
 		}
 			
 		// --Statements--

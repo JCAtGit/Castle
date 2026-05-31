@@ -74,10 +74,10 @@ class CmdTasker{
 	 * Fixing dangling statements from constructs by adding the compound statement node brackets where necessary.
 	 * TODO: Pre-expand macros?
 	 */
-	void preprocessQueueItem(filesystem::path path2process, filesystem::path outputResultPath){
+	void preprocessQueueItem(filesystem::path path2process){
 		//"clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + "example0.c" + ">" + "example0_formatted.c";
 		
-		string command = "clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + path2process.string(); // als same dir input gefixt is dan deze weer aanpassen?
+		string command = "clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM, SortIncludes: false}\" " + path2process.string(); // als same dir input gefixt is dan deze weer aanpassen?
 //		cout << command << "\n";
 	    int status = std::system(command.c_str());
 //	    if (status == 0) {
@@ -89,26 +89,26 @@ class CmdTasker{
 	}
 	
 	void processSingle(){
-		cout 	<< "Process Single Start. \n"				
-				<< "pathQueue items: " << pathQueue.size() << "\n";
-				
-		preprocessQueueItem(inputPath, outputPath);
-		auto codeString = file2string(outputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
+		cout 	<< "Process Single. \n";				
+		preprocessQueueItem(inputPath);
+		auto codeString = file2string(inputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
 //		cout << "Enchanting " << inputPath.string() << endl;
 		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
 		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputPath.string());
 	}
 	
 	void processQueue(){
-		cout 	<< "Process Queue Start. \n"				
+		cout 	<< "Process Queue. \n"				
 				<< "pathQueue items: " << pathQueue.size() << "\n";
 		
 		for(const auto& path2process : pathQueue){
 			cout << "Starting on " << path2process << "\n";
 			filesystem::path outPath = outputDir / rel_outputPath(inputDir, path2process);
-	
+			if(outPath.empty()){
+				outPath = inputDir;
+			}
 			//Doe dit voordat AST unit ptr is aangemaakt. Prepare file for marking, this includes fixing dangling statements
-			preprocessQueueItem(path2process, outPath);
+			preprocessQueueItem(path2process);
 			auto codeString = file2string(path2process);
 	
 			// TODO?: extract selection of action
@@ -159,7 +159,7 @@ class CmdTasker{
 			cout << "inputPath: " << inputPath << "\n";
 			cout << "outputPath: " << outputPath << "\n";
 			filesystem::remove_all(outputPath);
-			std::filesystem::copy(inputPath, outputPath, std::filesystem::copy_options::recursive);
+			filesystem::copy(inputPath, outputPath, filesystem::copy_options::recursive);
 //			inputPath = outputPath;
 		}	
 		if(filesystem::is_regular_file(inputPath)){

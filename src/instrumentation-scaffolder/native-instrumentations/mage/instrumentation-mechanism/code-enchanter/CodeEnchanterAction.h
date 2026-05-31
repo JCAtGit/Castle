@@ -54,7 +54,7 @@ class CodeMarkerAction: public ASTFrontendAction {
 			visitor->insertMarkerDependency(path2process, inputDir);
 			visitor->TraverseDecl(CI.getASTContext().getTranslationUnitDecl());
 			if(filesystem::is_regular_file(inputPath)){
-				visitor->commitToSingleFile(inputPath, outputPath);
+				visitor->commitToSingleFile(path2process, outputPath, outputDir);
 			} else {
 				visitor->commitToQueueFile(inputDir, outputDir);
 			}

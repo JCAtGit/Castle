@@ -10,13 +10,13 @@
  */
 
 int main(int argc, char **argv) {
-	CLI::App app{"MarkerSurgeon"};
+	CLI::App app{"Mage"};
 	
-	std::string inputPath;
+	string inputPath;
 	app.add_option("input", inputPath, "input path for instrumentation")
 		->required();
 	
-	std::string outputPath = inputPath; // overwrite location if no output is given.
+	string outputPath; // overwrite location if no output is given.
 	auto option_outputPath = app.add_option("-o,--output", outputPath, "output path for results");
 	
 	bool onCopy;
@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
 	int taskQuantifier;
 	app.add_option("--task-quantifier", taskQuantifier, "Determines if files will be queued 0=recursively or 1=locally");
 	
-	std::string mrkrFormatsPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/castle-pipeline/instrumentation-config/formats.json";
+	string mrkrFormatsPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/castle-pipeline/instrumentation-config/formats.json";
 	app.add_option("--marker_cfg_path", mrkrFormatsPath, "Marker config used for heuristics");
 	
 	bool toggle = false;
@@ -37,6 +37,9 @@ int main(int argc, char **argv) {
 	
 	CLI11_PARSE(app, argc, argv);
 	
+	if(outputPath.empty()){
+		outputPath = inputPath;
+	}
 	CmdTasker cmdTskr(inputPath, outputPath, mrkrFormatsPath, onCopy);
 	if(toggle){
 		// start instrumentation removal TODO
