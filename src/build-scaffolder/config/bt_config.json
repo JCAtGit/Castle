@@ -17,7 +17,7 @@
 			"binPath":"/home/user/Desktop/CASTLE/BuildScaffolder/scripts/rufus_build.sh",
 			"run_bin_as_shell":true,
 			"outputFlag":"-o",
-			"active":false,
+			"active":true,
 			"run_per_file":false,
 			"comments":"TODO: split up instrumentation and build of rufus, see instrumentation entry"
 		},
