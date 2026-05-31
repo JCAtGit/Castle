@@ -51,7 +51,7 @@ class CmdTasker{
 																	filepath.stem().c_str() + ".c";
 			addStaticFlags(command, dt_config_data);
 			if(dt_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
-			command = command + " > /dev/null 2>&1";
+			if(dt_config_data["redirectNull"].get<bool>()){command = command + " > /dev/null 2>&1";}
 			std::cout << command << "\n";
 			auto status = std::system(command.c_str());
 		}

@@ -7,7 +7,18 @@
 			"run_bin_as_shell":false,
 			"static_options":[],
 			"outputFlag":"-o", 
+			"redirectNull": true,
 			"active":false
+		},
+		{
+			"name":"rufus_mage_build_ghidra",
+			"tgtDir":"/home/user/Desktop/CASTLE/BuildScaffolder/rufus_mage_build/",
+			"binPath":"/home/user/Desktop/CASTLE/DeComScaffolder/scripts/ghidra_decompile.sh",
+			"static_options":[],
+			"run_bin_as_shell":true,
+			"outputFlag":"",
+			"redirectNull": false,
+			"active":true
 		},
 		{
 			"name":"csmith_mage_clang_retdec",
@@ -16,6 +27,7 @@
 			"static_options":[{"--cleanup":""}, {"--silent":""}],
 			"run_bin_as_shell":false,
 			"outputFlag":"--output",
+			"redirectNull": true,
 			"active":false
 		},
 		{
@@ -25,7 +37,8 @@
 			"static_options":[],
 			"run_bin_as_shell":true,
 			"outputFlag":"",
-			"active":true
+			"redirectNull": true,
+			"active":false
 		}
 	]
 }
