@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <clang/Frontend/FrontendAction.h>
+#include <string>
 #include "clang/Tooling/Tooling.h"
 #include "../../../../../include/helper.hpp"
 #include "../instrumentation-mechanism/code-enchanter/CodeEnchanterAction.h"
@@ -114,7 +115,21 @@ class CmdTasker{
 	 */
 	void createMarkerDefinitionHeaderFile(){
 		cout << "Start instrumentation header file creation." << "\n";
-		string content = markerFormatCfg["headerString"].get<string>();
+		string content;
+		if(nameEncodedMarkers){
+			for(int neIndex = 0; neIndex < idCounter; neIndex++){
+				content += 
+				markerFormatCfg["functionType"].get<string>() 	+ " " +
+				markerFormatCfg["name"].get<string>() 			+ " " +
+				std::to_string(neIndex)							+ " " +
+				
+				;
+			}
+		} else {
+			content = markerFormatCfg["headerString"].get<string>();
+		}
+		
+		
 		string outFile = (outputDir / (markerFormatCfg["definitionFileName"].get<string>() + ".h")).string();
 		// Open the file; if it exists, it will be overwritten.
 	    error_code EC;
@@ -176,7 +191,6 @@ class CmdTasker{
 			processQueue();
 		}
 		createMarkerDefinitionHeaderFile();
-		// if declmarkermode, add all definitions to header
 	}
 	
 	void removeInstrumentationEnhancement(){
