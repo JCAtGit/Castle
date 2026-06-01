@@ -176,7 +176,7 @@ void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter,
                     std::string newAttrText;
                     if (attrText.find("()") != StringRef::npos) {
                         // Empty argument list: __attribute__(())
-                        newAttrText = "__attribute__((optnone))";
+                        newAttrText = "__attribute__((optimize(\"O0\"), optnone))";
                     } else {
                         // Insert "optnone, " after the second '('.
                         size_t start = attrText.find('(');
@@ -184,7 +184,7 @@ void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter,
                             start = attrText.find('(', start + 1);
                             if (start != StringRef::npos) {
                                 newAttrText = attrText.str();
-                                newAttrText.insert(start + 1, "optnone, ");
+                                newAttrText.insert(start + 1, "optimize(\"O0\"), optnone, ");
                             }
                         }
                     }
@@ -203,5 +203,5 @@ void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter,
 	SourceLocation insertLoc = Lexer::getLocForEndOfToken(retRange.getEnd(), 0, SM, LangOpts);
 	if (insertLoc.isInvalid() || !isLocationSafe(insertLoc)) return;
 
-	Rewriter.InsertText(insertLoc, " __attribute__((optnone))");
+	Rewriter.InsertText(insertLoc, " __attribute__((optimize(\"O0\"), optnone))");
 }

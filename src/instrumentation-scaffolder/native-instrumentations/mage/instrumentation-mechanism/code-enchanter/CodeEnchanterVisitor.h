@@ -47,19 +47,22 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		string definitionFilename;
 
 		string synthesizeCallMarkerString(){
+			string markerCallString = markerName;
 			if(nameEncodedMarkers){
-				// TODO
-				return "";
-			} else {
-				string markerSigInstance = "(" + std::to_string(idCounter) + ")";
-				(idCounter)++;
-				return markerName + markerSigInstance + markerEndString;
+				markerCallString += std::to_string(idCounter);
 			}
+			markerCallString +=  "(" + std::to_string(idCounter) + ")" + markerEndString;
+			idCounter++;
+			return markerCallString;
 		}
 		
 		string synthesizeInclusionDirective(filesystem::path inputPath, filesystem::path inputDir){
 			string relativeTrail = getDescend2BaseDirString(rel_outputPath(inputDir, inputPath));
 			return headerInclusion + "\""+ relativeTrail + definitionFilename + ".h" + "\"\n";
+		}
+		
+		string synthesizePragmaDirectives(){
+			return markerFormatCfg["noOptPragma"];
 		}
 		
 	public:
@@ -89,10 +92,19 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 				definitionFilename 	=	markerFormatCfg["definitionFileName"].get<string>();
 			}
 	
-			void insertMarkerDependency(filesystem::path inputPath, filesystem::path inputDir){
+			/**
+			 *  Include strings and other directives like:
+	 		 *		#if defined(__clang__)
+			 *	    	#pragma clang optimize off
+			 *	 	#elif defined(__GNUC__)
+			 *	     	#pragma GCC push_options
+			 *	     	#pragma GCC optimize ("O0")
+			 *	 	#endif
+			 */
+			void insertPreprocessorDirectives(filesystem::path inputPath, filesystem::path inputDir){
 				SourceLocation startLoc = SM.getLocForStartOfFile(SM.getMainFileID());
 				StringRef filePath = SM.getFilename(startLoc);
-				rewriter.InsertTextBefore(startLoc,synthesizeInclusionDirective(inputPath, inputDir));
+				rewriter.InsertTextBefore(startLoc, synthesizeInclusionDirective(inputPath, inputDir));
 			}
 			
 			void commitToSingleFile(filesystem::path inputPath, filesystem::path outputPath, filesystem::path outputDir){

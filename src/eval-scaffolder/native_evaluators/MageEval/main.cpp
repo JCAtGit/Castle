@@ -5,22 +5,25 @@
 int main(int argc, char **argv) {
 	CLI::App app{"MageEval"};
 	
-	std::string inputPath;
+	string inputPath;
 	app.add_option("inputPath", inputPath, "input path to evaluate")
 		->required();
 	
-	std::string oracleDir;
+	string oracleDir;
 	app.add_option("oraclePath", oracleDir, "input dir to use as oracle, uses input filename in dir")
 		->required();
 
-	std::string outputPath;
+	string outputPath;
 	app.add_option("-o,--output", outputPath, "output path for results")
 		->required();
 		
-	std::string mrkrFormatsPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/castle-pipeline/instrumentation-config/formats.json";
+	string mrkrFormatsPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/castle-pipeline/instrumentation-config/formats.json";
 	app.add_option("--mrkrFormatsPath", mrkrFormatsPath, "Instrumentation config used for heuristics")
 		->required();
 
+	bool nameEncodedMarkers = false;  // TODO
+	app.add_flag("-n, --name_encoded_marker",nameEncodedMarkers,  "TODO: Evaluate constructs using names instead of indices.");
+		
 	// TODO: integrate option into implementation
 	std::string astMode = "-xc"; 
 	app.add_option("--astMode", astMode, "TODO: AST mode used for heuristics ('-xc' or '-xc++')")

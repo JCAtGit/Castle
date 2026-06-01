@@ -115,20 +115,32 @@ class CmdTasker{
 	 */
 	void createMarkerDefinitionHeaderFile(){
 		cout << "Start instrumentation header file creation." << "\n";
-		string content;
+		string content = 
+			markerFormatCfg["pragma_once"].get<string>() + 
+			markerFormatCfg["noOptPragma"].get<string>();
+		
 		if(nameEncodedMarkers){
 			for(int neIndex = 0; neIndex < idCounter; neIndex++){
 				content += 
-				markerFormatCfg["functionType"].get<string>() 	+ " " +
-				markerFormatCfg["name"].get<string>() 			+ " " +
-				std::to_string(neIndex)							+ " " +
-				
-				;
+				markerFormatCfg["noOptAttributes"].get<string>()	+ " " +
+				markerFormatCfg["functionType"].get<string>() 		+ " " +
+				markerFormatCfg["name"].get<string>() 				+
+				std::to_string(neIndex)						+
+				markerFormatCfg["paramSignature"].get<string>()		+ "{" +
+				markerFormatCfg["definition"].get<string>()			+ "};"+
+				"\n"; 
 			}
 		} else {
-			content = markerFormatCfg["headerString"].get<string>();
+			// TODO: keep ifndef etc directives for portability?
+//			content += markerFormatCfg["headerString"].get<string>(); // TODO: rework to dynamic components
+			content += 
+				markerFormatCfg["noOptAttributes"].get<string>()	+ " " +
+				markerFormatCfg["functionType"].get<string>() 		+ " " +
+				markerFormatCfg["name"].get<string>() 				+ " " +
+				markerFormatCfg["paramSignature"].get<string>()		+ "{" +
+				markerFormatCfg["definition"].get<string>()			+ "};"+
+				"\n"; 
 		}
-		
 		
 		string outFile = (outputDir / (markerFormatCfg["definitionFileName"].get<string>() + ".h")).string();
 		// Open the file; if it exists, it will be overwritten.

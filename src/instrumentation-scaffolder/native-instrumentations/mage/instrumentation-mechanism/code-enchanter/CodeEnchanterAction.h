@@ -75,7 +75,7 @@ class CodeMarkerAction: public ASTFrontendAction {
 				idCounter,
 				nameEncodedMarkers
 			);
-			visitor->insertMarkerDependency(path2process, inputDir);
+			visitor->insertPreprocessorDirectives(path2process, inputDir);
 			visitor->TraverseDecl(CI.getASTContext().getTranslationUnitDecl());
 			if(filesystem::is_regular_file(inputPath)){
 				visitor->commitToSingleFile(path2process, outputPath, outputDir);
