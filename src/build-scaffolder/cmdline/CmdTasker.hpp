@@ -16,14 +16,14 @@ class CmdTasker{
 		   	ifstream bt_config_file(bt_configPath);
 			ifstream bs_config_file(bs_configPath);
 		   	if (!(bt_config_file.is_open() && bs_config_file.is_open())) {
-		    	cerr << "Error: Could not open required config files, see the source json folder for details." << endl;
+		    	cerr << "Error: Could not open required config files, see the source json folder for details." << "\n";
 		   		return;
 		   	}
 		   	try {
 		    	bt_configData = json::parse(bt_config_file);
 				bs_configData = json::parse(bs_config_file);
 		   	} catch (const json::parse_error& e) {
-		    	cerr << "Parse error: " << e.what() << endl;
+		    	cerr << "Parse error: " << e.what() << "\n";
 		    	return;
 		  	}
 		}
@@ -37,18 +37,18 @@ class CmdTasker{
 				" > /dev/null 2>&1";
 			// TODO: add static flags
 			if(bt_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
-			std::cout << command << "\n";
-			auto status = std::system(command.c_str());
+			cout << command << "\n";
+			auto status = system(command.c_str());
 		}
 
 		void saveJsonToFile(const std::string& path, const json& data) {
-		    std::ofstream file(path);
+		    ofstream file(path);
 		    if (!file.is_open()) {
-		        std::cerr << "Error: Could not open file for writing: " << path << std::endl;
+		        std::cerr << "Error: Could not open file for writing: " << path << "\n";
 		        return;
 		    }
 		    file << data.dump(4);  // pretty print with 4 spaces indentation
-		    std::cout << "Saved config to " << path << std::endl;
+		    cout << "Saved config to " << path << "\n";
 		}
 	public:
 	CmdTasker(string bs_configPath, string bt_configPath):bs_configPath(bs_configPath), bt_configPath(bt_configPath){

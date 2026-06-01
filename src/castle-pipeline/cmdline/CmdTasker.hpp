@@ -16,14 +16,14 @@ class CmdTasker{
 		   	ifstream ct_config_file(ct_configPath);
 			ifstream cp_config_file(cp_configPath);
 		   	if (!(ct_config_file.is_open() && cp_config_file.is_open())) {
-		    	cerr << "Error: Could not open required config files, see the source json folder for details." << endl;
+		    	cerr << "Error: Could not open required config files, see the source json folder for details." << "\n";
 		   		return;
 		   	}
 		   	try {
 		    	ct_configData = json::parse(ct_config_file);
 				cp_configData = json::parse(cp_config_file);
 		   	} catch (const json::parse_error& e) {
-		    	cerr << "Parse error: " << e.what() << endl;
+		    	cerr << "Parse error: " << e.what() << "\n";
 		    	return;
 		  	}
 		}

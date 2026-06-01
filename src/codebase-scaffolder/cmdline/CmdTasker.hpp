@@ -18,27 +18,27 @@ class CmdTasker{
 		   	ifstream cg_config_file(cg_configPath);
 			ifstream cs_config_file(cs_configPath);
 		   	if (!(cg_config_file.is_open() && cs_config_file.is_open())) {
-		    	cerr << "Error: Could not open required config files, see the source json folder for details." << endl;
+		    	cerr << "Error: Could not open required config files, see the source json folder for details." << "\n";
 		   		return;
 		   	}
 		   	try {
 		    	cg_configData = json::parse(cg_config_file);
 				cs_configData = json::parse(cs_config_file);
 		   	} catch (const json::parse_error& e) {
-		    	cerr << "Parse error: " << e.what() << endl;
+		    	cerr << "Parse error: " << e.what() << "\n";
 		    	return;
 		  	}
 		}
 		
 		// misschien naar helper?
 		void saveJsonToFile(const std::string& path, const json& data) {
-		    std::ofstream file(path);
+		    ofstream file(path);
 		    if (!file.is_open()) {
-		        std::cerr << "Error: Could not open file for writing: " << path << std::endl;
+		        std::cerr << "Error: Could not open file for writing: " << path << "\n";
 		        return;
 		    }
 		    file << data.dump(4);  // pretty print with 4 spaces indentation
-		    std::cout << "Saved config to " << path << std::endl;
+		    cout << "Saved config to " << path << "\n";
 		}
 	public:
 	CmdTasker(string cs_configPath, string cg_configPath): cs_configPath(cs_configPath), cg_configPath(cg_configPath){
