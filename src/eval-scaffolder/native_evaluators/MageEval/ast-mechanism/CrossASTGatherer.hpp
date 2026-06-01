@@ -90,24 +90,32 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 //		cout << selectedMessage << endl;
 	}
 	
+	bool identifyMage(FunctionDecl *DC){
+		return DC->getNameInfo().getName().getAsString() != markerFormat["name"].get<string>();
+	}
+	
+	int getMageIndex(CallExpr* markerCE){
+		auto *IL = dyn_cast<IntegerLiteral>(markerCE->getArg(0)->IgnoreImpCasts());
+		if (!IL) {return -1;}
+		llvm::APInt Value = IL->getValue();
+	    return Value.getSExtValue();
+	}
+	
 	void indexProcessor(Stmt *S){
 		if (selectedSM->isInMainFile(S->getBeginLoc()) && S->getStmtClass() == Stmt::CallExprClass){
 			CallExpr* markerCE = cast<CallExpr>(S);
 			auto DC = markerCE->getDirectCallee();
 			if(DC == nullptr){return;}
-			if(DC->getNameInfo().getName().getAsString() != markerFormat["name"].get<string>()){return;} // TODO?: check comment at markerformat declaration.
+			if(identifyMage(DC)){return;} // TODO?: check comment at markerformat declaration.
+			int mageIndex = getMageIndex(markerCE);
 			
-			auto *IL = dyn_cast<IntegerLiteral>(markerCE->getArg(0)->IgnoreImpCasts());
-			if (!IL) {return;}
-			llvm::APInt Value = IL->getValue();
-		    int64_t intValue = Value.getSExtValue();
-			(*selectedMarkerMap)[intValue] = markerCE;
+			(*selectedMarkerMap)[mageIndex] = markerCE;
 			
 			// Build parent map for markerCE.
 			auto markerCEParents = selectedAST->getParents(*markerCE);
 			auto markerCEParent = markerCEParents[0];
 			auto markerCEParentStmt = markerCEParent.get<CompoundStmt>();
-			(*selectedMarkerParentMap)[intValue] = const_cast<CompoundStmt*>(markerCEParentStmt);
+			(*selectedMarkerParentMap)[mageIndex] = const_cast<CompoundStmt*>(markerCEParentStmt);
 		}
 	}
 	

@@ -24,18 +24,6 @@
 			"run_per_file":true
 		},
 		{
-			"name":"rufus_mage_preparation",
-			"tgtDir":"/home/user/Desktop/CASTLE/CodebaseScaffolder/rufus/",
-			"binPath":"",
-			"run_bin_as_shell":true,
-			"static_pre_flags":[],
-			"static_options":[],
-			"outputFlag":"",
-			"redirectNull": false,
-			"active":true,
-			"run_per_file":false	
-		},
-		{
 			"name":"rufus_mage",
 			"tgtDir":"/home/user/Desktop/CASTLE/CodebaseScaffolder/rufus/",
 			"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/Mage",

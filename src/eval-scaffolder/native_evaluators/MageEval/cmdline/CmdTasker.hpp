@@ -21,7 +21,7 @@ class CmdTasker{
 		json selectedFormat;
 		
 		const vector<std::string> args = {
-	        "-xc++", // xc++ or xc makes a huge difference and is work consideration
+	        "-xc++", // xc++ or xc makes a huge difference for node recovery and is worth consideration
 			"-w",
 //			"-Xclang",
 //	        "-frecovery-ast",
