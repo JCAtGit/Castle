@@ -1,18 +1,14 @@
-Project TODO:
-	Determine build systems, some build systems encapsulate others.
-	Determine how to modify base buildsystems
-	Determine how to modify build frameworks.	
-	Test modifications on test projects.
+cd /home/user/Desktop/CastleDecompilerBenchmarker
 
-Base buildsystem:
-CMake(Modern)
-Make (Legacy?)
-Ninja
+# Clean everything
+rm -rf build/
+rm -f compile_commands.json
 
-Encapsulating build system/framework:
-	meson
-	gnu autotools
+# Generate with Ninja (matching Eclipse)
+mkdir build
+cd build
+cmake -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+ln -sf compile_commands.json ../
 
-CMDLINE:
-
-/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/MarkerSurgeon
+# Build with ninja
+ninja

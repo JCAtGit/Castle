@@ -5,7 +5,7 @@
 #include <clang/Frontend/FrontendAction.h>
 #include <string>
 #include "clang/Tooling/Tooling.h"
-#include "../../../../../include/helper.hpp"
+#include <helper.hpp>
 #include "../instrumentation-mechanism/code-enchanter/CodeEnchanterAction.h"
 
 using namespace nlohmann;
