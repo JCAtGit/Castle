@@ -16,14 +16,14 @@ class CmdTasker{
 		   	ifstream it_config_file(it_configPath);
 			ifstream is_config_file(is_configPath);
 		   	if (!(it_config_file.is_open() && is_config_file.is_open())) {
-		    	cerr << "Error: Could not open required config files, see the source json folder for details." << endl;
+		    	cerr << "Error: Could not open required config files, see the source json folder for details." << "\n";
 		   		return;
 		   	}
 		   	try {
 		    	it_configData = json::parse(it_config_file);
 				is_configData = json::parse(is_config_file);
 		   	} catch (const json::parse_error& e) {
-		    	cerr << "Parse error: " << e.what() << endl;
+		    	cerr << "Parse error: " << e.what() << "\n";
 		    	return;
 		  	}
 		}
@@ -36,8 +36,8 @@ class CmdTasker{
 				for (auto& [flag, value] : option.items()) {
 	                command = command + " " + flag;
 	                // If the value is a non‑empty string, append it as an argument
-	                if (value.is_string() && !value.get<std::string>().empty()) {
-	                    command = command + " " + value.get<std::string>();
+	                if (value.is_string() && !value.get<string>().empty()) {
+	                    command = command + " " + value.get<string>();
 	                } // Handle other types (numbers, bool)
 	            }
 			}
@@ -46,13 +46,13 @@ class CmdTasker{
 		/**
 		 * Volgorde options maakt soms uit, dus let hierop bij de config.
 		 */
-		void addStaticPreFlags(std::string& command, json& dt_config_data){
+		void addStaticPreFlags(string& command, json& dt_config_data){
 			for(auto option:dt_config_data["static_pre_flags"]){
 				for (auto& [flag, value] : option.items()) {
 	                command = command + " " + flag;
 	                // If the value is a non‑empty string, append it as an argument
-	                if (value.is_string() && !value.get<std::string>().empty()) {
-	                    command = command + " " + value.get<std::string>();
+	                if (value.is_string() && !value.get<string>().empty()) {
+	                    command = command + " " + value.get<string>();
 	                } // Handle other types (numbers, bool)
 	            }
 			}
@@ -70,8 +70,8 @@ class CmdTasker{
 						filePath.filename().string();
 			if(it_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 			if(it_config_data["redirectNull"].get<bool>()){command = command + " > /dev/null 2>&1";}
-			std::cout << command << "\n";
-			auto status = std::system(command.c_str());
+			cout << command << "\n";
+			auto status = system(command.c_str());
 		}
 
 		void processDir(filesystem::path dirPath, json& it_config_data){
@@ -84,18 +84,18 @@ class CmdTasker{
 				it_config_data["name"].get<string>() 		+ "/";
 			}
 			addStaticFlags(command, it_config_data);
-			std::cout << command << "\n";
+			cout << command << "\n";
 			auto status = std::system(command.c_str());
 		}
 		
-		void saveJsonToFile(const std::string& path, const json& data) {
-		    std::ofstream file(path);
+		void saveJsonToFile(const string& path, const json& data) {
+		    ofstream file(path);
 		    if (!file.is_open()) {
-		        std::cerr << "Error: Could not open file for writing: " << path << std::endl;
+		        cerr << "Error: Could not open file for writing: " << path << "\n";
 		        return;
 		    }
-		    file << data.dump(4);  // pretty print with 4 spaces indentation
-		    std::cout << "Saved config to " << path << std::endl;
+		    file << data.dump(2);  // pretty print indentation
+		    cout << "Saved config to " << path << "\n";
 		}
 	public:
 	CmdTasker(string is_configPath, string it_configPath) : is_configPath(is_configPath), it_configPath(it_configPath){

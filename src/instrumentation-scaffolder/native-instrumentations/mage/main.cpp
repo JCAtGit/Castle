@@ -29,15 +29,15 @@ int main(int argc, char **argv) {
 	bool toggle = false; // TODO
 	app.add_flag("-t, --toggle",toggle,  "TODO: Toggles marking and removal");
 	
-	bool nameEncodedMarkers = false;  // TODO
-	app.add_flag("-n, --name_encoded_marker",nameEncodedMarkers,  "TODO: Mark constructs using names instead of indices.");
+	bool nameEncodedMarker = false;  // TODO
+	app.add_flag("-n, --name_encoded_marker",nameEncodedMarker,  "TODO: Mark constructs using names instead of indices.");
 	
 	CLI11_PARSE(app, argc, argv);
 	
 	if(outputPath.empty()){
 		outputPath = inputPath;
 	}
-	CmdTasker cmdTskr(inputPath, outputPath, mrkrFormatsPath, onCopy, nameEncodedMarkers);
+	CmdTasker cmdTskr(inputPath, outputPath, mrkrFormatsPath, onCopy, nameEncodedMarker);
 	if(toggle){
 		// start instrumentation removal TODO
 		cout << "TODO: Toggle \n";

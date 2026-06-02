@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -102,12 +103,13 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		
 		if(namestring.compare(0, magestring.length(), magestring) != 0){return -1;} 
 		auto *IL = dyn_cast<IntegerLiteral>(markerCE->getArg(0)->IgnoreImpCasts());
-		if (IL) {
+		if (IL) {// && !nameEncodedMarkers ? nameEncodedMarkers kunnen nog een extra check op correctheid index krijgen.
 			llvm::APInt Value = IL->getValue();
 			return Value.getSExtValue();
 		} else if(nameEncodedMarkers) {
-			// TODO
-			return 0;
+			// TODO			
+			string postfix = namestring.substr(magestring.length());
+			return std::stoi(postfix);
 		} else {
 			return -1;
 		}
