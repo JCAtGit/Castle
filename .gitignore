@@ -9,3 +9,9 @@ build/
 out/
 CMakeFiles/
 CMakeCache.txt
+/bin/
+.classpath
+_deps/
+cmake_install.cmake
+compile_commands.json
+CMakeLists.txt
