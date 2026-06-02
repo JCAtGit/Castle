@@ -67,7 +67,8 @@ class CmdTasker{
 		    std::cout << "Saved config to " << path << "\n";
 		}
 	public:
-	CmdTasker(string es_configPath, string et_configPath): es_configPath(es_configPath), et_configPath(et_configPath){
+	CmdTasker(string es_configPath, string et_configPath): 
+	es_configPath(es_configPath), et_configPath(et_configPath){
 		loadConfigs();
 	}
 	

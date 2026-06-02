@@ -19,6 +19,7 @@ class CmdTasker{
 		filesystem::path inputPath, oracleDir, outputPath, mrkrFormatsPath;
 		json markerFormats, findings, findings_eval, dev, humanEval;
 		json selectedFormat;
+		bool& nameEncodedMarkers;
 		
 		const vector<std::string> args = {
 	        "-xc++", // xc++ or xc makes a huge difference for node recovery and is worth consideration
@@ -54,7 +55,16 @@ class CmdTasker{
 			unordered_map<int, json> oracleFindings;
 			unordered_map<int, json> evalResults;
 			
-			CrossASTGatherer CAGatherer(selectedFormat,findings, findings_eval, dev, humanEval, astOracleUnit->getASTContext(), astDecomUnit->getASTContext());
+			CrossASTGatherer CAGatherer(
+				selectedFormat,
+				findings, 
+				findings_eval, 
+				dev, 
+				humanEval, 
+				astOracleUnit->getASTContext(), 
+				astDecomUnit->getASTContext(),
+				nameEncodedMarkers
+			);
 			CAGatherer.selectMode(0);
 			CAGatherer.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
 			CAGatherer.selectMode(1);
@@ -63,11 +73,18 @@ class CmdTasker{
 		}
 	
 	public:
-	CmdTasker(filesystem::path inputPath, filesystem::path oracleDir, filesystem::path outputPath, filesystem::path  mrkrFormatsPath): 
+	CmdTasker(
+		filesystem::path inputPath, 
+		filesystem::path oracleDir, 
+		filesystem::path outputPath, 
+		filesystem::path mrkrFormatsPath,
+		bool& nameEncodedMarkers
+	): 
 			inputPath(inputPath), 		// file or dir
 			oracleDir(oracleDir), 		// when iterating over files, looks for same name in oracle path
 			outputPath(outputPath),
-			mrkrFormatsPath(mrkrFormatsPath)
+			mrkrFormatsPath(mrkrFormatsPath),
+			nameEncodedMarkers(nameEncodedMarkers)
 	{
 		loadMarkerFormats();
 		selectedFormat = markerFormats["0"];

@@ -21,6 +21,9 @@ int main(int argc, char **argv) {
 	app.add_option("--mrkrFormatsPath", mrkrFormatsPath, "Instrumentation config used for heuristics")
 		->required();
 
+	bool enchantAttributes = false;
+	app.add_flag("-e --enchant_attributes", enchantAttributes, "TODO: ");
+		
 	bool nameEncodedMarkers = false;  // TODO
 	app.add_flag("-n, --name_encoded_marker",nameEncodedMarkers,  "TODO: Evaluate constructs using names instead of indices.");
 		
@@ -31,6 +34,6 @@ int main(int argc, char **argv) {
 
 	CLI11_PARSE(app, argc, argv);
 
-	CmdTasker cmdTskr(inputPath, oracleDir, outputPath, mrkrFormatsPath);
+	CmdTasker cmdTskr(inputPath, oracleDir, outputPath, mrkrFormatsPath, nameEncodedMarkers);
 	cmdTskr.startEvaluationProcesses();
 }

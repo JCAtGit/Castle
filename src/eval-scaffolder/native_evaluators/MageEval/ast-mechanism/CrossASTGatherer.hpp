@@ -22,6 +22,8 @@ using namespace std;
 class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	private:
 	json &markerFormat, &findings, &specEval, &markerEval, &humanEval;
+	bool& nameEncodedMarkers;
+	
 	ASTContext &oracleAST, &decomAST;
 	SourceManager &oracleSM, &decomSM;
 		
@@ -47,9 +49,12 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	public:	
 	CrossASTGatherer(
 		json& markerFormat, json& findings, json& specEval, json& markerEval, json& humanEval,
-		ASTContext &oracleAST, ASTContext &decomAST): 
+		ASTContext &oracleAST, ASTContext &decomAST, 
+		bool& nameEncodedMarkers
+	): 
 	markerFormat(markerFormat),	findings(findings), specEval(specEval), markerEval(markerEval), humanEval(humanEval),
-	oracleAST(oracleAST), decomAST(decomAST),
+	oracleAST(oracleAST), decomAST(decomAST), 
+	nameEncodedMarkers(nameEncodedMarkers),
 	
 	oracleSM(oracleAST.getSourceManager()), decomSM(decomAST.getSourceManager()), 
 	sec(
@@ -90,24 +95,29 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 //		cout << selectedMessage << endl;
 	}
 	
-	bool identifyMage(FunctionDecl *DC){
-		return DC->getNameInfo().getName().getAsString() != markerFormat["name"].get<string>();
-	}
-	
 	int getMageIndex(CallExpr* markerCE){
+		auto DC = markerCE->getDirectCallee();
+		string namestring = DC->getNameInfo().getName().getAsString();
+		string magestring = markerFormat["name"].get<string>();
+		
+		if(namestring.compare(0, magestring.length(), magestring) != 0){return -1;} 
 		auto *IL = dyn_cast<IntegerLiteral>(markerCE->getArg(0)->IgnoreImpCasts());
-		if (!IL) {return -1;}
-		llvm::APInt Value = IL->getValue();
-	    return Value.getSExtValue();
+		if (IL) {
+			llvm::APInt Value = IL->getValue();
+			return Value.getSExtValue();
+		} else if(nameEncodedMarkers) {
+			
+			// TODO
+		} else {
+			return -1;
+		}
 	}
 	
 	void indexProcessor(Stmt *S){
 		if (selectedSM->isInMainFile(S->getBeginLoc()) && S->getStmtClass() == Stmt::CallExprClass){
 			CallExpr* markerCE = cast<CallExpr>(S);
-			auto DC = markerCE->getDirectCallee();
-			if(DC == nullptr){return;}
-			if(identifyMage(DC)){return;} // TODO?: check comment at markerformat declaration.
 			int mageIndex = getMageIndex(markerCE);
+			if(mageIndex == -1){return;}
 			
 			(*selectedMarkerMap)[mageIndex] = markerCE;
 			
