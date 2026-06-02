@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 	app.add_option("-o,--output", outputPath, "output path for results")
 		->required();
 		
-	string mrkrFormatsPath = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/castle-pipeline/instrumentation-config/formats.json";
+	string mrkrFormatsPath = "/home/user/Desktop/CCastle/CCastleData/configs/CCastlePipeline/formats.json";
 	app.add_option("--mrkrFormatsPath", mrkrFormatsPath, "Instrumentation config used for heuristics")
 		->required();
 

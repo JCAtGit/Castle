@@ -4,10 +4,10 @@
 int main(int argc, char **argv) {
 	CLI::App app{"CodebaseScaffolder"};
 	
-	string scaffolderConfig = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/codebase-scaffolder/config/cs_config.json";
+	string scaffolderConfig = "/home/user/Desktop/CCastle/CCastleData/configs/CodebaseScaffolder/cs_config.json";
 	app.add_option("--scaffolder-config", scaffolderConfig, "Uses the specified config for the scaffolder");
 
-	string toolConfig = "/home/user/eclipse-workspace/DE_CompilationBenchmarker/src/codebase-scaffolder/config/cg_config.json";
+	string toolConfig = "/home/user/Desktop/CCastle/CCastleData/configs/CodebaseScaffolder/ct_config.json";
 	app.add_option("--tool-config", toolConfig, "Uses the specified config for the tools within scaffolder.");
 	
 	CLI11_PARSE(app, argc, argv);

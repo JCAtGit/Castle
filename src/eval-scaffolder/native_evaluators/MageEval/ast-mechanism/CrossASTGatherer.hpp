@@ -106,8 +106,8 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			llvm::APInt Value = IL->getValue();
 			return Value.getSExtValue();
 		} else if(nameEncodedMarkers) {
-			
 			// TODO
+			return 0;
 		} else {
 			return -1;
 		}
