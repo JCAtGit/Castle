@@ -83,7 +83,7 @@ class CmdTasker{
 		preprocessQueueItem(inputPath);
 		auto codeString = file2string(inputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
 //		cout << "Enchanting " << inputPath.string() << endl;
-		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(inputPath, inputDir, outputPath, outputDir, markerFormatCfg, idCounter, nameEncodedMarkers);
+		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(inputPath, inputDir, outputPath, outputDir, markerFormatCfg, idCounter, nameEncodedMarkers);
 		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputPath.string());
 	}
 	
@@ -103,7 +103,7 @@ class CmdTasker{
 	
 			// TODO?: extract selection of action
 //			cout << "Enchanting " << path2process.string() << endl;
-			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerAction>(path2process, inputDir, outputPath, outputDir,markerFormatCfg, idCounter, nameEncodedMarkers);
+			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(path2process, inputDir, outputPath, outputDir,markerFormatCfg, idCounter, nameEncodedMarkers);
 			clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, path2process.string());
 		}
 	}
@@ -120,16 +120,16 @@ class CmdTasker{
 			markerFormatCfg["noOptPragma"].get<string>();
 		
 		if(nameEncodedMarkers){
-			for(int neIndex = 0; neIndex < idCounter; neIndex++){
-				content += 
-				markerFormatCfg["noOptAttributes"].get<string>()	+ " " +
-				markerFormatCfg["functionType"].get<string>() 		+ " " +
-				markerFormatCfg["name"].get<string>() 				+
-				std::to_string(neIndex)						+
-				markerFormatCfg["paramSignature"].get<string>()		+ "{" +
-				markerFormatCfg["definition"].get<string>()			+ "};"+
-				"\n"; 
-			}
+//			for(int neIndex = 0; neIndex < idCounter; neIndex++){
+//				content += 
+//				markerFormatCfg["noOptAttributes"].get<string>()	+ " " +
+//				markerFormatCfg["functionType"].get<string>() 		+ " " +
+//				markerFormatCfg["name"].get<string>() 				+
+//				std::to_string(neIndex)						+
+//				markerFormatCfg["paramSignature"].get<string>()		+ "{" +
+//				markerFormatCfg["definition"].get<string>()			+ "};"+
+//				"\n"; 
+//			}
 		} else {
 			// TODO: keep ifndef etc directives for portability?
 //			content += markerFormatCfg["headerString"].get<string>(); // TODO: rework to dynamic components

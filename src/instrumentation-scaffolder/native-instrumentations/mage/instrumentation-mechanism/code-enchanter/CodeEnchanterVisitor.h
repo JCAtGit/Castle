@@ -24,7 +24,7 @@ using namespace clang;
 using namespace std;
 using namespace nlohmann;
 
-class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
+class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 	private:
 		Rewriter& rewriter;
 		syntax::TokenBuffer tokenBuffer;
@@ -35,8 +35,10 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		ASTContext& context;
 
 		json markerFormatCfg;
+		int lastStart;
 		int& idCounter;
-		bool& nameEncodedMarkers;
+		bool& nameEncodedMarker;
+		
 		
 		string markerName;
 		string markerKeyword;
@@ -48,7 +50,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 
 		string synthesizeCallMarkerString(){
 			string markerCallString = markerName;
-			if(nameEncodedMarkers){
+			if(nameEncodedMarker){
 				markerCallString += std::to_string(idCounter);
 			}
 			markerCallString +=  "(" + std::to_string(idCounter) + ")" + markerEndString;
@@ -66,7 +68,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 		}
 		
 	public:
-		CodeMarkerVisitor(
+		CodeEnchanterVisitor(
 			CompilerInstance& ci, 
 			Rewriter& rewriter, 
 			syntax::TokenBuffer tokenBuffer, 
@@ -81,7 +83,7 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 			recordedPPEventsEvents(recordedPPEventsEvents), 
 			markerFormatCfg(markerFormatCfg), 
 			idCounter(idCounter),
-			nameEncodedMarkers(nameEncodedMarkers),
+			nameEncodedMarker(nameEncodedMarkers),
 			
 			context(ci.getASTContext()), SM(ci.getASTContext().getSourceManager()){
 				markerName 			= 	markerFormatCfg["name"].get<string>();
@@ -90,10 +92,11 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 				markerSignature 	= 	markerFormatCfg["paramSignature"].get<string>();
 				headerInclusion 	=   markerFormatCfg["headerInclusionDirective"].get<string>();
 				definitionFilename 	=	markerFormatCfg["definitionFileName"].get<string>();
+				lastStart = idCounter;
 			}
 	
 			/**
-			 *  Include strings and other directives like:
+			 *  Include and other directives like:
 	 		 *		#if defined(__clang__)
 			 *	    	#pragma clang optimize off
 			 *	 	#elif defined(__GNUC__)
@@ -105,6 +108,22 @@ class CodeMarkerVisitor: public RecursiveASTVisitor<CodeMarkerVisitor> {
 				SourceLocation startLoc = SM.getLocForStartOfFile(SM.getMainFileID());
 				StringRef filePath = SM.getFilename(startLoc);
 				rewriter.InsertTextBefore(startLoc, synthesizeInclusionDirective(inputPath, inputDir));
+			}
+			
+			void insertNameEncodedMarkerDefinitions(){
+				SourceLocation startLoc = SM.getLocForStartOfFile(SM.getMainFileID());
+				string localDefinition;
+				for(; lastStart < idCounter; lastStart++){
+					localDefinition += 
+					markerFormatCfg["noOptAttributes"].get<string>()	+ " " +
+					markerFormatCfg["functionType"].get<string>() 		+ " " +
+					markerFormatCfg["name"].get<string>() 				+
+					std::to_string(lastStart)						+
+					markerFormatCfg["paramSignature"].get<string>()		+ "{" +
+					markerFormatCfg["definition"].get<string>()			+ "};"+
+					"\n"; 
+				}
+				rewriter.InsertTextBefore(startLoc, localDefinition);
 			}
 			
 			void commitToSingleFile(filesystem::path inputPath, filesystem::path outputPath, filesystem::path outputDir){

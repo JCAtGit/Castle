@@ -12,27 +12,27 @@ using namespace clang;
 using namespace nlohmann;
 using namespace std;
 
-class CodeMarkerAction: public ASTFrontendAction {
+class CodeEnchanterAction: public ASTFrontendAction {
 	private:
 		filesystem::path inputPath, 	inputDir;
 		filesystem::path outputPath, 	outputDir;
 		filesystem::path path2process;
 		json markerFormatCfg;	
 		int& idCounter;
-		bool& nameEncodedMarkers;
+		bool& nameEncodedMarker;
 		
 		clang::Rewriter rewriter;	
 		vector<RecordedPPConstruct> ppEvents; 
 		unique_ptr<syntax::TokenCollector> tokenCollector; 
 		
 	public:
-		CodeMarkerAction(
+		CodeEnchanterAction(
 			filesystem::path path2process, 
 			filesystem::path inputDir, filesystem::path outputPath,
 			filesystem::path outputDir, 
 			json& markerFormatCfg, 
 			int& idCounter,
-			bool& nameEncodedMarkers
+			bool& nameEncodedMarker
 		): 
 			path2process(path2process), 
 			inputDir(inputDir), 
@@ -40,7 +40,7 @@ class CodeMarkerAction: public ASTFrontendAction {
 			outputDir(outputDir), 
 			markerFormatCfg(markerFormatCfg), 
 			idCounter(idCounter),
-			nameEncodedMarkers(nameEncodedMarkers)
+			nameEncodedMarker(nameEncodedMarker)
 			{}
 		
 		/**
@@ -66,22 +66,29 @@ class CodeMarkerAction: public ASTFrontendAction {
 			CompilerInstance &CI = getCompilerInstance();
 	        syntax::TokenBuffer tokenBuffer = std::move(*tokenCollector).consume();
 	        tokenBuffer.indexExpandedTokens();
-			auto visitor = std::make_unique<CodeMarkerVisitor>(
+			auto visitor = std::make_unique<CodeEnchanterVisitor>(
 				CI, 
 				rewriter, 
 				std::move(tokenBuffer), 
 				ppEvents, 
 				markerFormatCfg, 
 				idCounter,
-				nameEncodedMarkers
+				nameEncodedMarker
 			);
-			visitor->insertPreprocessorDirectives(path2process, inputDir);
+			
 			visitor->TraverseDecl(CI.getASTContext().getTranslationUnitDecl());
+			if(nameEncodedMarker){
+				// https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#Rs-include-order
+				// But we only use this in ".c" files, not headers.
+				visitor->insertNameEncodedMarkerDefinitions();
+			}
+			visitor->insertPreprocessorDirectives(path2process, inputDir);
+
 			if(filesystem::is_regular_file(inputPath)){
 				visitor->commitToSingleFile(path2process, outputPath, outputDir);
 			} else {
 				visitor->commitToQueueFile(inputDir, outputDir);
 			}
 		}
-		
 };
+

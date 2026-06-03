@@ -5,6 +5,7 @@
 #include <string>
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Lex/Lexer.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 
 using namespace std;
