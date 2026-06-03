@@ -18,11 +18,8 @@ int main(int argc, char **argv) {
 		->required();
 		
 	string mrkrFormatsPath = "/home/user/Desktop/CCastle/CCastleData/configs/CCastlePipeline/formats.json";
-	app.add_option("--mrkrFormatsPath", mrkrFormatsPath, "Instrumentation config used for heuristics")
+	app.add_option("--marker_formats_path", mrkrFormatsPath, "Instrumentation config used for heuristics")
 		->required();
-
-	bool enchantAttributes = false;
-	app.add_flag("-e --enchant_attributes", enchantAttributes, "TODO: ");
 		
 	bool nameEncodedMarkers = false;  // TODO
 	app.add_flag("-n, --name_encoded_marker",nameEncodedMarkers,  "TODO: Evaluate constructs using names instead of indices.");

@@ -24,13 +24,16 @@ int main(int argc, char **argv) {
 		->needs(option_outputPath);
 	
 	string mrkrFormatsPath = "/home/user/Desktop/CCastle/CCastleData/configs/CCastlePipeline/formats.json";
-	app.add_option("--marker_cfg_path", mrkrFormatsPath, "Marker config used for heuristics");
+	app.add_option("--marker_formats_path", mrkrFormatsPath, "Marker format used for heuristics");
 	
 	bool toggle = false; // TODO
 	app.add_flag("-t, --toggle",toggle,  "TODO: Toggles marking and removal");
 	
+	bool enchantFunction = false;
+	app.add_flag("-e, --enchant_function",enchantFunction,  "TODO: Adds (optnone, etc.) attributes to function decls.");
+
 	bool nameEncodedMarker = false;  // TODO
-	app.add_flag("-n, --name_encoded_marker",nameEncodedMarker,  "TODO: Mark constructs using names instead of indices.");
+	app.add_flag("-n, --name_encoded_marker",nameEncodedMarker,  "Mark constructs using names instead of indices.");
 	
 	CLI11_PARSE(app, argc, argv);
 	

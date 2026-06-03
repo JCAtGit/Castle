@@ -40,7 +40,7 @@ class CmdTasker{
 		   	try {
 				markerFormats = json::parse(mrkrFormatsFile);
 		   	} catch (const json::parse_error& e) {
-		    	cerr << "Parse error: " << e.what() << endl;
+		    	cerr << "MageEval: parse error: " << e.what() << endl;
 		    	return;
 		  	}
 		}

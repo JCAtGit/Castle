@@ -79,7 +79,7 @@ class CodeEnchanterAction: public ASTFrontendAction {
 			visitor->TraverseDecl(CI.getASTContext().getTranslationUnitDecl());
 			if(nameEncodedMarker){
 				// https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#Rs-include-order
-				// But we only use this in ".c" files, not headers.
+				// But we only use this in ".c" files, not headers. Maar C files kunnen in theory ook geinclude worden.
 				visitor->insertNameEncodedMarkerDefinitions();
 			}
 			visitor->insertPreprocessorDirectives(path2process, inputDir);

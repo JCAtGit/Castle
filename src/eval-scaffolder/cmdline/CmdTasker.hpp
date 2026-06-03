@@ -12,7 +12,7 @@ class CmdTasker{
 		json  	es_configData, et_configData;
 		
 		void loadConfigs(){
-			cout << "Importing JSON configs.\n";
+			cout << "EvalScaffolder: importing JSON configs.\n";
 		   	ifstream et_config_file(et_configPath);
 			ifstream es_config_file(es_configPath);
 		   	if (!(et_config_file.is_open() && es_config_file.is_open())) {
@@ -20,10 +20,10 @@ class CmdTasker{
 		   		return;
 		   	}
 		   	try {
-		    	et_configData = json::parse(et_config_file);
+				et_configData = json::parse(et_config_file);
 				es_configData = json::parse(es_config_file);
 		   	} catch (const json::parse_error& e) {
-		    	cerr << "Parse error: " << e.what() << "\n";
+		    	cerr << "EvalScaffolder: parse error: " << e.what() << "\n";
 		    	return;
 		  	}
 		}
