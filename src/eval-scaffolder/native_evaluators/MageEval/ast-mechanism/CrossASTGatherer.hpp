@@ -38,7 +38,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	void (CrossASTGatherer::*selectedProcessor)(Stmt *S);
 	ASTContext* selectedAST;
 	SourceManager* selectedSM;
-	string selectedMessage;
+	string selectedMessage, magestring;
 	unordered_map<int64_t, CallExpr*>* 		selectedMarkerMap;
 	unordered_map<int64_t, CompoundStmt*>* 	selectedMarkerParentMap;
 	unordered_map<CallExpr*, CallExpr*> 	markerParentMarkerMap;
@@ -70,7 +70,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		    true					//ErrorOnTagTypeMismatch
 		)
 	)
-	{}
+	{magestring = markerFormat["name"].get<string>();}
 	
 	void selectMode(int proc_mode){
 		switch (proc_mode) {
@@ -93,26 +93,26 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			selectedMessage = "No processor selected";
 			break;
 		}
-//		cout << selectedMessage << endl;
 	}
 	
 	int getMageIndex(CallExpr* markerCE){
 		auto DC = markerCE->getDirectCallee();
+		if (!DC) return -1;
 		string namestring = DC->getNameInfo().getName().getAsString();
-		string magestring = markerFormat["name"].get<string>();
-		
-		if(namestring.compare(0, magestring.length(), magestring) != 0){return -1;} 
-		auto *IL = dyn_cast<IntegerLiteral>(markerCE->getArg(0)->IgnoreImpCasts());
-		if (IL) {// && !nameEncodedMarkers ? nameEncodedMarkers kunnen nog een extra check op correctheid index krijgen.
-			llvm::APInt Value = IL->getValue();
-			return Value.getSExtValue();
-		} else if(nameEncodedMarkers) {
-			// TODO			
+
+		if (namestring.compare(0, magestring.length(), magestring) != 0){return -1;} 		
+		if (markerCE->getNumArgs() > 0 && !nameEncodedMarkers){
+			auto IL = dyn_cast<IntegerLiteral>(markerCE->getArg(0)->IgnoreImpCasts());
+			if (IL) {
+				llvm::APInt Value = IL->getValue();
+				return Value.getSExtValue();
+			}
+		} else if(nameEncodedMarkers){
 			string postfix = namestring.substr(magestring.length());
+			if (postfix.empty() || !std::all_of(postfix.begin(), postfix.end(), ::isdigit)) {return -1;}
 			return std::stoi(postfix);
-		} else {
-			return -1;
 		}
+		return -1;
 	}
 	
 	void indexProcessor(Stmt *S){
@@ -186,7 +186,10 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	}
 	
 	// Evaluates by traversing through the oracle and then mapping onto the target.
-	bool VisitStmt(Stmt *S) {indexProcessor(S); return true;}
+	bool VisitStmt(Stmt *S) {
+		indexProcessor(S); 
+ 		return true;
+	}
 		
 	const std::unordered_set<Stmt::StmtClass> traversalSkipList = {
 //		Stmt::ImplicitCastExprClass,

@@ -53,7 +53,7 @@ class CmdTasker{
 			addStaticFlags(command, et_config_data);
 			if(et_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 			if(et_config_data["redirectNull"].get<bool>()){command = command + " > /dev/null 2>&1";}
-			cout << command << "\n";
+			cout << "exec: " << command << "\n";
 			auto status = system(command.c_str());
 		}
 		
@@ -79,11 +79,18 @@ class CmdTasker{
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << "\n";
 			filesystem::create_directories((es_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
+			
+			// TODO
+			if(toolcfg["run_per_file"].get<bool>()){
+				
+			}
 			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
 				if(entry.path().extension() == ".c"){
 					processPath(entry, toolcfg);
 				}
 			}
+			
+			
 			toolcfg["timestamp"] = time(NULL);
 		}
 	}

@@ -23,7 +23,7 @@ class CrossASTEvaluator{
 		filesystem::path &outputPath
 	): findings(findings), findings_eval(findings_eval), dev_report(dev_report), outputPath(outputPath)
 	{
-		dev_report["Missed"] = json::array();
+		dev_report["missing"] = json::array();
 	}
 
 	using EvalFnPtr = bool(CrossASTEvaluator::*)(const string &, json &, json &);
@@ -39,9 +39,12 @@ class CrossASTEvaluator{
 	
 	void startEval(){
 		auto markerFindings = findings.items();
-//		for(size_t i = 0; i<findings.size(); i++){ // check marker survival?
-//			TODO:
-//		}
+		for(size_t i = 0; i<findings.size(); i++){ // check marker survival?
+			//	TODO:
+			if(!findings.contains(std::to_string(i))){
+				dev_report["missing"].push_back(i);
+			}
+		}
 		for(auto [markerID, finding] : findings.items()){
 			evalTraverse(markerID, finding["oracle"], finding["decom"]);
 		}

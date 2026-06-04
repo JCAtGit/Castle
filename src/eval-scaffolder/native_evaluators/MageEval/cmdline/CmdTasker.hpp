@@ -45,12 +45,27 @@ class CmdTasker{
 		  	}
 		}
 		
-		void processFile(){			
+		// TODO
+		void processDir(){
+			string fileDecomData = file2string(inputPath);
+			
+			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputPath.filename().c_str());
+			
+//			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
+			
+			unordered_map<int, json> decomFindings;
+			unordered_map<int, json> oracleFindings;
+			unordered_map<int, json> evalResults;
+			
+//			for(){}
+		}
+		
+		void processFile(){
 			string fileDecomData = file2string(inputPath);
 			string fileOracleData = file2string(oracleDir / inputPath.filename()); // TODO: oraclePath is an dir, which must be changed
 			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputPath.filename().c_str());
 			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
-						
+
 			unordered_map<int, json> decomFindings;
 			unordered_map<int, json> oracleFindings;
 			unordered_map<int, json> evalResults;
@@ -65,6 +80,7 @@ class CmdTasker{
 				astDecomUnit->getASTContext(),
 				nameEncodedMarkers
 			);
+	
 			CAGatherer.selectMode(0);
 			CAGatherer.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
 			CAGatherer.selectMode(1);
@@ -87,7 +103,7 @@ class CmdTasker{
 			nameEncodedMarkers(nameEncodedMarkers)
 	{
 		loadMarkerFormats();
-		selectedFormat = markerFormats["0"];
+		selectedFormat = markerFormats;
 	}
 	
 	void saveJsonToFile(const std::string& path, const json& data) {
@@ -103,8 +119,9 @@ class CmdTasker{
 	void startEvaluationProcesses(){
 		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
 		processFile();
-		CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
+		
 		cout << "Starting eval" << "\n";
+		CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
 		CAEvaluator.startEval();
 		cout << "Saving results to json" << "\n";
 		saveJsonToFile(outputPath.string() + "_findings.json", findings);
