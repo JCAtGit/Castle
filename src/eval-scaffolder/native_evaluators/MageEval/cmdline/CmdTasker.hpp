@@ -3,8 +3,10 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <unordered_map>
 
 #include "clang/AST/ASTContext.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
 #include "../../../../../include/helper.hpp"
@@ -28,7 +30,7 @@ class CmdTasker{
 //	        "-frecovery-ast",
 //			"-Xclang",
 //	        "-frecovery-ast-type",
-			"-ferror-limit=1"
+			"-ferror-limit=1",
 	    };
 		
 		void loadMarkerFormats(){
@@ -45,23 +47,50 @@ class CmdTasker{
 		  	}
 		}
 		
-		// TODO
 		void processDir(){
-			string fileDecomData = file2string(inputPath);
-			
-			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputPath.filename().c_str());
-			
-//			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
-			
-			unordered_map<int, json> decomFindings;
-			unordered_map<int, json> oracleFindings;
-			unordered_map<int, json> evalResults;
-			
-			for(auto entry :filesystem::recursive_directory_iterator(inputPath)){
+			unordered_map<string, unique_ptr<ASTUnit>> astDecomUnits;
+			unordered_map<string, unique_ptr<ASTUnit>> astOracleUnits;
+			string mapKey;
+			CrossASTGatherer CAGatherer(
+				selectedFormat,
+							findings, 
+							findings_eval, 
+							dev, 
+							humanEval, 
+							nameEncodedMarkers
+						);
+			cout << "BIGCheck0" << "\n";						
+			string fileDecomData;
+			CAGatherer.selectMode(0);
+			for(auto entry :filesystem::recursive_directory_iterator(inputPath)){ // inputPath is een dir in dit geval
 				if(entry.path().extension() == ".c"){
-					
+					fileDecomData = file2string(entry.path());
+					mapKey = entry.path().filename().string();
+					astDecomUnits[mapKey] = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, entry.path().filename().string());
+					cout << "BIGCheck00: " << fileDecomData.size() << "\n";						
+
+					CAGatherer.setDecomContext(&(astDecomUnits[mapKey])->getASTContext());
+					cout << "BIGCheck01" << "\n";						
+
+					CAGatherer.TraverseDecl(astDecomUnits[mapKey]->getASTContext().getTranslationUnitDecl());
+					cout << "BIGCheck02" << "\n";						
+
+				}
+			}
+			cout << "BIGCheck1" << "\n";						
+			string fileOracleData;
+			CAGatherer.selectMode(1);
+			for(auto entry :filesystem::recursive_directory_iterator(inputPath)){ // inputPath is een dir in dit geval
+				if(entry.path().extension() == ".c"){
+					fileOracleData = file2string(entry.path());
+					mapKey = entry.path().filename().string();
+					astOracleUnits[mapKey] = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
+					CAGatherer.setOracleContext(&(astOracleUnits[mapKey])->getASTContext());
+					CAGatherer.TraverseDecl(astOracleUnits[mapKey]->getASTContext().getTranslationUnitDecl());
 				}
  			}
+			
+			CAGatherer.gatherFindings();
 		}
 		
 		void processFile(){
@@ -69,10 +98,6 @@ class CmdTasker{
 			string fileOracleData = file2string(oracleDir / inputPath.filename()); // TODO: oraclePath is an dir, which must be changed
 			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputPath.filename().c_str());
 			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
-
-			unordered_map<int, json> decomFindings;
-			unordered_map<int, json> oracleFindings;
-			unordered_map<int, json> evalResults;
 			
 			CrossASTGatherer CAGatherer(
 				selectedFormat,
@@ -80,8 +105,8 @@ class CmdTasker{
 				findings_eval, 
 				dev, 
 				humanEval, 
-				astOracleUnit->getASTContext(), 
-				astDecomUnit->getASTContext(),
+				&(astOracleUnit->getASTContext()), 
+				&(astDecomUnit->getASTContext()),
 				nameEncodedMarkers
 			);
 	
@@ -123,6 +148,7 @@ class CmdTasker{
 	void startEvaluationProcesses(){
 		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
 		
+		cout << "ChoiceCheck: " << filesystem::is_directory(inputPath) << " - " << inputPath << "\n";
 		if(filesystem::is_directory(inputPath)){
 			processDir();
 		} else {

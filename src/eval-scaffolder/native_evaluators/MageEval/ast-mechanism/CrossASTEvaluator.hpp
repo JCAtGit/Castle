@@ -1,16 +1,11 @@
 
 #pragma once
 
-#include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
-#include "clang/AST/ASTStructuralEquivalence.h"
-#include "../ast-mechanism/ast-helper.hpp"
 
 using namespace nlohmann;
-using namespace clang;
 using namespace std;
 
 // assumes oracle to be free of major errors and to be compilable.
@@ -25,7 +20,7 @@ class CrossASTEvaluator{
 	{
 		dev_report["missing"] = json::array();
 	}
-
+	
 	using EvalFnPtr = bool(CrossASTEvaluator::*)(const string &, json &, json &);
 	unordered_map<string, EvalFnPtr> fnSelector = {
 		{"CallExpr", &CrossASTEvaluator::processCallExpr},

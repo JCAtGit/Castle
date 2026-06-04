@@ -14,6 +14,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/Support/Casting.h"
 #include "../ast-mechanism/ast-helper.hpp"
 
 using namespace nlohmann;
@@ -26,7 +27,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	bool& nameEncodedMarkers;
 	
 	ASTContext *oracleAST, *decomAST;
-	SourceManager &oracleSM, &decomSM;
+	SourceManager *oracleSM, *decomSM;
 		
 	unordered_map<int64_t, CallExpr*> decomMarkerMap;
 	unordered_map<int64_t, CallExpr*> oracleMarkerMap;
@@ -41,11 +42,10 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	string selectedMessage, magestring;
 	unordered_map<int64_t, CallExpr*>* 		selectedMarkerMap;
 	unordered_map<int64_t, CompoundStmt*>* 	selectedMarkerParentMap;
-	unordered_map<CallExpr*, CallExpr*> 	markerParentMarkerMap;
 	
 	// Structural equivalence functionality
-	StructuralEquivalenceContext::NonEquivalentDeclSet neds;
-	StructuralEquivalenceContext sec;
+//	StructuralEquivalenceContext::NonEquivalentDeclSet neds;
+//	StructuralEquivalenceContext sec;
 	
 	public:	
 	CrossASTGatherer(
@@ -57,37 +57,37 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	oracleAST(oracleAST), decomAST(decomAST), 
 	nameEncodedMarkers(nameEncodedMarkers),
 	
-	oracleSM(oracleAST->getSourceManager()), decomSM(decomAST->getSourceManager()), 
-	sec(
-		StructuralEquivalenceContext(
-			oracleAST->getLangOpts(),
-		    *oracleAST,
-		    *decomAST,
-		    neds,
-		    StructuralEquivalenceKind::Default,
-		    false, 						//StrictTypeSpelling
-		    true, 								// Complain, structural errors emit straight to your TextDiagnosticPrinter
-		    true					//ErrorOnTagTypeMismatch
-		)
-	)
+	oracleSM(&oracleAST->getSourceManager()), decomSM(&decomAST->getSourceManager())
 	{magestring = markerFormat["name"].get<string>();}
 	
-	void setASTContext(ASTContext *otherOracleAST){
-		oracleAST = otherOracleAST;
+	CrossASTGatherer(
+		json& markerFormat, json& findings, json& specEval, json& markerEval, json& humanEval, 
+		bool& nameEncodedMarkers
+	): markerFormat(markerFormat), findings(findings), specEval(specEval), markerEval(markerEval), humanEval(humanEval), nameEncodedMarkers(nameEncodedMarkers)
+	{magestring = markerFormat["name"].get<string>();}
+	
+	void setDecomContext(ASTContext *otherAST){
+		decomAST = otherAST;
+		selectedSM = &(otherAST->getSourceManager());
+	}
+	
+	void setOracleContext(ASTContext *otherAST){
+		oracleAST = otherAST;
+		selectedSM = &(otherAST->getSourceManager());
 	}
 	
 	void selectMode(int proc_mode){
 		switch (proc_mode) {
 			case 0:
 			selectedAST = decomAST;
-			selectedSM = &decomSM;
+			selectedSM = decomSM;
 			selectedMarkerMap = &decomMarkerMap;
 			selectedMarkerParentMap = &decomMarkerParentMap;
 			selectedMessage = "decomIndexProcessor";
 			break;
 			case 1:
 			selectedAST = oracleAST;
-			selectedSM = &oracleSM;
+			selectedSM = oracleSM;
 			selectedMarkerMap = &oracleMarkerMap;
 			selectedMarkerParentMap = &oracleMarkerParentMap;
 			selectedMessage = "oracleIndexProcessor";
@@ -99,6 +99,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		}
 	}
 	
+	// Sommige DC dingen nu dubbel
 	int getMageIndex(CallExpr* markerCE){
 		auto DC = markerCE->getDirectCallee();
 		if (!DC) return -1;
@@ -119,19 +120,31 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return -1;
 	}
 	
-	void indexProcessor(Stmt *S){
-		if (selectedSM->isInMainFile(S->getBeginLoc()) && S->getStmtClass() == Stmt::CallExprClass){
-			CallExpr* markerCE = cast<CallExpr>(S);
-			int mageIndex = getMageIndex(markerCE);
+	void indexProcessor(CallExpr *CE){
+		if (selectedSM->isInMainFile(CE->getBeginLoc())){				
+			int mageIndex = getMageIndex(CE);
 			if(mageIndex == -1){return;}
+			(*selectedMarkerMap)[mageIndex] = CE;
 			
-			(*selectedMarkerMap)[mageIndex] = markerCE;
-			
-			// Build parent map for markerCE.
-			auto markerCEParents = selectedAST->getParents(*markerCE);
-			auto markerCEParent = markerCEParents[0];
-			auto markerCEParentStmt = markerCEParent.get<CompoundStmt>();
-			(*selectedMarkerParentMap)[mageIndex] = const_cast<CompoundStmt*>(markerCEParentStmt);
+//			auto DC = CE->getDirectCallee();
+//			if (!DC) return;
+//			string namestring = DC->getNameInfo().getName().getAsString();
+//			cout << "checkCE1.5 - " << namestring << "\n";						
+	
+//			// Build parent map for markerCE.
+//			auto markerCEParents = selectedAST->getParentMapContext().getParents(*CE);
+////			auto markerCEParents = selectedAST->getParents(*markerCE);
+//		
+//			cout << "checkCE2" << "\n";						
+//
+//			auto markerCEParent = markerCEParents[0];
+//			cout << "checkCE3" << "\n";						
+//
+//			auto markerCEParentStmt = markerCEParent.get<CompoundStmt>();
+//			cout << "checkCE4" << "\n";						
+//
+//			(*selectedMarkerParentMap)[mageIndex] = const_cast<CompoundStmt*>(markerCEParentStmt);
+//			cout << "checkCE5" << "\n";						
 		}
 	}
 	
@@ -189,12 +202,23 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		}
 	}
 	
-	// Evaluates by traversing through the oracle and then mapping onto the target.
-	bool VisitStmt(Stmt *S) {
-		indexProcessor(S); 
- 		return true;
+	bool VisitCallExpr(CallExpr *CE){
+		indexProcessor(CE); 
+		return true;
 	}
-		
+
+	bool VisitCompoundStmt(CompoundStmt *CS){
+		auto children = CS->children();
+		for(auto child: children){
+			if(child->getStmtClass() != Stmt::CallExprClass){continue;}
+			auto CE = llvm::cast<CallExpr>(child);
+			int mageIndex = getMageIndex(CE);
+			if(mageIndex == -1){continue;}
+			(*selectedMarkerParentMap)[mageIndex] = CS;
+		}
+		return true;
+	}
+	
 	const std::unordered_set<Stmt::StmtClass> traversalSkipList = {
 //		Stmt::ImplicitCastExprClass,
 //		Stmt::DeclRefExprClass,
