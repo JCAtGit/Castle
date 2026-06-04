@@ -69,8 +69,8 @@ class CmdTasker{
 					}
 				}
 			} else {
+				// TODO: add static flags, etc. Currently assumes that separate scripts handles everything
 				string command = toolcfg["binPath"].get<string>();
-				// TODO: add static flags
 				std::cout << command << "\n";
 				auto status = std::system(command.c_str());
 			}

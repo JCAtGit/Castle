@@ -25,7 +25,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	json &markerFormat, &findings, &specEval, &markerEval, &humanEval;
 	bool& nameEncodedMarkers;
 	
-	ASTContext &oracleAST, &decomAST;
+	ASTContext *oracleAST, *decomAST;
 	SourceManager &oracleSM, &decomSM;
 		
 	unordered_map<int64_t, CallExpr*> decomMarkerMap;
@@ -50,19 +50,19 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	public:	
 	CrossASTGatherer(
 		json& markerFormat, json& findings, json& specEval, json& markerEval, json& humanEval,
-		ASTContext &oracleAST, ASTContext &decomAST, 
+		ASTContext *oracleAST, ASTContext *decomAST, 
 		bool& nameEncodedMarkers
 	): 
 	markerFormat(markerFormat),	findings(findings), specEval(specEval), markerEval(markerEval), humanEval(humanEval),
 	oracleAST(oracleAST), decomAST(decomAST), 
 	nameEncodedMarkers(nameEncodedMarkers),
 	
-	oracleSM(oracleAST.getSourceManager()), decomSM(decomAST.getSourceManager()), 
+	oracleSM(oracleAST->getSourceManager()), decomSM(decomAST->getSourceManager()), 
 	sec(
 		StructuralEquivalenceContext(
-			oracleAST.getLangOpts(),
-		    oracleAST,
-		    decomAST,
+			oracleAST->getLangOpts(),
+		    *oracleAST,
+		    *decomAST,
 		    neds,
 		    StructuralEquivalenceKind::Default,
 		    false, 						//StrictTypeSpelling
@@ -72,17 +72,21 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	)
 	{magestring = markerFormat["name"].get<string>();}
 	
+	void setASTContext(ASTContext *otherOracleAST){
+		oracleAST = otherOracleAST;
+	}
+	
 	void selectMode(int proc_mode){
 		switch (proc_mode) {
 			case 0:
-			selectedAST = &decomAST;
+			selectedAST = decomAST;
 			selectedSM = &decomSM;
 			selectedMarkerMap = &decomMarkerMap;
 			selectedMarkerParentMap = &decomMarkerParentMap;
 			selectedMessage = "decomIndexProcessor";
 			break;
 			case 1:
-			selectedAST = &oracleAST;
+			selectedAST = oracleAST;
 			selectedSM = &oracleSM;
 			selectedMarkerMap = &oracleMarkerMap;
 			selectedMarkerParentMap = &oracleMarkerParentMap;

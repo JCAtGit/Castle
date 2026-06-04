@@ -57,7 +57,11 @@ class CmdTasker{
 			unordered_map<int, json> oracleFindings;
 			unordered_map<int, json> evalResults;
 			
-//			for(){}
+			for(auto entry :filesystem::recursive_directory_iterator(inputPath)){
+				if(entry.path().extension() == ".c"){
+					
+				}
+ 			}
 		}
 		
 		void processFile(){
@@ -107,7 +111,7 @@ class CmdTasker{
 	}
 	
 	void saveJsonToFile(const std::string& path, const json& data) {
-	    std::ofstream file(path);
+	    ofstream file(path);
 	    if (!file.is_open()) {
 	        std::cerr << "Error: Could not open file for writing: " << path << "\n";
 	        return;
@@ -118,7 +122,12 @@ class CmdTasker{
 		
 	void startEvaluationProcesses(){
 		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
-		processFile();
+		
+		if(filesystem::is_directory(inputPath)){
+			processDir();
+		} else {
+			processFile();
+		}
 		
 		cout << "Starting eval" << "\n";
 		CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
