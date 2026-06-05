@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
@@ -26,10 +25,10 @@ class CrossASTEvaluator{
 	
 	using EvalFnPtr = bool(CrossASTEvaluator::*)(const string &, json &, json &);
 	unordered_map<string, EvalFnPtr> fnSelector = {
-//		{"CallExpr", &CrossASTEvaluator::processCallExpr},
+		{"CallExpr", &CrossASTEvaluator::processCallExpr},
 		{"DeclStmt", &CrossASTEvaluator::processDeclStmt},
 		{"IfStmt", &CrossASTEvaluator::processIfStmt},
-//		{"ForStmt", &CrossASTEvaluator::processForStmt},
+		{"ForStmt", &CrossASTEvaluator::processForStmt},
 		{"WhileStmt", &CrossASTEvaluator::processWhileStmt},
 		{"DoStmt", &CrossASTEvaluator::processDoStmt},
 		{"BinaryOperator", &CrossASTEvaluator::processBinaryOperator},
@@ -53,24 +52,12 @@ class CrossASTEvaluator{
 	
 	void evalTraverse(const string &markerID, json &findingsOracle, json &findingsDecom){
 		auto it = fnSelector.find(findingsOracle["ASTNode"].get<string>());
-		bool ct;
-	   	if (it != fnSelector.end()) {// TODO: rework for slight speedup
-			// create base associated structure with results initialized to false outcomes
-			// perform basic check, if check approves continue else return base structure
-
-            ct = (this->*(it->second))(markerID, findingsOracle, findingsDecom);
+	   	if (it != fnSelector.end()) {
+            (this->*(it->second))(markerID, findingsOracle, findingsDecom);
         } else {
 			// report and record
-//			findings_eval[markerID][findingsOracle["ASTNode"].get<string>()] = "TODO";
-//			dev_report["ASTNode"][findingsOracle["ASTNode"].get<string>()] = "TODO";
-//			dev_report["unevaluated"].push_back(markerID);
-			return;
+			dev_report["unevaluated"].push_back(markerID);
 		}
-//		if(!ct){return;}
-//		for(size_t i = 0; i < findingsOracle["children"].size(); ++i){
-//			json decomChild = (i < findingsDecom["children"].size()) ? findingsDecom["children"][i] : json();
-//			evalTraverse(markerID, findingsOracle["children"][i], decomChild);
-//		}
 	}
 	
 	private:
