@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
@@ -19,29 +20,34 @@ class CrossASTEvaluator{
 	): findings(findings), findings_eval(findings_eval), dev_report(dev_report), outputPath(outputPath)
 	{
 		dev_report["missing"] = json::array();
+		dev_report["incomplete"] = json::array();
+		dev_report["unevaluated"] = json::array();
 	}
 	
 	using EvalFnPtr = bool(CrossASTEvaluator::*)(const string &, json &, json &);
 	unordered_map<string, EvalFnPtr> fnSelector = {
-		{"CallExpr", &CrossASTEvaluator::processCallExpr},
+//		{"CallExpr", &CrossASTEvaluator::processCallExpr},
 		{"DeclStmt", &CrossASTEvaluator::processDeclStmt},
 		{"IfStmt", &CrossASTEvaluator::processIfStmt},
-		{"ForStmt", &CrossASTEvaluator::processForStmt},
+//		{"ForStmt", &CrossASTEvaluator::processForStmt},
 		{"WhileStmt", &CrossASTEvaluator::processWhileStmt},
 		{"DoStmt", &CrossASTEvaluator::processDoStmt},
-		{"BinaryOperator", &CrossASTEvaluator::processBinaryOperator}
+		{"BinaryOperator", &CrossASTEvaluator::processBinaryOperator},
 	};
 	
 	void startEval(){
 		auto markerFindings = findings.items();
 		for(size_t i = 0; i<findings.size(); i++){ // check marker survival?
-			//	TODO:
 			if(!findings.contains(std::to_string(i))){
 				dev_report["missing"].push_back(i);
 			}
 		}
 		for(auto [markerID, finding] : findings.items()){
-			evalTraverse(markerID, finding["oracle"], finding["decom"]);
+			if(finding.contains("oracle") && finding.contains("decom")){
+				evalTraverse(markerID, finding["oracle"], finding["decom"]);
+			} else {
+				dev_report["incomplete"].push_back(markerID);
+			}
 		}
 	}
 	
@@ -55,16 +61,16 @@ class CrossASTEvaluator{
             ct = (this->*(it->second))(markerID, findingsOracle, findingsDecom);
         } else {
 			// report and record
-			findings_eval[markerID][findingsOracle["ASTNode"].get<string>()] = "TODO";
-			dev_report["ASTNode"][findingsOracle["ASTNode"].get<string>()] = "TODO";
-			dev_report["Unevaluated"].push_back(markerID);
+//			findings_eval[markerID][findingsOracle["ASTNode"].get<string>()] = "TODO";
+//			dev_report["ASTNode"][findingsOracle["ASTNode"].get<string>()] = "TODO";
+//			dev_report["unevaluated"].push_back(markerID);
 			return;
 		}
-		if(!ct){return;}
-		for(size_t i = 0; i < findingsOracle["children"].size(); ++i){
-			json decomChild = (i < findingsDecom["children"].size()) ? findingsDecom["children"][i] : json();
-			evalTraverse(markerID, findingsOracle["children"][i], decomChild);
-		}
+//		if(!ct){return;}
+//		for(size_t i = 0; i < findingsOracle["children"].size(); ++i){
+//			json decomChild = (i < findingsDecom["children"].size()) ? findingsDecom["children"][i] : json();
+//			evalTraverse(markerID, findingsOracle["children"][i], decomChild);
+//		}
 	}
 	
 	private:
@@ -251,7 +257,7 @@ class CrossASTEvaluator{
 
 		if(markerFindingsResult["recovered_construct"]){
 			// condvar tests
-			if(findingsOracle["properties"]["has_init"] && findingsDecom["properties"]["has_init"]){
+			if(findingsOracle["properties"]["has_cond_var"] && findingsDecom["properties"]["has_cond_var"]){
 				markerFindingsResult["parity_has_cond_var"] = true;
 				markerFindingsResult["parity_condvar_stmt_class"] = findingsOracle["properties"]["condvar_stmt_class"] == findingsDecom["properties"]["condvar_stmt_class"];
 				

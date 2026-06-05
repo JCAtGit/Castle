@@ -183,14 +183,14 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		Stmt::DoStmtClass,
 		Stmt::ForStmtClass,
 		Stmt::SwitchStmtClass,
-		Stmt::CompoundStmtClass
+		Stmt::CompoundStmtClass,
 	};
 
 	// experimental
 	void evalSRDeciderP(Stmt *node, json *findings){
 		bool ct;
 		switch(node->getStmtClass()){
-			default: 						ct = false; break;
+			default: 						ct = generalStmtRecorder(node, findings); break;
 			case Stmt::DeclStmtClass: 		ct = declStmtRecorder(node, findings); break;
 			case Stmt::RecoveryExprClass: 	ct = recoveryExprRecorder(node, findings); break;
 			case Stmt::CallExprClass:		ct = callExprRecorder(node, findings); break;
