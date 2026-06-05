@@ -4,6 +4,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ParentMapContext.h"
 #include "clang/AST/Stmt.h"
+#include <iostream>
 #include <nlohmann/json.hpp>
 
 using namespace clang;
@@ -19,8 +20,8 @@ size_t findNodeSiblingIndex(const llvm::SmallVectorImpl<DynTypedNode> &siblings,
 
 llvm::SmallVector<DynTypedNode, 16> getChildrenNodes(const Stmt *parent) {
     llvm::SmallVector<DynTypedNode, 16> children;
-    for (const Stmt *child : parent->children()) {
-        children.push_back(DynTypedNode::create(*child));
+    for (auto child : parent->children()) {
+		children.push_back(DynTypedNode::create(*child));
     }
     return children;
 }

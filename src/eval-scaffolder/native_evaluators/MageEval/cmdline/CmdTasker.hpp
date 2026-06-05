@@ -59,38 +59,30 @@ class CmdTasker{
 							humanEval, 
 							nameEncodedMarkers
 						);
-			cout << "BIGCheck0" << "\n";						
 			string fileDecomData;
 			CAGatherer.selectMode(0);
-			for(auto entry :filesystem::recursive_directory_iterator(inputPath)){ // inputPath is een dir in dit geval
+			for(auto entry :filesystem::recursive_directory_iterator(inputPath)){ // inputPath is nu de dir waar de decompiled c zit
 				if(entry.path().extension() == ".c"){
 					fileDecomData = file2string(entry.path());
 					mapKey = entry.path().filename().string();
 					astDecomUnits[mapKey] = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, entry.path().filename().string());
-					cout << "BIGCheck00: " << fileDecomData.size() << "\n";						
-
 					CAGatherer.setDecomContext(&(astDecomUnits[mapKey])->getASTContext());
-					cout << "BIGCheck01" << "\n";						
-
 					CAGatherer.TraverseDecl(astDecomUnits[mapKey]->getASTContext().getTranslationUnitDecl());
-					cout << "BIGCheck02" << "\n";						
-
 				}
 			}
-			cout << "BIGCheck1" << "\n";						
+
 			string fileOracleData;
 			CAGatherer.selectMode(1);
-			for(auto entry :filesystem::recursive_directory_iterator(inputPath)){ // inputPath is een dir in dit geval
+			for(auto entry :filesystem::recursive_directory_iterator(oracleDir)){ // 
 				if(entry.path().extension() == ".c"){
 					fileOracleData = file2string(entry.path());
 					mapKey = entry.path().filename().string();
-					astOracleUnits[mapKey] = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
+					astOracleUnits[mapKey] = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + entry.path().filename().string());
 					CAGatherer.setOracleContext(&(astOracleUnits[mapKey])->getASTContext());
 					CAGatherer.TraverseDecl(astOracleUnits[mapKey]->getASTContext().getTranslationUnitDecl());
 				}
  			}
-			
-			CAGatherer.gatherFindings();
+			CAGatherer.announceFindings();
 		}
 		
 		void processFile(){
@@ -114,7 +106,7 @@ class CmdTasker{
 			CAGatherer.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
 			CAGatherer.selectMode(1);
 			CAGatherer.TraverseDecl(astOracleUnit->getASTContext().getTranslationUnitDecl());
-			CAGatherer.gatherFindings();
+			CAGatherer.announceFindings();
 		}
 	
 	public:
@@ -148,7 +140,6 @@ class CmdTasker{
 	void startEvaluationProcesses(){
 		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
 		
-		cout << "ChoiceCheck: " << filesystem::is_directory(inputPath) << " - " << inputPath << "\n";
 		if(filesystem::is_directory(inputPath)){
 			processDir();
 		} else {
@@ -157,7 +148,7 @@ class CmdTasker{
 		
 		cout << "Starting eval" << "\n";
 		CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
-		CAEvaluator.startEval();
+//		CAEvaluator.startEval();
 		cout << "Saving results to json" << "\n";
 		saveJsonToFile(outputPath.string() + "_findings.json", findings);
 		saveJsonToFile(outputPath.string() + "_eval.json", findings_eval);
