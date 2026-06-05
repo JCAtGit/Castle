@@ -3,6 +3,12 @@
 ### Packages
 llvm-devel
 clang-devel
+mingw64-gcc-c++
+automake
+ninja
+cmake
+make
+java-21-openjdk-devel (JDK21+)
 
 ### Go to dir
 cd /home/user/Desktop/CastleDecompilerBenchmarker
