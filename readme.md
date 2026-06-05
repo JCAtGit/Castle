@@ -1,5 +1,9 @@
 # Castle - A C Assisted Source Translation Evaluator.
 ## Setup 
+### Packages
+llvm-devel
+clang-devel
+
 ### Go to dir
 cd /home/user/Desktop/CastleDecompilerBenchmarker
 
@@ -7,7 +11,7 @@ cd /home/user/Desktop/CastleDecompilerBenchmarker
 rm -rf build/
 rm -f compile_commands.json
 
-- Generate with Ninja (matching Eclipse)
+### Generate with Ninja (matching Eclipse)
 mkdir build
 cd build
 cmake -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
