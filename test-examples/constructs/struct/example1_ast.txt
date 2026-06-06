@@ -1,0 +1,46 @@
+TranslationUnitDecl 0x55a3120302a8 <<invalid sloc>> <invalid sloc>
+|-TypedefDecl 0x55a312030e80 <<invalid sloc>> <invalid sloc> implicit __int128_t '__int128'
+| `-BuiltinType 0x55a312030870 '__int128'
+|-TypedefDecl 0x55a312030ef0 <<invalid sloc>> <invalid sloc> implicit __uint128_t 'unsigned __int128'
+| `-BuiltinType 0x55a312030890 'unsigned __int128'
+|-TypedefDecl 0x55a312031200 <<invalid sloc>> <invalid sloc> implicit __NSConstantString 'struct __NSConstantString_tag'
+| `-RecordType 0x55a312030fd0 'struct __NSConstantString_tag'
+|   `-Record 0x55a312030f48 '__NSConstantString_tag'
+|-TypedefDecl 0x55a312030b28 <<invalid sloc>> <invalid sloc> implicit __builtin_ms_va_list 'char *'
+| `-PointerType 0x55a312030ae0 'char *'
+|   `-BuiltinType 0x55a312030350 'char'
+|-TypedefDecl 0x55a312030e10 <<invalid sloc>> <invalid sloc> implicit __builtin_va_list 'struct __va_list_tag[1]'
+| `-ConstantArrayType 0x55a312030dc0 'struct __va_list_tag[1]' 1 
+|   `-RecordType 0x55a312030c00 'struct __va_list_tag'
+|     `-Record 0x55a312030b80 '__va_list_tag'
+|-RecordDecl 0x55a312097790 <example1.c:4:1, line:47:1> line:4:8 invalid struct MyStruct definition
+| |-FieldDecl 0x55a312097848 <line:6:5, col:9> col:9 normalField 'int'
+| |-RecordDecl 0x55a312097898 <line:9:5, line:12:5> line:9:5 union definition
+| | |-FieldDecl 0x55a312097958 <line:10:9, col:15> col:15 anonymousUnionField 'float'
+| | `-FieldDecl 0x55a3120979c0 <line:11:9, col:16> col:16 anotherUnionField 'double'
+| |-FieldDecl 0x55a312097a68 <line:9:5> col:5 implicit 'union MyStruct::(anonymous at example1.c:9:5)'
+| |-IndirectFieldDecl 0x55a312097ac8 <line:10:15> col:15 implicit anonymousUnionField 'float'
+| | |-Field 0x55a312097a68 field_index 1 'union MyStruct::(anonymous at example1.c:9:5)'
+| | `-Field 0x55a312097958 'anonymousUnionField' 'float'
+| |-IndirectFieldDecl 0x55a312097b20 <line:11:16> col:16 implicit anotherUnionField 'double'
+| | |-Field 0x55a312097a68 field_index 1 'union MyStruct::(anonymous at example1.c:9:5)'
+| | `-Field 0x55a3120979c0 'anotherUnionField' 'double'
+| |-RecordDecl 0x55a312097b68 <line:14:5, line:17:5> line:14:5 invalid struct definition
+| | |-FieldDecl 0x55a312097c20 <line:15:9, col:14> col:14 anonymousStructChar 'char'
+| | `-FieldDecl 0x55a312097ca0 <line:16:9, col:14> col:14 invalid anonymousStructBool 'int'
+| |-FieldDecl 0x55a312097d08 <line:20:5, col:16> col:16 staticMember 'int'
+| |-FieldDecl 0x55a312097db0 <line:23:5, col:17> col:10 invalid method 'void ()'
+| |-FieldDecl 0x55a312097e18 <line:29:5, col:11> col:11 invalid MyDouble 'int'
+| |-EnumDecl 0x55a312097e68 parent 0x55a3120302a8 <line:32:5, col:35> col:10 Color
+| | |-EnumConstantDecl 0x55a312097f40 <col:18> col:18 Red 'int'
+| | |-EnumConstantDecl 0x55a312097f98 <col:23> col:23 Green 'int'
+| | `-EnumConstantDecl 0x55a312097ff0 <col:30> col:30 Blue 'int'
+| |-RecordDecl 0x55a312098048 parent 0x55a3120302a8 <line:35:5, line:37:5> line:35:12 struct Nested definition
+| | `-FieldDecl 0x55a312098118 <line:36:9, col:13> col:13 nestedField 'int'
+| |-FieldDecl 0x55a3120981c8 <line:40:5, col:32> col:17 invalid friendFunction 'int ()'
+| |-FieldDecl 0x55a312098240 <line:43:5, col:52> col:5 invalid static_assert 'int ()'
+| `-FieldDecl 0x55a3120982a8 <line:46:5, col:12> col:12 invalid class 'int'
+|-VarDecl 0x55a312098310 <line:50:1, col:5> col:5 MyStruct 'int'
+|-FunctionDecl 0x55a3120983e0 <line:53:1, col:24> col:6 friendFunction 'void ()'
+| `-CompoundStmt 0x55a312098488 <col:23, col:24>
+`-VarDecl 0x55a3120984b0 <line:56:1, col:7> col:7 invalid FriendClass 'int'
