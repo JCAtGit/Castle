@@ -32,6 +32,7 @@ class CrossASTEvaluator{
 		{"WhileStmt", &CrossASTEvaluator::processWhileStmt},
 		{"DoStmt", &CrossASTEvaluator::processDoStmt},
 		{"BinaryOperator", &CrossASTEvaluator::processBinaryOperator},
+		{"SwitchStmt", &CrossASTEvaluator::processSwitchStmt}
 	};
 	
 	void startEval(){
@@ -42,7 +43,8 @@ class CrossASTEvaluator{
 			}
 		}
 		for(auto [markerID, finding] : findings.items()){
-			if(finding.contains("oracle") && finding.contains("decom")){
+			// TODO: Create dummy fail object, to punish the absence of decom instances.
+			if(finding.contains("oracle") && finding.contains("decom")){ 
 				evalTraverse(markerID, finding["oracle"], finding["decom"]);
 			} else {
 				dev_report["incomplete"].push_back(markerID);
@@ -327,21 +329,84 @@ class CrossASTEvaluator{
 
 			markerFindingsResult["parity_rhs_stmt_class"] = false;
 			markerFindingsResult["parity_rhs_types"] = false;
-
 		}
 
 		findings_eval[markerID] = markerFindingsResult;
 		return false;
 	}
 	
-	bool processImplicitCastExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
+	bool processSwitchStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
 		json markerFindingsResult = json::object();
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 
 		if(markerFindingsResult["recovered_construct"]){
-					
+		// init test
+		if(findingsOracle["properties"]["has_init"] && findingsDecom["properties"]["has_init"]){
+			markerFindingsResult["parity_has_init"] = true;
+			markerFindingsResult["parity_init_stmt_class"] = findingsOracle["properties"]["init_stmt_class"] == findingsDecom["properties"]["init_stmt_class"];
+			
+			sort(findingsOracle["properties"]["init_types"].begin(), findingsOracle["properties"]["init_types"].end());
+			sort(findingsDecom["properties"]["init_types"].begin(), findingsDecom["properties"]["init_types"].end());
+
+			markerFindingsResult["parity_init_types"] = findingsOracle["properties"]["init_types"] == findingsDecom["properties"]["init_types"];
+		} else {
+			markerFindingsResult["parity_has_init"] = false;
+			markerFindingsResult["parity_init_stmt_class"] = false;
+			markerFindingsResult["parity_init_types"] = false;
 		}
+		
+		// condvar tests
+		if(findingsOracle["properties"]["has_init"] && findingsDecom["properties"]["has_init"]){
+			markerFindingsResult["parity_has_cond_var"] = true;
+			markerFindingsResult["parity_cond_var_stmt_class"] = findingsOracle["properties"]["cond_var_stmt_class"] == findingsDecom["properties"]["cond_var_stmt_class"];
+			
+			sort(findingsOracle["properties"]["cond_var_types"].begin(), findingsOracle["properties"]["cond_var_types"].end());
+			sort(findingsDecom["properties"]["cond_var_types"].begin(), findingsDecom["properties"]["cond_var_types"].end());
+			markerFindingsResult["parity_cond_var_types"] =  findingsOracle["properties"]["cond_var_types"] == findingsDecom["properties"]["cond_var_types"];
+		} else {
+			markerFindingsResult["parity_has_cond_var"] = false;
+			markerFindingsResult["parity_cond_var_stmt_class"] = false;
+			markerFindingsResult["parity_cond_var_types"] = false;
+		}
+
+		// cond tests
+		if(findingsOracle["properties"]["has_cond_expr"] && findingsDecom["properties"]["has_cond_expr"]){
+			markerFindingsResult["parity_has_cond_expr"] = true;
+			markerFindingsResult["parity_cond_stmt_class"] = findingsOracle["properties"]["cond_stmt_class"] == findingsDecom["properties"]["cond_stmt_class"];
+
+			sort(findingsOracle["properties"]["cond_expr_types"].begin(), findingsOracle["properties"]["cond_expr_types"].end());
+			sort(findingsDecom["properties"]["cond_expr_types"].begin(), findingsDecom["properties"]["cond_expr_types"].end());
+			markerFindingsResult["parity_cond_expr_types"] = findingsOracle["properties"]["cond_expr_types"] == findingsDecom["properties"]["cond_expr_types"];
+		} else {
+			markerFindingsResult["parity_has_cond_expr"] = false;
+			markerFindingsResult["parity_cond_stmt_class"] = false;
+			markerFindingsResult["parity_cond_expr_types"] = false;
+		}
+		
+	} else {
+		markerFindingsResult["parity_has_init"] = false;
+		markerFindingsResult["parity_init_stmt_class"] = false;
+		markerFindingsResult["parity_init_types"] = false;
+		
+		markerFindingsResult["parity_has_cond_var"] = false;
+		markerFindingsResult["parity_cond_var_stmt_class"] = false;
+		markerFindingsResult["parity_cond_var_types"] = false;
+		
+		markerFindingsResult["parity_has_cond_expr"] = false;
+		markerFindingsResult["parity_cond_stmt_class"] = false;
+		markerFindingsResult["parity_cond_expr_types"] = false;
+	}
+		return false;
+	}
+	
+	
+	bool processImplicitCastExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
+		json markerFindingsResult = json::object();
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
+		// TODO:
+//		if(markerFindingsResult["recovered_construct"]){}
 
 		findings_eval[markerID] = markerFindingsResult;
 		return false;

@@ -149,7 +149,7 @@ class CmdTasker{
 		cout << "Starting eval" << "\n";
 		CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
 		CAEvaluator.startEval();
-		cout << "Saving results to json" << "\n";
+		cout << "Saving results to json:" << outputPath << "\n";
 		saveJsonToFile(outputPath.string() + "_findings.json", findings);
 		saveJsonToFile(outputPath.string() + "_eval.json", findings_eval);
 		saveJsonToFile(outputPath.string() + "_dev.json", dev);

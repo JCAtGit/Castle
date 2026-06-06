@@ -199,6 +199,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			case Stmt::DoStmtClass:			ct = doStmtRecorder(node, findings); break;
 			case Stmt::IfStmtClass:			ct = ifStmtRecorder(node,findings); break;
 			case Stmt::BinaryOperatorClass:	ct = binaryOperatorRecorder(node,findings); break;
+			case Stmt::SwitchStmtClass:		ct = switchStmtRecorder(node,findings); break;
 //			case Stmt::IntegerLiteralClass: break;
 		}
 		if(!ct){return;}
@@ -545,9 +546,112 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return false;
 	}
 	
+	bool switchStmtRecorder(Stmt *node, json *findings){
+		auto cast_node = llvm::cast<SwitchStmt>(node);
+		(*findings)["properties"]["has_markee"] = true;
+				
+		auto switchInitStmt = cast_node->getInit();
+		if(switchInitStmt){
+			(*findings)["properties"]["has_init"] = true;
+			(*findings)["properties"]["init_stmt_class"] = switchInitStmt->getStmtClassName();
+			switch(switchInitStmt->getStmtClass()){
+				default: 
+					if (isa<Expr>(switchInitStmt)) {
+						auto cast_node = llvm::cast<Expr>(switchInitStmt);
+//						(*findings)["properties"]["init_contains_errors"] = cast_node->containsErrors();
+						recordQTypeInfo(cast_node->getType(), (*findings)["properties"]["init_types"]);
+					} else {
+						// TODO: report to diagnostics
+					}
+				break;
+				case Stmt::DeclStmtClass:{
+					(*findings)["properties"]["init_types"] = json::array();
+					auto forInitDeclStmt = llvm::cast<DeclStmt>(switchInitStmt);
+					(*findings)["properties"]["init_single_decl"] = forInitDeclStmt->isSingleDecl();
+					auto forInitVarDecls = forInitDeclStmt->decls();
+					for(auto uncast_decl: forInitVarDecls){
+						switch (uncast_decl->getKind()) {
+					        case clang::Decl::Var: {
+					            auto *VD = cast<clang::VarDecl>(uncast_decl);
+								recordQTypeInfo(VD->getType(), (*findings)["properties"]["init_types"]);
+					            break;
+					        }
+					        case clang::Decl::Function: {
+					            auto *FD = cast<clang::FunctionDecl>(uncast_decl);
+								recordQTypeInfo(FD->getType(), (*findings)["properties"]["init_types"]);
+					            break;
+					        }
+					        case clang::Decl::Typedef: {
+					            auto *TD = cast<clang::TypedefDecl>(uncast_decl);
+								recordQTypeInfo(TD->getUnderlyingType(), (*findings)["properties"]["init_types"]);
+					            break;
+					        }
+					        case clang::Decl::Record: {
+					            auto *RD = cast<clang::RecordDecl>(uncast_decl);
+								recordQTypeInfo(selectedAST->getTypeDeclType(RD), (*findings)["properties"]["init_types"]);
+					            break;
+					        }
+					        case clang::Decl::Enum: {
+					            auto *ED = cast<clang::EnumDecl>(uncast_decl);
+								recordQTypeInfo(selectedAST->getTypeDeclType(ED), (*findings)["properties"]["init_types"]);
+					            break;
+					        }
+					        default:
+					            // TODO: report to diagnostics
+					            break;
+					    	}
+					}
+					break;
+				}
+			}
+		} else {
+			(*findings)["properties"]["has_init"] = false;
+		}
+		
+		auto condVar = cast_node->getConditionVariable();
+		if(condVar){
+			(*findings)["properties"]["has_cond_var"] = true;
+			(*findings)["properties"]["cond_var_stmt_class"] = condVar->getDeclKindName();
+			recordQTypeInfo(condVar->getType(), (*findings)["properties"]["cond_var_types"]);
+		} else {
+			(*findings)["properties"]["has_cond_var"] = false;
+		}
+		
+		auto conditionExpr = cast_node->getCond();
+		if(conditionExpr){
+			(*findings)["properties"]["has_cond_expr"] = true;
+			(*findings)["properties"]["cond_stmt_class"] = conditionExpr->getStmtClassName();
+//			(*findings)["properties"]["cond_expr_has_errors"] = conditionExpr->containsErrors();
+			recordQTypeInfo(conditionExpr->getType(), (*findings)["properties"]["cond_expr_types"]);
+		} else {
+			(*findings)["properties"]["has_cond_expr"] = false;
+		}
+		
+		auto switchCaseList = cast_node->getSwitchCaseList();
+		(*findings)["properties"]["switch_cases"] = json::array();
+		if(switchCaseList){
+			(*findings)["properties"]["has_switch_cases"] = true;
+			for (const SwitchCase *sc = switchCaseList; sc; sc = sc->getNextSwitchCase()) {
+				json caseInfo;
+				caseInfo["case_stmt"] = sc->getStmtClassName();
+				caseInfo["case_sub_stmt"] = sc->getSubStmt()->getStmtClassName();
+				
+				// TODO: check fallthrough behaviour
+//				caseInfo["case_is_fallthrough"] = false;
+				(*findings)["properties"]["switch_cases"].push_back(caseInfo);
+			}
+		} else {
+			(*findings)["properties"]["has_switch_cases"] = false;
+		}
+		
+		// TODO
+		return false;
+	}
+	
 	/* 			Declaration Recorders 			*/
 
-	// entry should give diagnostic effects
+	// TODO: entries should give diagnostic effects, also all decls are still WIP.
+	
 	bool generalDeclRecorder(Decl *node, json *findings){
 		(*findings)["properties"]["TODO"] = true;
 		return false;
