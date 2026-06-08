@@ -49,7 +49,7 @@ class CmdTasker{
 				et_config_data["oracleDir"].get<string>() 	+ " " + 												// oraclePath
 				et_config_data["outputFlag"].get<string>() 	+ " " + es_configData["outputDir"].get<string>() 	+ 	// outputPath
 																	et_config_data["name"].get<string>() + "/" 	+
-																	filepath.stem().c_str() + ".c";
+																	filepath.filename().string();
 			addStaticFlags(command, et_config_data);
 			if(et_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 			if(et_config_data["redirectNull"].get<bool>()){command = command + " > /dev/null 2>&1";}
@@ -63,7 +63,7 @@ class CmdTasker{
 		        std::cerr << "Error: Could not open file for writing: " << path << "\n";
 		        return;
 		    }
-		    file << data.dump(4);  // pretty print with 4 spaces indentation
+		    file << data.dump(2);  // pretty print with 4 spaces indentation
 		    std::cout << "Saved config to " << path << "\n";
 		}
 	public:

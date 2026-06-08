@@ -4,7 +4,6 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTStructuralEquivalence.h"
 #include "clang/AST/Decl.h"
@@ -16,7 +15,6 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 #include "../ast-mechanism/ast-helper.hpp"
-#include "nlohmann/detail/abi_macros.hpp"
 
 
 using namespace nlohmann;
@@ -45,12 +43,11 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	void (CrossASTGatherer::*selectedProcessor)(Stmt *S);
 	ASTContext* selectedAST;
 	SourceManager* selectedSM;
-	string selectedContext, magestring;
+	string selectedContextString, magestring;
 	unordered_map<int64_t, CallExpr*>* 	selectedMarkerMap;
 	unordered_map<int64_t, Stmt*>* 		selectedMarkerParentMap;
 	unordered_map<int64_t, Stmt*>* 		selectedMarkeeMap;
 
-	
 	// Structural equivalence functionality
 //	StructuralEquivalenceContext::NonEquivalentDeclSet neds;
 //	StructuralEquivalenceContext sec;
@@ -93,18 +90,18 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			selectedSM = decomSM;
 			selectedMarkerMap = &decomMarkerMap;
 			selectedMarkerParentMap = &decomMarkerParentMap;
-			selectedContext = "decom";
+			selectedContextString = "decom";
 			break;
 			case 1:
 			selectedAST = oracleAST;
 			selectedSM = oracleSM;
 			selectedMarkerMap = &oracleMarkerMap;
 			selectedMarkerParentMap = &oracleMarkerParentMap;
-			selectedContext = "oracle";
+			selectedContextString = "oracle";
 			break;			
 			default:
 			selectedProcessor = NULL;
-			selectedContext = "none";
+			selectedContextString = "none";
 			break;
 		}
 	}
@@ -144,10 +141,14 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			auto CEMarkee = getNextSiblingFromList(siblings, CESibIndex);
 			auto mageIndexString = std::to_string(mageIndex);
 			if(CEMarkee){
-				findings[mageIndexString][selectedContext]["ASTNode"] = CEMarkee->getNodeKind().asStringRef();
-				findings[mageIndexString][selectedContext]["children"] = json::array();
-				findings[mageIndexString][selectedContext]["properties"] = json::object();
-				evalSRDeciderP(const_cast<Stmt*>(CEMarkee->get<Stmt>()), &(findings[mageIndexString][selectedContext]));
+				findings[mageIndexString][selectedContextString]["ASTNode"] = CEMarkee->getNodeKind().asStringRef();
+				findings[mageIndexString][selectedContextString]["Source"] = 
+					llvm::sys::path::filename(selectedSM->getFilename(CE->getBeginLoc())).str() 	+ " (" + 
+					std::to_string(selectedSM->getSpellingLineNumber(CE->getBeginLoc()))					+ ", "+
+				 	std::to_string(selectedSM->getSpellingColumnNumber(CE->getBeginLoc()))				+ ") " ;
+				findings[mageIndexString][selectedContextString]["children"] = json::array();
+				findings[mageIndexString][selectedContextString]["properties"] = json::object();
+				evalSRDeciderP(const_cast<Stmt*>(CEMarkee->get<Stmt>()), &(findings[mageIndexString][selectedContextString]));
 			} else {
 				// TODO: report to dev
 			}
@@ -172,19 +173,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		indexProcessor(CE); 
 		return true;
 	}
-	
-	const std::unordered_set<Stmt::StmtClass> traversalSkipList = {
-//		Stmt::ImplicitCastExprClass,
-//		Stmt::DeclRefExprClass,
-		Stmt::BinaryOperatorClass,
-		Stmt::CallExprClass,
-		Stmt::IfStmtClass,
-		Stmt::WhileStmtClass,
-		Stmt::DoStmtClass,
-		Stmt::ForStmtClass,
-		Stmt::SwitchStmtClass,
-		Stmt::CompoundStmtClass,
-	};
 
 	// experimental
 	void evalSRDeciderP(Stmt *node, json *findings){
@@ -203,41 +191,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 //			case Stmt::IntegerLiteralClass: break;
 		}
 		if(!ct){return;}
-		json child;
-
-		switch(node->getStmtClass()){	// and	decide traversal continuation
-			default:{
-				auto stmtChildren = node->children();
-				for(auto childNode:stmtChildren){
-					if (!childNode) {continue;}
-					if(traversalSkipList.find(childNode->getStmtClass()) != traversalSkipList.end()){continue;}
-					string nodeClassString = childNode->getStmtClassName();
-					json child;
-					child["ASTNode"] = nodeClassString;
-					child["children"] = json::array();
-					child["properties"] = json::object();
-					(*findings)["children"].push_back(child);
-					json &storedChild = (*findings)["children"].back();
-					evalSRDeciderP(childNode, &storedChild);
-				}
-				break;
-			}
-			case Stmt::DeclStmtClass: {
-				auto declChildren = llvm::cast<DeclStmt>(node)->decls();
-				for(auto childNode:declChildren){
-					if (!childNode) {continue;}
-					string nodeClassString = childNode->getDeclKindName();
-					json child;
-					child["ASTNode"] = nodeClassString;
-					child["children"] = json::array();
-					child["properties"] = json::object();
-					(*findings)["children"].push_back(child);
-					json &storedChild = (*findings)["children"].back();
-					evalDRDeciderP(childNode, &storedChild);
-					break;
-				}
-			}
-		}
 	}
 
 	// misschien niet nodig
@@ -335,7 +288,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return false;
 	}
 
-	// voor FunctionDecl aparte entries maken op basis van CallExpr
+	// Voor FunctionDecl aparte entries maken op basis van CallExpr
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
 		(*findings)["properties"]["has_markee"] = false;
@@ -375,6 +328,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return false;
 	}
 	
+
 	bool forStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<ForStmt>(node);
 		(*findings)["properties"]["has_markee"] = true;
@@ -522,7 +476,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return false;
 	}
 	
-	
 	/* 			Statements Recorders - Expr		*/
 	bool binaryOperatorRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<BinaryOperator>(node);
@@ -545,6 +498,22 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 
 		return false;
 	}
+	
+	std::unordered_map<const FunctionDecl*, std::unique_ptr<CFG>> FunctionCFGs;
+	CFG* getOrBuildCFG(const FunctionDecl *FD) {
+	    auto it = FunctionCFGs.find(FD);
+	    if (it != FunctionCFGs.end()) return it->second.get();
+
+	    // Build CFG with options
+	    CFG::BuildOptions Options;
+	    Options.AddImplicitDtors = true; // optional
+
+	    auto CFG = CFG::buildCFG(FD, FD->getBody(), selectedAST, Options);
+	    if (!CFG) return nullptr;
+
+	    FunctionCFGs[FD] = std::move(CFG);
+	    return FunctionCFGs[FD].get();
+	  }
 	
 	bool switchStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<SwitchStmt>(node);
@@ -631,20 +600,11 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		(*findings)["properties"]["switch_cases"] = json::array();
 		if(switchCaseList){
 			(*findings)["properties"]["has_switch_cases"] = true;
-			for (const SwitchCase *sc = switchCaseList; sc; sc = sc->getNextSwitchCase()) {
-				json caseInfo;
-				caseInfo["case_stmt"] = sc->getStmtClassName();
-				caseInfo["case_sub_stmt"] = sc->getSubStmt()->getStmtClassName();
-				
-				// TODO: check fallthrough behaviour
-//				caseInfo["case_is_fallthrough"] = false;
-				(*findings)["properties"]["switch_cases"].push_back(caseInfo);
-			}
+			hasFallthroughWidth(cast_node, (*findings)["properties"]["switch_cases"]);
 		} else {
 			(*findings)["properties"]["has_switch_cases"] = false;
 		}
 		
-		// TODO
 		return false;
 	}
 	
