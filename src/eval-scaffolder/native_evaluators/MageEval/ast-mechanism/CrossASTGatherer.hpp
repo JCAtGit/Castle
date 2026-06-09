@@ -499,22 +499,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return false;
 	}
 	
-	std::unordered_map<const FunctionDecl*, std::unique_ptr<CFG>> FunctionCFGs;
-	CFG* getOrBuildCFG(const FunctionDecl *FD) {
-	    auto it = FunctionCFGs.find(FD);
-	    if (it != FunctionCFGs.end()) return it->second.get();
-
-	    // Build CFG with options
-	    CFG::BuildOptions Options;
-	    Options.AddImplicitDtors = true; // optional
-
-	    auto CFG = CFG::buildCFG(FD, FD->getBody(), selectedAST, Options);
-	    if (!CFG) return nullptr;
-
-	    FunctionCFGs[FD] = std::move(CFG);
-	    return FunctionCFGs[FD].get();
-	  }
-	
 	bool switchStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<SwitchStmt>(node);
 		(*findings)["properties"]["has_markee"] = true;
@@ -600,11 +584,18 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		(*findings)["properties"]["switch_cases"] = json::array();
 		if(switchCaseList){
 			(*findings)["properties"]["has_switch_cases"] = true;
-			hasFallthroughWidth(cast_node, (*findings)["properties"]["switch_cases"]);
+//			hasFallthroughWidth(cast_node, (*findings)["properties"]["switch_cases"]);
+
+			while(switchCaseList != nullptr){
+				json caseInfo = json::object();
+				caseInfo["case_stmt_class"] = switchCaseList->getStmtClassName();
+				caseInfo["case_substmt_class"] = switchCaseList->getSubStmt()->getStmtClassName();
+				(*findings)["properties"]["switch_cases"].push_back(caseInfo);
+				switchCaseList = switchCaseList->getNextSwitchCase();
+			}
 		} else {
 			(*findings)["properties"]["has_switch_cases"] = false;
-		}
-		
+		}		
 		return false;
 	}
 	

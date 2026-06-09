@@ -100,17 +100,42 @@ void recordQTypeInfo(const QualType& T, json& storage){
 
 
 // TODO:
-bool hasFallthroughDepth(Stmt * S, bool& conditional){
+bool hasFallthroughDepth(Stmt * S, bool& conditional, json& switchCases, int depth = -1){
 	vector<bool> branches; // ifs and whatnot
 	if (!S) return true; // empty statement -> fallthrough
-
+	depth++;
 	switch (S->getStmtClass()) {
+		case Stmt::DefaultStmtClass:{
+			if(depth>0){
+				json caseInfo = json::object();	
+				caseInfo["has_fallthrough"] = true;
+				caseInfo["condition_fallthrough"] = conditional;
+				caseInfo["case_stmt"] = S->getStmtClassName();
+				caseInfo["case_sub_stmt"] = llvm::dyn_cast<DefaultStmt>(S)->getSubStmt()->getStmtClassName();
+				switchCases.push_back(caseInfo);
+				conditional = false;
+				return true;
+			}
+		}
+			
+		case Stmt::CaseStmtClass:{
+			if(depth>0){
+				json caseInfo = json::object();	
+				caseInfo["has_fallthrough"] = true;
+				caseInfo["condition_fallthrough"] = conditional;
+				caseInfo["case_stmt"] = S->getStmtClassName();
+				caseInfo["case_sub_stmt"] = llvm::dyn_cast<DefaultStmt>(S)->getSubStmt()->getStmtClassName();
+				switchCases.push_back(caseInfo);
+				conditional = false;
+				return true;
+			}
+		}
 		default: 
 			if (auto *E = llvm::dyn_cast<Expr>(S)) {
 				return true;
 			}
 			for (auto child : S->children()){
-				branches.push_back(hasFallthroughDepth(child, conditional));
+				branches.push_back(hasFallthroughDepth(child, conditional, switchCases, depth));
 			}
 			for(int i=1;i<branches.max_size();i++){
 				if(branches[0] != branches[i]){
@@ -125,7 +150,7 @@ bool hasFallthroughDepth(Stmt * S, bool& conditional){
 //		case Stmt::CompoundStmtClass:break;
 		case Stmt::IfStmtClass:	{
 			for (auto child : S->children()){
-				branches.push_back(hasFallthroughDepth(child, conditional));
+				branches.push_back(hasFallthroughDepth(child, conditional, switchCases, depth));
 			}
 			for(int i=1;i<branches.max_size();i++){
 				if(branches[0] != branches[i]){
@@ -146,14 +171,14 @@ bool hasFallthroughDepth(Stmt * S, bool& conditional){
 		case Stmt::SwitchStmtClass:		return true;
      	case Stmt::WhileStmtClass:		return true;
 	    case Stmt::DoStmtClass:			return true;
-	    case Stmt::ForStmtClass:		return true;
+	    case Stmt::ForStmtClass:		return true;	
 	}
 }
 
-void hasFallthroughWidth(SwitchStmt* SS, json& switch_cases){
+void hasFallthroughWidth(SwitchStmt* SS, json& switchCases){
 	auto switchChildren = SS->getBody()->children();
 //	SS->getSwitchCaseList()->
-    SwitchCase* currentCase = NULL;
+    SwitchCase* currentCase = nullptr;
 	vector<std::pair<bool, bool>> child_results;
 	bool conditional = false;
 	int index = 1;
@@ -161,7 +186,7 @@ void hasFallthroughWidth(SwitchStmt* SS, json& switch_cases){
 		cout << "child: " << child->getStmtClassName() << "\n";
 		if(llvm::dyn_cast<SwitchCase>(child)){
 			cout << "cast case: " << child->getStmtClassName() << "\n";
-			if(currentCase == NULL){
+			if(currentCase == nullptr){
 				cout << "Assign currentCase: " << child->getStmtClassName() << "\n";
 				currentCase = llvm::dyn_cast<SwitchCase>(child);
 			} else {
@@ -175,8 +200,8 @@ void hasFallthroughWidth(SwitchStmt* SS, json& switch_cases){
 				json caseInfo;
 				if(child_results.size() <= 1){
 					cout << "noChild" << "\n";
-					caseInfo["has_fallthrough"] = true;
-					caseInfo["condition_fallthrough"] = false;
+					caseInfo["has_fallthrough"] = child_results[index].first;
+					caseInfo["condition_fallthrough"] = conditional;
 					caseInfo["case_stmt"] = currentCase->getStmtClassName();
 					caseInfo["case_sub_stmt"] = currentCase->getSubStmt()->getStmtClassName();
 				} else {
@@ -190,7 +215,7 @@ void hasFallthroughWidth(SwitchStmt* SS, json& switch_cases){
 				}
 				cout << caseInfo.dump(2) << "\n";
 				
-				switch_cases.push_back(caseInfo);
+				switchCases.push_back(caseInfo);
 				cout << "Assign new case" << "\n";
 				currentCase = llvm::dyn_cast<SwitchCase>(child);
 				conditional = false;	
@@ -199,9 +224,9 @@ void hasFallthroughWidth(SwitchStmt* SS, json& switch_cases){
 			}
 		}
 		if(!currentCase) continue;
-		child_results.push_back({hasFallthroughDepth(child,conditional), conditional});
+		child_results.push_back({hasFallthroughDepth(child,conditional,switchCases), conditional});
 	}
-	if(currentCase != NULL && switch_cases.empty()){
+	if(currentCase != NULL && switchCases.empty()){
 		json caseInfo;
 		caseInfo["has_fallthrough"] = child_results[0].first;
 		caseInfo["condition_fallthrough"] = child_results[0].second;
