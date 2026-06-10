@@ -15,6 +15,7 @@ class CmdTasker{
 	private:
 	filesystem::path inputPath, outputPath, mrkrFormatsPath;
 	bool onCopy = false, nameEncodedMarkers = false, clangFormatMode = false;
+	set<string> &exclFilesSet;
 	
 	int idCounter = 0;
 	json markerFormatCfg;
@@ -23,9 +24,8 @@ class CmdTasker{
 	std::vector<filesystem::path> pathQueue;
 	std::vector<std::string> toolArgs = {
 		"-xc", 							// Treat the input as C code
-		"-std=c11", 					// Use a specific C standard
+		"-std=c17", 					// Use a specific C standard
 		"-nostdinc",					// Don't search for system headers
-//      "-D__STDC__=1",						//
 		"-Wno-all",						// Suppress all warnings, W-prefix stands for warning.
 	};
 	
@@ -75,7 +75,6 @@ class CmdTasker{
 		cout 	<< "Process Single. \n";				
 		preprocessQueueItem(inputPath);
 		auto codeString = file2string(inputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
-//		cout << "Enchanting " << inputPath.string() << endl;
 		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(
 			inputPath, inputDir, outputPath, outputDir, markerFormatCfg, 
 			idCounter, nameEncodedMarkers, clangFormatMode
@@ -88,15 +87,16 @@ class CmdTasker{
 				<< "pathQueue items: " << pathQueue.size() << "\n";
 		
 		for(const auto& path2process : pathQueue){
-			cout << "Starting on " << path2process << "\n";
+			if(exclFilesSet.find(path2process.filename().string()) == exclFilesSet.end()){
+				cout << "Excluded: " << path2process << "\n";
+				return
+				;}
+			cout << "Processing: " << path2process << "\n";
 			filesystem::path outPath = outputDir / rel_outputPath(inputDir, path2process);
-			if(outPath.empty()){
-				outPath = inputDir;
-			}
+			if(outPath.empty()){outPath = inputDir;}
 			preprocessQueueItem(path2process); //Doe dit voordat AST unit ptr is aangemaakt. Prepare file for marking, this includes fixing dangling statements
 			auto codeString = file2string(path2process);
 	
-			// TODO?: extract selection of action
 			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(
 				path2process, inputDir, outputPath, outputDir,markerFormatCfg, 
 				idCounter, nameEncodedMarkers, clangFormatMode
@@ -128,21 +128,20 @@ class CmdTasker{
 				"\n"; 
 		}
 		
-		string outFile = (outputDir / (markerFormatCfg["definitionFileName"].get<string>() + ".h")).string();
-		// Open the file; if it exists, it will be overwritten.
+		string outFile = (outputDir / (markerFormatCfg["definitionFileName"].get<string>() + ".h")).string(); // Open the file; if it exists, it will be overwritten.
+
 	    error_code EC;
 	    llvm::raw_fd_ostream out(outFile, EC, llvm::sys::fs::OF_None);
 	    if (EC) {llvm::errs() << "Error opening file: " << EC.message() << "\n";}
-
 	    out << content; // Write the string to the file and optionally flush (the destructor will close the file automatically).
 	    out.flush();
 		cout << "Instrumentation header file written to: " << outFile << "\n";
 	}
 	
 	public:
-	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath, bool onCopy, bool nameEncodedMarkers, bool formatMode): 
+	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath, bool onCopy, bool nameEncodedMarkers, bool formatMode, set<string> &exclFilesSet): 
 		inputPath(inputPath), outputPath(outputPath), mrkrFormatsPath(mrkrFormatsPath), 
-		onCopy(onCopy), nameEncodedMarkers(nameEncodedMarkers), clangFormatMode(formatMode)
+		onCopy(onCopy), nameEncodedMarkers(nameEncodedMarkers), clangFormatMode(formatMode), exclFilesSet(exclFilesSet)
 		{
 			loadConfigs();
 		}	
@@ -163,7 +162,6 @@ class CmdTasker{
 			cout << "outputPath: " << outputPath << "\n";
 			filesystem::remove_all(outputPath);
 			filesystem::copy(inputPath, outputPath, filesystem::copy_options::recursive);
-//			inputPath = outputPath;
 		}	
 		if(filesystem::is_regular_file(inputPath)){
 			inputDir = inputPath.has_parent_path() ? inputPath.parent_path() : ".";
@@ -208,6 +206,5 @@ class CmdTasker{
 		}
 		// if a dir is given we try to cleanse the dir recursively and remove any marker headers files we come across
 	}
-	
 };
 

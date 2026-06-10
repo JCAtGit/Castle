@@ -35,17 +35,21 @@ int main(int argc, char **argv) {
 	bool nameEncodedMarker = false;
 	app.add_flag("-n, --name_encoded_marker",nameEncodedMarker,  "Mark constructs using names instead of indices.");
 	
-	// TODO: Check parents for compoundStmt and integrate clangformat decision points. Should test first.
-	bool clangFormatMode = true;	
+	// TODO: Check parents for compoundStmt and integrate Clang Format decision points. Should test first.
+	bool clangFormatMode = false;	
 	app.add_flag("-c, --clang_format_mode",clangFormatMode,  "TODO: Use clang-format and insert more liberally.");
+	
+	vector<string> exclFiles;
+	app.add_option("--exclude_files", exclFiles, "Files to exclude from processing");
 	
 	CLI11_PARSE(app, argc, argv);
 	
+	set<string> exclFilesSet(exclFiles.begin(), exclFiles.end());
 	if(outputPath.empty()){
 		outputPath = inputPath;
 	}
 	
-	CmdTasker cmdTskr(inputPath, outputPath, mrkrFormatsPath, onCopy, nameEncodedMarker, clangFormatMode);
+	CmdTasker cmdTskr(inputPath, outputPath, mrkrFormatsPath, onCopy, nameEncodedMarker, clangFormatMode, exclFilesSet);
 	if(toggle){
 		// start instrumentation removal TODO
 		cout << "TODO: Toggle \n";
