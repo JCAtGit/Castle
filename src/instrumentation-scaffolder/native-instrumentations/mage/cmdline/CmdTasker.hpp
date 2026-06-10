@@ -24,7 +24,7 @@ class CmdTasker{
 	std::vector<filesystem::path> pathQueue;
 	std::vector<std::string> toolArgs = {
 		"-xc", 							// Treat the input as C code
-		"-std=c17", 					// Use a specific C standard
+		"-std=c11", 					// Use a specific C standard
 		"-nostdinc",					// Don't search for system headers
 		"-Wno-all",						// Suppress all warnings, W-prefix stands for warning.
 	};
@@ -52,8 +52,12 @@ class CmdTasker{
 		} else if(filesystem::is_directory(inputPath)){
 			for (const auto& entry : filesystem::recursive_directory_iterator(inputPath)) {
 				if (entry.path().extension() == ".c") {
-					cout << "Enqueued: " << entry.path() << "\n";
-					pathQueue.push_back(entry.path());
+					if(exclFilesSet.find(entry.path().filename().string()) != exclFilesSet.end()){
+						cout << "Excluded: " << entry.path().string() << "\n";
+					} else {
+						cout << "Enqueued: " << entry.path() << "\n";
+						pathQueue.push_back(entry.path());
+					}					
 				}
 		    }
 		}
@@ -66,7 +70,7 @@ class CmdTasker{
 	 *		Fix format to be performed on the on the copy-over instead when required. Retain path and dir whilst doing so.
 	 */
 	void preprocessQueueItem(filesystem::path path2process){
-		if(!clangFormatMode) return;
+		if(!clangFormatMode) {return;}
 		string command = "clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM, SortIncludes: false}\" " + path2process.string(); // als same dir input gefixt is dan deze weer aanpassen?
 	    int status = std::system(command.c_str());
 	}
@@ -87,10 +91,6 @@ class CmdTasker{
 				<< "pathQueue items: " << pathQueue.size() << "\n";
 		
 		for(const auto& path2process : pathQueue){
-			if(exclFilesSet.find(path2process.filename().string()) == exclFilesSet.end()){
-				cout << "Excluded: " << path2process << "\n";
-				return
-				;}
 			cout << "Processing: " << path2process << "\n";
 			filesystem::path outPath = outputDir / rel_outputPath(inputDir, path2process);
 			if(outPath.empty()){outPath = inputDir;}
