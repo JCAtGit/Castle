@@ -14,7 +14,7 @@ using namespace std;
 class CmdTasker{
 	private:
 	filesystem::path inputPath, outputPath, mrkrFormatsPath;
-	bool onCopy = false, nameEncodedMarkers = false;
+	bool onCopy = false, nameEncodedMarkers = false, formatMode = false;
 	
 	int idCounter = 0;
 	json markerFormatCfg;
@@ -155,10 +155,11 @@ class CmdTasker{
 	}
 	
 	public:
-	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath, bool onCopy, bool nameEncodedMarkers): 
-		inputPath(inputPath), outputPath(outputPath), mrkrFormatsPath(mrkrFormatsPath), onCopy(onCopy), nameEncodedMarkers(nameEncodedMarkers)
+	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath, bool onCopy, bool nameEncodedMarkers, bool formatMode): 
+		inputPath(inputPath), outputPath(outputPath), mrkrFormatsPath(mrkrFormatsPath), 
+		onCopy(onCopy), nameEncodedMarkers(nameEncodedMarkers), formatMode(formatMode)
 		{
-			loadConfigs();		
+			loadConfigs();
 		}	
 	
 	/**

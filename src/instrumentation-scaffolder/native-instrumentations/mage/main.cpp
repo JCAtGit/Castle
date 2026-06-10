@@ -35,6 +35,10 @@ int main(int argc, char **argv) {
 	bool nameEncodedMarker = false;  // TODO
 	app.add_flag("-n, --name_encoded_marker",nameEncodedMarker,  "Mark constructs using names instead of indices.");
 	
+	// TODO: Check parents for compoundStmt and integrate clangformat decision points.
+	bool formatMode = false;	
+	app.add_flag("-f, --format_mode",formatMode,  "TODO: Withold clang-format and use more conservative insertions.");
+	
 	CLI11_PARSE(app, argc, argv);
 	
 	if(outputPath.empty()){

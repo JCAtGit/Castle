@@ -21,7 +21,7 @@ class CmdTasker{
 		filesystem::path inputPath, oracleDir, outputPath, mrkrFormatsPath;
 		json markerFormats, findings, findings_eval, dev, humanEval;
 		json selectedFormat;
-		bool& nameEncodedMarkers;
+		bool &nameEncodedMarkers;
 		
 		const vector<std::string> args = {
 	        "-xc++", // xc++ or xc makes a huge difference for node recovery and is worth consideration
