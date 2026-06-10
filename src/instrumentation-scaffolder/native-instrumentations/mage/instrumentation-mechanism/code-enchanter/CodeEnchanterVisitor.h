@@ -4,6 +4,7 @@
 #include "clang/AST/ASTContext.h"
 
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/AST/Stmt.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Syntax/Tokens.h"
@@ -38,7 +39,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		int lastStart;
 		int& idCounter;
 		bool& nameEncodedMarker;
-		
+		bool& clangFormatMode;
 		
 		string markerName;
 		string markerKeyword;
@@ -69,13 +70,14 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		
 	public:
 		CodeEnchanterVisitor(
-			CompilerInstance& ci, 
-			Rewriter& rewriter, 
+			CompilerInstance &ci, 
+			Rewriter &rewriter, 
 			syntax::TokenBuffer tokenBuffer, 
 			vector<RecordedPPConstruct>& recordedPPEventsEvents, 
-			json& markerFormatCfg, 
+			json &markerFormatCfg, 
 			int &idCounter,
-			bool& nameEncodedMarkers
+			bool &nameEncodedMarkers,
+			bool &clangFormatMode
 		):
 			CI(ci), 
 			rewriter(rewriter),	
@@ -84,6 +86,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			markerFormatCfg(markerFormatCfg), 
 			idCounter(idCounter),
 			nameEncodedMarker(nameEncodedMarkers),
+			clangFormatMode(clangFormatMode),
 			
 			context(ci.getASTContext()), SM(ci.getASTContext().getSourceManager()){
 				markerName 			= 	markerFormatCfg["name"].get<string>();
@@ -182,7 +185,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		}	
 		
 		bool VisitStmt(Stmt *S) {
-			if (SM.isInMainFile(S->getBeginLoc())){
+			if (SM.isInMainFile(S->getBeginLoc())){				
 				//-- Start marker safety checks
 				//-- Surrounding ASTNodes check
 //				if(!stmtHasValidPrevSibling(S, context)){return;}
@@ -193,10 +196,13 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				if (!isStmtLocationSafe(S, SM, CI.getLangOpts())) return true;
 
 				//--  Clang Macro expansion id check.
-				DynTypedNodeList Parents = context.getParents(*S);
+				DynTypedNodeList Parents = context.getParents(*S); // TODO: migrate to parentStack method?
 				for (const auto &Parent : Parents) {
 					if (Parent.getSourceRange().getBegin().isMacroID()) {return true;}
 				}
+				
+				if(!clangFormatMode && !Parents[0].get<CompoundStmt>()){return true;}
+				
 				if(S->getBeginLoc().isMacroID() || S->getBeginLoc().isInvalid()){return true;}
 				//-- End safety checks;
 				switch (S->getStmtClass()) {
@@ -228,7 +234,8 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 					}
 				}
 				if(D->getBeginLoc().isMacroID()){return true;}
-				//-- ;	
+				//-- End safety checks;
+				
 				switch (D->getKind()) {
 					case Decl::Function:
 					    processFunctionDecl(cast<FunctionDecl>(D)); break;

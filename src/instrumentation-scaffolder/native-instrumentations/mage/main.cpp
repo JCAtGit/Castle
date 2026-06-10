@@ -26,25 +26,26 @@ int main(int argc, char **argv) {
 	string mrkrFormatsPath = "/home/user/Desktop/CCastle/CCastleData/configs/CCastlePipeline/formats.json";
 	app.add_option("--marker_formats_path", mrkrFormatsPath, "Marker format used for heuristics");
 	
-	bool toggle = false; // TODO
+	bool toggle = false; // TODO: has been removed due to rework, reimplement someday
 	app.add_flag("-t, --toggle",toggle,  "TODO: Toggles marking and removal");
 	
-	bool enchantFunction = false;
+	bool enchantFunction = false; // TODO: Is used automatically currently, implement as optional function 
 	app.add_flag("-e, --enchant_function",enchantFunction,  "TODO: Adds (optnone, etc.) attributes to function decls.");
 
-	bool nameEncodedMarker = false;  // TODO
+	bool nameEncodedMarker = false;
 	app.add_flag("-n, --name_encoded_marker",nameEncodedMarker,  "Mark constructs using names instead of indices.");
 	
-	// TODO: Check parents for compoundStmt and integrate clangformat decision points.
-	bool formatMode = false;	
-	app.add_flag("-f, --format_mode",formatMode,  "TODO: Withold clang-format and use more conservative insertions.");
+	// TODO: Check parents for compoundStmt and integrate clangformat decision points. Should test first.
+	bool clangFormatMode = true;	
+	app.add_flag("-c, --clang_format_mode",clangFormatMode,  "TODO: Use clang-format and insert more liberally.");
 	
 	CLI11_PARSE(app, argc, argv);
 	
 	if(outputPath.empty()){
 		outputPath = inputPath;
 	}
-	CmdTasker cmdTskr(inputPath, outputPath, mrkrFormatsPath, onCopy, nameEncodedMarker);
+	
+	CmdTasker cmdTskr(inputPath, outputPath, mrkrFormatsPath, onCopy, nameEncodedMarker, clangFormatMode);
 	if(toggle){
 		// start instrumentation removal TODO
 		cout << "TODO: Toggle \n";

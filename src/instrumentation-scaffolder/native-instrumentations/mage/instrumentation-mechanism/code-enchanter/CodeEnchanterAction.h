@@ -20,6 +20,7 @@ class CodeEnchanterAction: public ASTFrontendAction {
 		json markerFormatCfg;	
 		int& idCounter;
 		bool& nameEncodedMarker;
+		bool& clangFormatMode;
 		
 		clang::Rewriter rewriter;	
 		vector<RecordedPPConstruct> ppEvents; 
@@ -32,7 +33,8 @@ class CodeEnchanterAction: public ASTFrontendAction {
 			filesystem::path outputDir, 
 			json& markerFormatCfg, 
 			int& idCounter,
-			bool& nameEncodedMarker
+			bool& nameEncodedMarker,
+			bool& formatMode
 		): 
 			path2process(path2process), 
 			inputDir(inputDir), 
@@ -40,7 +42,8 @@ class CodeEnchanterAction: public ASTFrontendAction {
 			outputDir(outputDir), 
 			markerFormatCfg(markerFormatCfg), 
 			idCounter(idCounter),
-			nameEncodedMarker(nameEncodedMarker)
+			nameEncodedMarker(nameEncodedMarker),
+			clangFormatMode(formatMode)
 			{}
 		
 		/**
@@ -73,7 +76,8 @@ class CodeEnchanterAction: public ASTFrontendAction {
 				ppEvents, 
 				markerFormatCfg, 
 				idCounter,
-				nameEncodedMarker
+				nameEncodedMarker,
+				clangFormatMode
 			);
 			
 			visitor->TraverseDecl(CI.getASTContext().getTranslationUnitDecl());

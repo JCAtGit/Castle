@@ -14,7 +14,7 @@ using namespace std;
 class CmdTasker{
 	private:
 	filesystem::path inputPath, outputPath, mrkrFormatsPath;
-	bool onCopy = false, nameEncodedMarkers = false, formatMode = false;
+	bool onCopy = false, nameEncodedMarkers = false, clangFormatMode = false;
 	
 	int idCounter = 0;
 	json markerFormatCfg;
@@ -60,22 +60,15 @@ class CmdTasker{
 	}
 	
 	/**
-	 * Preprocesses files before instrumentation, which include:
-	 * Fixing dangling statements from constructs by adding the compound statement node brackets where necessary.
-	 * TODO: Pre-expand macros?
+	 * 	Preprocesses files before instrumentation, which include:
+	 * 	Fixing dangling statements from constructs by adding the compound statement node brackets where necessary.
+	 * 	FIXME: 
+	 *		Fix format to be performed on the on the copy-over instead when required. Retain path and dir whilst doing so.
 	 */
 	void preprocessQueueItem(filesystem::path path2process){
-		//"clang-format --style=\"{InsertBraces: true, BasedOnStyle: LLVM}\" " + "example0.c" + ">" + "example0_formatted.c";
-		
+		if(!clangFormatMode) return;
 		string command = "clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM, SortIncludes: false}\" " + path2process.string(); // als same dir input gefixt is dan deze weer aanpassen?
-//		cout << command << "\n";
 	    int status = std::system(command.c_str());
-//	    if (status == 0) {
-//			cout << "clang-format performed for:" + path2process.string() << "\n";
-//	    } else {
-//			cout << "clang-format failed for:" + path2process.string() << "\n";
-//	    }
-//				runMacroExpander(path2process, cfg);
 	}
 	
 	void processSingle(){
@@ -83,7 +76,10 @@ class CmdTasker{
 		preprocessQueueItem(inputPath);
 		auto codeString = file2string(inputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
 //		cout << "Enchanting " << inputPath.string() << endl;
-		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(inputPath, inputDir, outputPath, outputDir, markerFormatCfg, idCounter, nameEncodedMarkers);
+		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(
+			inputPath, inputDir, outputPath, outputDir, markerFormatCfg, 
+			idCounter, nameEncodedMarkers, clangFormatMode
+		);
 		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputPath.string());
 	}
 	
@@ -97,13 +93,14 @@ class CmdTasker{
 			if(outPath.empty()){
 				outPath = inputDir;
 			}
-			//Doe dit voordat AST unit ptr is aangemaakt. Prepare file for marking, this includes fixing dangling statements
-			preprocessQueueItem(path2process);
+			preprocessQueueItem(path2process); //Doe dit voordat AST unit ptr is aangemaakt. Prepare file for marking, this includes fixing dangling statements
 			auto codeString = file2string(path2process);
 	
 			// TODO?: extract selection of action
-//			cout << "Enchanting " << path2process.string() << endl;
-			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(path2process, inputDir, outputPath, outputDir,markerFormatCfg, idCounter, nameEncodedMarkers);
+			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(
+				path2process, inputDir, outputPath, outputDir,markerFormatCfg, 
+				idCounter, nameEncodedMarkers, clangFormatMode
+			);
 			clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, path2process.string());
 		}
 	}
@@ -120,19 +117,8 @@ class CmdTasker{
 			markerFormatCfg["noOptPragma"].get<string>();
 		
 		if(nameEncodedMarkers){
-//			for(int neIndex = 0; neIndex < idCounter; neIndex++){
-//				content += 
-//				markerFormatCfg["noOptAttributes"].get<string>()	+ " " +
-//				markerFormatCfg["functionType"].get<string>() 		+ " " +
-//				markerFormatCfg["name"].get<string>() 				+
-//				std::to_string(neIndex)						+
-//				markerFormatCfg["paramSignature"].get<string>()		+ "{" +
-//				markerFormatCfg["definition"].get<string>()			+ "};"+
-//				"\n"; 
-//			}
+			// ...
 		} else {
-			// TODO: keep ifndef etc directives for portability?
-//			content += markerFormatCfg["headerString"].get<string>(); // TODO: rework to dynamic components
 			content += 
 				markerFormatCfg["noOptAttributes"].get<string>()	+ " " +
 				markerFormatCfg["functionType"].get<string>() 		+ " " +
@@ -148,8 +134,7 @@ class CmdTasker{
 	    llvm::raw_fd_ostream out(outFile, EC, llvm::sys::fs::OF_None);
 	    if (EC) {llvm::errs() << "Error opening file: " << EC.message() << "\n";}
 
-	    // Write the string to the file and optionally flush (the destructor will close the file automatically).
-	    out << content;
+	    out << content; // Write the string to the file and optionally flush (the destructor will close the file automatically).
 	    out.flush();
 		cout << "Instrumentation header file written to: " << outFile << "\n";
 	}
@@ -157,7 +142,7 @@ class CmdTasker{
 	public:
 	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath, bool onCopy, bool nameEncodedMarkers, bool formatMode): 
 		inputPath(inputPath), outputPath(outputPath), mrkrFormatsPath(mrkrFormatsPath), 
-		onCopy(onCopy), nameEncodedMarkers(nameEncodedMarkers), formatMode(formatMode)
+		onCopy(onCopy), nameEncodedMarkers(nameEncodedMarkers), clangFormatMode(formatMode)
 		{
 			loadConfigs();
 		}	
