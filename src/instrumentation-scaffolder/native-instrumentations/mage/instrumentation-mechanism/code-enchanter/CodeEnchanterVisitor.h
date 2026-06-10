@@ -201,7 +201,13 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 					if (Parent.getSourceRange().getBegin().isMacroID()) {return true;}
 				}
 				
-				if(!clangFormatMode && !Parents[0].get<CompoundStmt>()){return true;}
+				if(!clangFormatMode){
+					if(Parents.empty()) {
+						return true;
+					} else if(!Parents[0].get<CompoundStmt>()){
+						return true;
+					}
+				}
 				
 				if(S->getBeginLoc().isMacroID() || S->getBeginLoc().isInvalid()){return true;}
 				//-- End safety checks;

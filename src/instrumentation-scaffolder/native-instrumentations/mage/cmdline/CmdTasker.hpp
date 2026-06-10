@@ -15,7 +15,7 @@ class CmdTasker{
 	private:
 	filesystem::path inputPath, outputPath, mrkrFormatsPath;
 	bool onCopy = false, nameEncodedMarkers = false, clangFormatMode = false;
-	set<string> &exclFilesSet;
+	set<string> exclFilesSet;
 	
 	int idCounter = 0;
 	json markerFormatCfg;
@@ -139,7 +139,7 @@ class CmdTasker{
 	}
 	
 	public:
-	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath, bool onCopy, bool nameEncodedMarkers, bool formatMode, set<string> &exclFilesSet): 
+	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath, bool onCopy, bool nameEncodedMarkers, bool formatMode, set<string> exclFilesSet): 
 		inputPath(inputPath), outputPath(outputPath), mrkrFormatsPath(mrkrFormatsPath), 
 		onCopy(onCopy), nameEncodedMarkers(nameEncodedMarkers), clangFormatMode(formatMode), exclFilesSet(exclFilesSet)
 		{
