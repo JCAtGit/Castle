@@ -35,21 +35,41 @@ int main(int argc, char **argv) {
 	bool nameEncodedMarker = false;
 	app.add_flag("-n, --name_encoded_marker",nameEncodedMarker,  "Mark constructs using names instead of indices.");
 	
-	// TODO: Check parents for compoundStmt and integrate Clang Format decision points. Should test first.
 	bool clangFormatMode = false;	
-	app.add_flag("-c, --clang_format_mode",clangFormatMode,  "TODO: Use clang-format and insert more liberally.");
+	app.add_flag("-c, --clang_format_mode",clangFormatMode,  "Use clang-format and insert more liberally.");
 	
-	vector<string> exclFiles;
-	app.add_option("--exclude_files", exclFiles, "Files to exclude from processing");
+	vector<string> excludeFiles;
+	auto option_excludeFiles = app.add_option("--exclude_files", excludeFiles, "Files to exclude from processing");
 	
+	vector<string> excludeDirs;
+	auto option_excludeDirs = app.add_option("--exclude_dirs", excludeFiles, "TODO: Directories to exclude from processing");
+
+	vector<string> exclusiveFiles;
+	auto option_exclusiveFiles = app.add_option("--exclusive_dir", exclusiveFiles, "TODO: Dir's to exclusively visit for processing enqueuement ");
+	
+	vector<string> exclusiveDirs;
+	auto option_exclusiveDirs = app.add_option("--exclusive_dir", exclusiveDirs, "TODO: Dir's to exclusively visit for processing enqueuement ");
+
+	option_excludeFiles->excludes(option_exclusiveFiles, option_exclusiveDirs);
+	option_excludeDirs->excludes(option_exclusiveFiles, option_exclusiveDirs);
+	option_exclusiveFiles->excludes(option_excludeFiles, option_excludeDirs);
+	option_exclusiveDirs->excludes(option_excludeFiles, option_excludeDirs);
+
 	CLI11_PARSE(app, argc, argv);
+	set<string> excludeFilesSet(excludeFiles.begin(), excludeFiles.end());
+	set<string> excludeDirsSet(excludeDirs.begin(), excludeDirs.end());
+	set<string> exclusiveFilesSet(exclusiveFiles.begin(), exclusiveFiles.end());
+	set<string> exclusiveDirsSetDirsSet(exclusiveDirs.begin(), excludeDirs.end());
+
+	struct {
+		
+	} cliOpt;
 	
-	set<string> exclFilesSet(exclFiles.begin(), exclFiles.end());
 	if(outputPath.empty()){
 		outputPath = inputPath;
 	}
 	
-	CmdTasker cmdTskr(inputPath, outputPath, mrkrFormatsPath, onCopy, nameEncodedMarker, clangFormatMode, exclFilesSet);
+	CmdTasker cmdTskr(inputPath, outputPath, mrkrFormatsPath, onCopy, nameEncodedMarker, clangFormatMode, excludeFilesSet);
 	if(toggle){
 		// start instrumentation removal TODO
 		cout << "TODO: Toggle \n";

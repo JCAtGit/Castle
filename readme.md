@@ -16,8 +16,10 @@ java-21-openjdk-devel (JDK21+)
 gtk3-devel
 libevent-devel
 byacc
-bzip2-devel openssl-devel ncurses-devel libffi-devel readline-devel sqlite-devel xz-devel
 
+dh-autoreconf curl-devel expat-devel gettext-devel openssl-devel perl-devel zlib-devel
+
+bzip2-devel openssl-devel ncurses-devel libffi-devel readline-devel sqlite-devel xz-devel
 curl https://pyenv.run | bash
 pyenv install 3.12.11
 

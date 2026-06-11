@@ -13,9 +13,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/raw_ostream.h"
 #include "../ast-mechanism/ast-helper.hpp"
-
 
 using namespace nlohmann;
 using namespace clang;

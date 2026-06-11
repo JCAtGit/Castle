@@ -177,9 +177,7 @@ class CmdTasker{
 	}
 	
 	void insertInstrumentationEnhancement(){
-		if(!preparePaths()){
-			return;
-		}
+		if(!preparePaths()){return;	}
 		if(filesystem::is_regular_file(inputPath)){
 			processSingle();
 		} else {
