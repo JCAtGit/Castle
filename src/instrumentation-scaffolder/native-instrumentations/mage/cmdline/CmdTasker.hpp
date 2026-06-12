@@ -15,7 +15,8 @@ class CmdTasker{
 	private:
 	filesystem::path inputPath, outputPath, mrkrFormatsPath;
 	bool onCopy = false, nameEncodedMarkers = false, clangFormatMode = false;
-	set<string> exclFilesSet;
+	set<string> excludeFilesSet;
+	set<string> excludeDirsSet;
 	
 	int idCounter = 0;
 	json markerFormatCfg;
@@ -51,8 +52,14 @@ class CmdTasker{
 			pathQueue.push_back(inputPath);
 		} else if(filesystem::is_directory(inputPath)){
 			for (const auto& entry : filesystem::recursive_directory_iterator(inputPath)) {
+				for(auto exclDir: excludeDirsSet){
+					if(is_subpath(exclDir, entry.path())){
+						continue;
+					}
+				}
+
 				if (entry.path().extension() == ".c") {
-					if(exclFilesSet.find(entry.path().filename().string()) != exclFilesSet.end()){
+					if(excludeFilesSet.find(entry.path().filename().string()) != excludeFilesSet.end()){
 						cout << "Excluded: " << entry.path().string() << "\n";
 					} else {
 						cout << "Enqueued: " << entry.path() << "\n";
@@ -139,10 +146,24 @@ class CmdTasker{
 	}
 	
 	public:
-	CmdTasker(string inputPath, string outputPath, string mrkrFormatsPath, bool onCopy, bool nameEncodedMarkers, bool formatMode, set<string> exclFilesSet): 
-		inputPath(inputPath), outputPath(outputPath), mrkrFormatsPath(mrkrFormatsPath), 
-		onCopy(onCopy), nameEncodedMarkers(nameEncodedMarkers), clangFormatMode(formatMode), exclFilesSet(exclFilesSet)
+	CmdTasker(
+		string inputPath, string outputPath, 
+		string mrkrFormatsPath, 
+		bool onCopy, 
+		bool nameEncodedMarkers, 
+		bool formatMode, 
+		set<string> exclFilesSet,
+		set<string> excludeDirsSet
+	): 
+		inputPath(inputPath), outputPath(outputPath), 
+		mrkrFormatsPath(mrkrFormatsPath), 
+		onCopy(onCopy), 
+		nameEncodedMarkers(nameEncodedMarkers), 
+		clangFormatMode(formatMode), 
+		excludeFilesSet(exclFilesSet),
+		excludeDirsSet(excludeDirsSet)
 		{
+			if(outputPath.empty()){outputPath = inputPath;}
 			loadConfigs();
 		}	
 	

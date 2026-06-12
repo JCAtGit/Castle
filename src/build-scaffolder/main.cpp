@@ -15,6 +15,7 @@ int main(int argc, char **argv) {
 
 	CmdTasker cmdTskr(scaffolderConfig, toolConfig);
 	cmdTskr.startBuildProcesses();
+//	cmdTskr.buildIterations();
 	cmdTskr.persistChanges();
 	return 0;
 }

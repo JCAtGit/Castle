@@ -47,7 +47,7 @@ class CmdTasker{
 		        std::cerr << "Error: Could not open file for writing: " << path << "\n";
 		        return;
 		    }
-		    file << data.dump(4);  // pretty print with 4 spaces indentation
+		    file << data.dump(2);  // pretty print with 4 spaces indentation
 		    cout << "Saved config to " << path << "\n";
 		}
 	public:
@@ -58,19 +58,38 @@ class CmdTasker{
 	void startBuildProcesses(){
 		cout << "Starting build processes and outputting to " << bs_configData["outputDir"] << "\n";
 		for(auto& toolcfg:bt_configData["targets"]){
+			string command;
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << "\n";
 			filesystem::create_directories((bs_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			
 			if(toolcfg["run_per_file"].get<bool>()){
-				for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
-					if(entry.path().extension() == ".c"){
-						processPath(entry, toolcfg);
+				if(toolcfg["run_as_it"]){
+					for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
+						command = 
+							toolcfg["binPath"].get<string>() 																	+ " " + 
+							std::to_string(toolcfg["it_begin"].get<int>())													+ ".c " +
+							toolcfg["outputFlag"].get<string>() + " \"" + bs_configData["outputDir"].get<string>() 				+ 
+							toolcfg["name"].get<string>() 		+ "/" 	+ std::to_string(toolcfg["it_begin"].get<int>())	+ ".o\"" + 					
+							" > /dev/null 2>&1";
+						// TODO: add static flags
+						
+						if(toolcfg["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
+						std::cout << command << "\n";
+						auto status = std::system(command.c_str());
+						command.clear();
+					}
+				} else {
+					for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
+						if(entry.path().extension() == ".c"){
+							processPath(entry, toolcfg);
+						}
 					}
 				}
+				
 			} else {
 				// TODO: add static flags, etc. Currently assumes that separate scripts handles everything
-				string command = toolcfg["binPath"].get<string>();
+				command = toolcfg["binPath"].get<string>();
 				std::cout << command << "\n";
 				auto status = std::system(command.c_str());
 			}

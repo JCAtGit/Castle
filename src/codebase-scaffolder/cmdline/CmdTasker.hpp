@@ -37,7 +37,7 @@ class CmdTasker{
 		        std::cerr << "Error: Could not open file for writing: " << path << "\n";
 		        return;
 		    }
-		    file << data.dump(4);  // pretty print with 4 spaces indentation
+		    file << data.dump(2);  // pretty print with 4 spaces indentation
 		    cout << "Saved config to " << path << "\n";
 		}
 	public:

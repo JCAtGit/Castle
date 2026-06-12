@@ -39,6 +39,13 @@ bool substringOnlyAtEndOfBasename(const string &filename,
 	return firstOccurrence == basename.length() - sub.length();
 }
 
+bool is_subpath(const filesystem::path& base, const filesystem::path& sub) {
+    auto base_norm = filesystem::weakly_canonical(base);
+    auto sub_norm = filesystem::weakly_canonical(sub);
+    auto rel = sub_norm.lexically_relative(base_norm);
+    return !rel.empty() && rel.native()[0] != '.' && rel.native()[0] != '/' || rel == ".";
+}
+
 /**
  *	Voorbeeld:
  * 	

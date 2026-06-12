@@ -57,8 +57,9 @@ class CrossASTEvaluator{
 	   	if (it != fnSelector.end()) {
             (this->*(it->second))(markerID, findingsOracle, findingsDecom);
         } else {
-			// report and record
-			dev_report["unevaluated"].push_back(markerID);
+			// Use general eval, and report/record for devs
+			dev_report["generic_eval"].push_back(markerID);
+			processStmtGeneral(markerID, findingsOracle, findingsDecom);
 		}
 	}
 	
@@ -67,6 +68,14 @@ class CrossASTEvaluator{
 	json &findings_eval;
 	json &dev_report;
 	filesystem::path &outputPath;
+	
+	bool processStmtGeneral(const string &markerID, json &findingsOracle,json &findingsDecom){
+		json markerFindingsResult = json::object();
+		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
+		findings_eval[markerID] = markerFindingsResult;
+		return false;
+	}
 	
 	bool processCallExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
 		json markerFindingsResult = json::object();

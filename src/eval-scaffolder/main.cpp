@@ -12,6 +12,8 @@ int main(int argc, char **argv) {
 	// select oracle map, identify marker function in decompiled code
 	CLI11_PARSE(app, argc, argv);
 	
+	
+	
 	CmdTasker cmdTskr(scaffolderConfig, toolConfig);
 	cmdTskr.startEvaluationProcesses();
 	cmdTskr.persistChanges();

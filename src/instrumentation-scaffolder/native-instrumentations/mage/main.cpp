@@ -9,6 +9,17 @@
  * 		Rework EVERYTHING SE-wise
  */
 
+ struct { // TODO: part of rework
+ 		set<string> excludeFilesSet;
+ 		set<string> excludeDirsSet;
+ 		set<string> exclusiveFilesSet;
+ 		set<string> exclusiveDirsSetDirsSet;
+ 		bool onCopy = false;
+		string mrkrFormatsPath;
+ 		bool nameEncodedMarker = false;
+ 		bool clangFormatMode = false;
+ } cliVars;
+ 	
 int main(int argc, char **argv) {
 	CLI::App app{"Mage"};
 	
@@ -61,17 +72,18 @@ int main(int argc, char **argv) {
 	set<string> exclusiveFilesSet(exclusiveFiles.begin(), exclusiveFiles.end());
 	set<string> exclusiveDirsSetDirsSet(exclusiveDirs.begin(), excludeDirs.end());
 
-	struct {
-		
-	} cliOpt;
+	CmdTasker cmdTskr(
+		inputPath, outputPath, 
+		mrkrFormatsPath, 
+		onCopy, 
+		nameEncodedMarker, 
+		clangFormatMode, 
+		excludeFilesSet,
+		excludeDirsSet
+	);
 	
-	if(outputPath.empty()){
-		outputPath = inputPath;
-	}
-	
-	CmdTasker cmdTskr(inputPath, outputPath, mrkrFormatsPath, onCopy, nameEncodedMarker, clangFormatMode, excludeFilesSet);
 	if(toggle){
-		// start instrumentation removal TODO
+		// start instrumentation removal TODO, or implement as separate tool?
 		cout << "TODO: Toggle \n";
 	} else {
 		cmdTskr.insertInstrumentationEnhancement();
