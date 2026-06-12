@@ -74,6 +74,8 @@ class CmdTasker{
 		cout << "Starting decompilation processes and outputting to " << ds_configData["outputDir"] << "\n";
 		for(auto& toolcfg:dt_configData["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
+			
+			
 			cout << toolcfg["name"] << "\n";
 			filesystem::create_directories((ds_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {

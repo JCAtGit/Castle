@@ -110,9 +110,17 @@ class CmdTasker{
 			filesystem::create_directories((is_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			cout << toolcfg["name"] << "\n";
 
+			// TODO:
 			if(toolcfg["run_per_file"].get<bool>()){
-				for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
-					processPath(entry, toolcfg);
+				if(toolcfg["run_as_it"].get<bool>()){
+					for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
+						filesystem::path entry = toolcfg["tgtDir"].get<string>() + std::to_string(toolcfg["it_begin"].get<int>()) +".c ";											+ ".c " ;
+						processPath(entry, toolcfg);
+					}
+				} else {
+					for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
+						processPath(entry, toolcfg);
+					}
 				}
 			} else {
 				processDir(toolcfg["tgtDir"], toolcfg);
