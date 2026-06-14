@@ -16,7 +16,7 @@ using namespace std;
 
 class CmdTasker{
 	private:		
-		filesystem::path inputPath, oracleDir, outputPath, mrkrFormatsPath;
+		filesystem::path inputDir, oracleDir, outputDir, mrkrFormatsPath;
 		json markerFormats, findings, findings_eval, dev;
 		json selectedFormat;
 		bool &nameEncodedMarkers;
@@ -41,7 +41,7 @@ class CmdTasker{
 		   	try {
 				markerFormats = json::parse(mrkrFormatsFile);
 		   	} catch (const json::parse_error& e) {
-		    	cerr << "MageEval: parse error: " << e.what() << endl;
+		    	cerr << "MageEval parse error: " << e.what() << endl;
 		    	return;
 		  	}
 		}
@@ -71,7 +71,7 @@ class CmdTasker{
  			}
 			
 			CAGatherer.selectMode(0);
-			for(auto entry :filesystem::recursive_directory_iterator(inputPath)){ // inputPath is nu de dir waar de decompiled c zit
+			for(auto entry :filesystem::recursive_directory_iterator(inputDir)){ // inputPath is nu de dir waar de decompiled c zit
 				// decompilers outputten soms zonder .c extension, maar aan de andere kant krijgen we ook regelmatig troep van bijvoorbeeld retdec.
 				if(entry.path().extension() == ".c" || entry.path().extension().empty()){ 
 					fileDecomData = file2string(entry.path());
@@ -82,18 +82,18 @@ class CmdTasker{
 					// TODO: consolidate findings here
 					CAGatherer.announceFindings();
 					cout << "Starting eval" << "\n";
-					CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
+					CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputDir);
 					
 					CAEvaluator.startEval();
 					
-					cout << "Saving dir-entry result to json:" << outputPath << "\n";
-					filesystem::create_directory(outputPath.string() + "findings/");
-					filesystem::create_directory(outputPath.string() + "eval/");
-					filesystem::create_directory(outputPath.string() + "dev/");
+					cout << "Saving dir-entry result to json:" << outputDir << "\n";
+					filesystem::create_directory(outputDir.string() + "findings/");
+					filesystem::create_directory(outputDir.string() + "eval/");
+					filesystem::create_directory(outputDir.string() + "dev/");
 					
-					saveJsonToFile(outputPath.string() + "findings/" 	+ mapKey + ".json", findings);
-					saveJsonToFile(outputPath.string() + "eval/" 		+ mapKey + ".json", findings_eval);
-					saveJsonToFile(outputPath.string() + "dev/" 		+ mapKey + ".json", dev);
+					saveJsonToFile(outputDir.string() + "findings/" 	+ mapKey + ".json", findings);
+					saveJsonToFile(outputDir.string() + "eval/" 		+ mapKey + ".json", findings_eval);
+					saveJsonToFile(outputDir.string() + "dev/" 		+ mapKey + ".json", dev);
 					
 					CAEvaluator.clearEval();
 					findings_eval.clear();
@@ -104,10 +104,10 @@ class CmdTasker{
 		
 		void processFile(){
 			cout<< "processFile" << "\n";
-			string fileDecomData = file2string(inputPath);
-			string fileOracleData = file2string(oracleDir / inputPath.filename()); // TODO: oraclePath is an dir, which must be changed
-			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputPath.filename().c_str());
-			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
+			string fileDecomData = file2string(inputDir);
+			string fileOracleData = file2string(oracleDir / inputDir.filename()); // TODO: oraclePath is an dir, which must be changed
+			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputDir.filename().c_str());
+			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputDir.filename().string());
 			
 			CrossASTGatherer CAGatherer(
 				selectedFormat,
@@ -124,18 +124,18 @@ class CmdTasker{
 			CAGatherer.announceFindings();
 			
 			cout << "Starting eval" << "\n";
-			CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
+			CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputDir);
 			CAEvaluator.startEval();
 			
-			cout << "Saving results to json:" << outputPath.parent_path().string() << "\n"; // outputPath is dir?
+			cout << "Saving results to json:" << outputDir.parent_path().string() << "\n"; // outputPath is dir?
 			
-			filesystem::create_directory(outputPath.parent_path().string() + "/findings/");
-			filesystem::create_directory(outputPath.parent_path().string() + "/eval/");
-			filesystem::create_directory(outputPath.parent_path().string() + "/dev/");
+			filesystem::create_directory(outputDir.parent_path().string() + "/findings/");
+			filesystem::create_directory(outputDir.parent_path().string() + "/eval/");
+			filesystem::create_directory(outputDir.parent_path().string() + "/dev/");
 
-			saveJsonToFile(outputPath.parent_path().string() + "/findings/" 	+ inputPath.filename().string() + ".json", findings);
-			saveJsonToFile(outputPath.parent_path().string() + "/eval/" 		+ inputPath.filename().string() + ".json", findings_eval);
-			saveJsonToFile(outputPath.parent_path().string() + "/dev/" 		+ inputPath.filename().string() + ".json", dev);
+			saveJsonToFile(outputDir.parent_path().string() + "/findings/" 	+ inputDir.filename().string() + ".json", findings);
+			saveJsonToFile(outputDir.parent_path().string() + "/eval/" 		+ inputDir.filename().string() + ".json", findings_eval);
+			saveJsonToFile(outputDir.parent_path().string() + "/dev/" 		+ inputDir.filename().string() + ".json", dev);
 		}
 	
 	public:
@@ -146,9 +146,9 @@ class CmdTasker{
 		filesystem::path mrkrFormatsPath,
 		bool& nameEncodedMarkers
 	): 
-			inputPath(inputPath), 		// file or dir
+			inputDir(inputPath), 		// file or dir
 			oracleDir(oracleDir), 		// when iterating over files, looks for same name in oracle path
-			outputPath(outputPath),
+			outputDir(outputPath),
 			mrkrFormatsPath(mrkrFormatsPath),
 			nameEncodedMarkers(nameEncodedMarkers)
 	{
@@ -167,8 +167,8 @@ class CmdTasker{
 	}
 		
 	void startProcesses(){
-		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
-		if(filesystem::is_directory(inputPath)){// TODO: if it does not exist, then it will proceed to file procession as well
+		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputDir << ", " << oracleDir.string() + inputDir.filename().string() << ")" << "\n";
+		if(filesystem::is_directory(inputDir)){// TODO: if it does not exist, then it will proceed to file procession as well
 			processDir();
 		} else {
 			processFile();

@@ -1,6 +1,6 @@
 #include <CLI/CLI.hpp>
 
-#include "../../../analysis-scaffolder/native_tools/MageEvalSummarizer/cmdline/CmdTasker.hpp"
+#include "../MageEvalAnalyzer/cmdline/CmdTasker.hpp"
 
 int main(int argc, char **argv) {
 	CLI::App app{"MageEvalSummarizer"};
@@ -17,7 +17,6 @@ int main(int argc, char **argv) {
 	app.add_option("-o,--output", processMode, "set, element-all, element-it")
 		->required();
 	
-	
 	/**
 	 *	Separated mode for easier testing later.
 	 * 	0: 	perform every analysis
@@ -32,5 +31,5 @@ int main(int argc, char **argv) {
 	
 	CLI11_PARSE(app, argc, argv);
 
-	CmdTasker cmdTskr(inputPath, outputPath, processMode, analysisMode);
+	CmdTasker cmdTskr(inputDir, outputDir, processMode, analysisMode);
 }

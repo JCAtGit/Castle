@@ -1,7 +1,6 @@
 #include <CLI/CLI.hpp>
 #include <string>
 //#include "../eval-scaffolder/cmdline/CmdTasker.hpp"
-
 #include "CmdTasker.hpp"
 
 using namespace std;
