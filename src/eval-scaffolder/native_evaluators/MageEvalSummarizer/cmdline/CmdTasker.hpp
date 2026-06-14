@@ -39,19 +39,17 @@ class CmdTasker{
 	 */
 	void startProcesses(){
 		cout << "Summarizing inputPath: " << inputPath << "\n";
-		if(filesystem::is_directory(inputPath)){
-			processDir();
-		} else {
-			processFile();
-		}		
+			
 	}
 	
-	void processDir(){
+	// Process each finding element as separate set
+	void processAsElements(){
 		
 	}
 	
-	void processFile(){
-				
+	// Process each finding element as part of the same set
+	void processAsSet(){
+		
 	}
 };
 	

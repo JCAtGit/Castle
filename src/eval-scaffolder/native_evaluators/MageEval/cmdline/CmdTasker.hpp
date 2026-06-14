@@ -1,13 +1,11 @@
 #include <filesystem>
-#include "nlohmann/json.hpp"
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <unordered_map>
 
+#include "nlohmann/json.hpp"
 #include "clang/AST/ASTContext.h"
 #include "clang/Frontend/ASTUnit.h"
-#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
 #include "helper.hpp"
 #include "../ast-mechanism/CrossASTEvaluator.hpp"

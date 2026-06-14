@@ -8,6 +8,8 @@
 using namespace std;
 using namespace nlohmann;
 
+// TODO: add continueCheckpoint
+
 class CmdTasker{
 	private:
 		string 	ps_configPath, pt_configPath;
@@ -136,11 +138,32 @@ class CmdTasker{
 						processPath(toolcfg["tgtDir"].get<string>() + std::to_string(toolcfg["it_begin"].get<int>()) +".c ", toolcfg);
 					}
 				} else {
+					// TODO: add checkpoint continuation
 					for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
-						processPath(entry, toolcfg);
+						if(toolcfg["continue_checkpoint"].get<bool>()){
+							// TODO: check output loc
+							cout 
+								<< "bugcheck:" 
+								<< ps_configData["outputDir"].get<string>() 
+								<< toolcfg["name"].get<string>() 
+								<< "/"
+								<< entry.path().filename().string() 
+								<< "\n";
+							if(!filesystem::exists(
+								ps_configData["outputDir"].get<string>() + 
+								toolcfg["name"].get<string>()  				+
+								"/"											+ 
+								entry.path().filename().string())
+							){
+								processPath(entry, toolcfg);
+							}
+						} else {
+							processPath(entry, toolcfg);
+						}
 					}
 				}
 			} else {
+				// TODO: add checkpoint continuation
 				processDir(toolcfg["tgtDir"], toolcfg);
 			}
 			toolcfg["timestamp"] = time(NULL);

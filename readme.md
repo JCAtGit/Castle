@@ -8,7 +8,7 @@ automake
 ninja
 cmake
 make
-
+boost-devel
 
 
 ### Pipeline Packages and instructions

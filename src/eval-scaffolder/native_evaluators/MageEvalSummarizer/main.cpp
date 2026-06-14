@@ -5,23 +5,32 @@
 int main(int argc, char **argv) {
 	CLI::App app{"MageEvalSummarizer"};
 	
-	string inputPath;
-	app.add_option("inputPath", inputPath, "input path to evaluate")
+	string inputDir;
+	app.add_option("inputPath", inputDir, "input dir to evaluate")
 		->required();
 
-	string outputPath;
-	app.add_option("-o,--output", outputPath, "output path for results")
+	string outputDir;
+	app.add_option("-o,--output", outputDir, "output dir for results")
 		->required();
 
+	int processMode = 0;
+	app.add_option("-o,--output", processMode, "set, element-all, element-it")
+		->required();
+	
+	
 	/**
-	 * 	0 - local summarizer:
-	 * 		high-level/generic stats per construct, e.g. basic recovery.
-	 *
+	 *	Separated mode for easier testing later.
+	 * 	0: 	perform every analysis
+	 * 	1: 	high-level/generic stats per construct, e.g. basic recovery.
+	 * 	 	general statistical analysis: 
+	 *			bernouilli?, e.g.; p, variance, std deviation.
+	 *	2:
+	 *		
 	 */
-	int summaryMode = 0;
-	app.add_option("-o,--output", outputPath, "output path for results");
+	int analysisMode = 0;
+	app.add_option("-o,--output", analysisMode, "determines what analysis is performed");
 	
 	CLI11_PARSE(app, argc, argv);
 
-	CmdTasker cmdTskr(inputPath, outputPath);
+	CmdTasker cmdTskr(inputPath, outputPath, processMode, analysisMode);
 }

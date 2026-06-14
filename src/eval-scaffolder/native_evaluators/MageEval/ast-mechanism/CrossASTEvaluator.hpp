@@ -63,6 +63,7 @@ class CrossASTEvaluator{
 		}
 	}
 	
+	// TODO: what if multiple occurences appear of some marker? Push to array instead?
 	void evalTraverse(const string &markerID, json &findingsOracle, json &findingsDecom){
 		auto it = fnSelector.find(findingsOracle["ASTNode"].get<string>());
 	   	if (it != fnSelector.end()) {
