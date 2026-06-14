@@ -1,4 +1,3 @@
-// TODO
 #include <filesystem>
 #include "nlohmann/json.hpp"
 #include <fstream>
@@ -7,8 +6,6 @@
 
 using namespace std;
 using namespace nlohmann;
-
-// TODO: add continueCheckpoint
 
 class CmdTasker{
 	private:
@@ -121,9 +118,7 @@ class CmdTasker{
 		}
 	}
 	
-	void startProcesses(
-//		json& pt_configData, json &ps_configData
-	){
+	void startProcesses(){
 		cout << "Starting processes and outputting to " << ps_configData["outputDir"] << "\n";
 		
 		for(auto& toolcfg:pt_configData["targets"]){
@@ -131,24 +126,14 @@ class CmdTasker{
 			filesystem::create_directories((ps_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			cout << toolcfg["name"] << "\n";
 
-			// TODO:
 			if(toolcfg["run_per_file"].get<bool>()){
 				if(toolcfg["run_as_it"].get<bool>()){
 					for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
 						processPath(toolcfg["tgtDir"].get<string>() + std::to_string(toolcfg["it_begin"].get<int>()) +".c ", toolcfg);
 					}
 				} else {
-					// TODO: add checkpoint continuation
 					for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
 						if(toolcfg["continue_checkpoint"].get<bool>()){
-							// TODO: check output loc
-							cout 
-								<< "bugcheck:" 
-								<< ps_configData["outputDir"].get<string>() 
-								<< toolcfg["name"].get<string>() 
-								<< "/"
-								<< entry.path().filename().string() 
-								<< "\n";
 							if(!filesystem::exists(
 								ps_configData["outputDir"].get<string>() + 
 								toolcfg["name"].get<string>()  				+
@@ -180,10 +165,7 @@ class CmdTasker{
 	    cout << "Saved config to " << path << "\n";
 	}
 	
-	void persistChanges(
-//		string 	ps_configPath, 	string 	pt_configPath,
-//		json 	&pt_configData, json 	&ps_configData
-	){
+	void persistChanges(){
 		if(ps_configData["save_on_exit"].get<bool>()){
 			cout << "Persist changes." << "\n";
 			pt_configData["timestamp"] = time(NULL);

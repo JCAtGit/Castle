@@ -1,6 +1,6 @@
 #include <CLI/CLI.hpp>
 
-#include "cmdline/CmdTasker.hpp"
+#include "../../../analysis-scaffolder/native_tools/MageEvalSummarizer/cmdline/CmdTasker.hpp"
 
 int main(int argc, char **argv) {
 	CLI::App app{"MageEvalSummarizer"};
