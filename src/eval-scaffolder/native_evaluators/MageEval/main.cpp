@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
 		->required();
 	
 	string oracleDir;
-	app.add_option("oraclePath", oracleDir, "input dir to use as oracle, uses input filename in dir")
+	app.add_option("oracleDir", oracleDir, "input dir to use as oracle, uses related filenames in dir")
 		->required();
 
 	string outputPath;
@@ -32,5 +32,5 @@ int main(int argc, char **argv) {
 	CLI11_PARSE(app, argc, argv);
 
 	CmdTasker cmdTskr(inputPath, oracleDir, outputPath, mrkrFormatsPath, nameEncodedMarkers);
-	cmdTskr.startEvaluationProcesses();
+	cmdTskr.startProcesses();
 }

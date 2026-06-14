@@ -1,6 +1,8 @@
 
 #include <CLI/CLI.hpp>
-#include "../build-scaffolder/cmdline/CmdTasker.hpp"
+//#include "../build-scaffolder/cmdline/CmdTasker.hpp"
+
+#include "CmdTasker.hpp"
 
 int main(int argc, char **argv) {
 	CLI::App app{"BuildScaffolder"};
@@ -14,8 +16,7 @@ int main(int argc, char **argv) {
 	CLI11_PARSE(app, argc, argv);
 
 	CmdTasker cmdTskr(scaffolderConfig, toolConfig);
-	cmdTskr.startBuildProcesses();
-//	cmdTskr.buildIterations();
+	cmdTskr.startProcesses();
 	cmdTskr.persistChanges();
 	return 0;
 }

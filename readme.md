@@ -12,6 +12,9 @@ make
 
 
 ### Pipeline Packages and instructions
+csmith
+csmith-devel
+
 java-21-openjdk-devel (JDK21+)
 gtk3-devel
 libevent-devel

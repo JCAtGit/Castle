@@ -94,8 +94,35 @@ class CmdTasker{
 		auto status = std::system(command.c_str());
 	}
 	
-	void startInstrumentationProcesses(json& pt_configData, json &ps_configData){
-		cout << "Starting instrumentation processes and outputting to " << ps_configData["outputDir"] << "\n";
+	void startCodeGeneration(){
+		cout << "Starting code generation and outputting to " << ps_configData["outputDir"] << "\n";
+		string command;
+		for(auto& toolcfg:pt_configData["targets"]){
+			if(!toolcfg["active"].get<bool>()){continue;}
+			cout << toolcfg["name"] << " [" << toolcfg["it_begin"]  << "," << toolcfg["it_end"] << ")\n";
+			filesystem::create_directories((ps_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
+			for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
+				command = 
+					toolcfg["binPath"].get<string>() 	+ " " 	+ 
+					toolcfg["seedFlag"].get<string>() 	+ " " 	+ to_string(toolcfg["it_begin"].get<int>()) 	+ " " 	+
+					toolcfg["outputFlag"].get<string>() + " \"" + ps_configData["outputDir"].get<string>() 				+ 
+					toolcfg["name"].get<string>() 		+ "/" 	+ to_string(toolcfg["it_begin"].get<int>())		+ ".c\"";					
+				
+				if(toolcfg["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
+				if(toolcfg["redirectNull"].get<bool>()){command = command + " > /dev/null 2>&1";}
+
+				std::cout << command << "\n";
+				auto status = std::system(command.c_str());
+				command.clear();
+			}
+			toolcfg["timestamp"] = time(NULL);
+		}
+	}
+	
+	void startProcesses(
+//		json& pt_configData, json &ps_configData
+	){
+		cout << "Starting processes and outputting to " << ps_configData["outputDir"] << "\n";
 		
 		for(auto& toolcfg:pt_configData["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
@@ -106,8 +133,7 @@ class CmdTasker{
 			if(toolcfg["run_per_file"].get<bool>()){
 				if(toolcfg["run_as_it"].get<bool>()){
 					for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
-						filesystem::path entry = toolcfg["tgtDir"].get<string>() + std::to_string(toolcfg["it_begin"].get<int>()) +".c ";											+ ".c " ;
-						processPath(entry, toolcfg);
+						processPath(toolcfg["tgtDir"].get<string>() + std::to_string(toolcfg["it_begin"].get<int>()) +".c ", toolcfg);
 					}
 				} else {
 					for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
@@ -132,10 +158,9 @@ class CmdTasker{
 	}
 	
 	void persistChanges(
-		string 	ps_configPath, 
-		string 	pt_configPath,
-		json 	&pt_configData, 
-		json 	&ps_configData){
+//		string 	ps_configPath, 	string 	pt_configPath,
+//		json 	&pt_configData, json 	&ps_configData
+	){
 		if(ps_configData["save_on_exit"].get<bool>()){
 			cout << "Persist changes." << "\n";
 			pt_configData["timestamp"] = time(NULL);

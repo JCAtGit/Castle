@@ -21,7 +21,7 @@ using namespace std;
 
 class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	private:
-	json &markerFormat, &findings, &specEval, &markerEval, &humanEval;
+	json &markerFormat, &findings;
 	bool& nameEncodedMarkers;
 	
 	ASTContext *oracleAST, *decomAST;
@@ -34,29 +34,30 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	unordered_map<int64_t, Stmt*> decomMarkerParentMap;
 	unordered_map<int64_t, Stmt*> oracleMarkerParentMap;
 
-	unordered_map<int64_t, Stmt*> decomMarkeeMap;
-	unordered_map<int64_t, Stmt*> oracleMarkeeMap;
+//	unordered_map<int64_t, Stmt*> decomMarkeeMap;
+//	unordered_map<int64_t, Stmt*> oracleMarkeeMap;
+
+	unordered_map<int64_t, CallExpr*>* 	selectedMarkerMap;
+	unordered_map<int64_t, Stmt*>* 		selectedMarkerParentMap;
+//	unordered_map<int64_t, Stmt*>* 		selectedMarkeeMap;
 
 	int proc_mode = 0; // 0 = oracle, 1 = decom
 	void (CrossASTGatherer::*selectedProcessor)(Stmt *S);
 	ASTContext* selectedAST;
 	SourceManager* selectedSM;
 	string selectedContextString, magestring;
-	unordered_map<int64_t, CallExpr*>* 	selectedMarkerMap;
-	unordered_map<int64_t, Stmt*>* 		selectedMarkerParentMap;
-	unordered_map<int64_t, Stmt*>* 		selectedMarkeeMap;
-
+	
 	// Structural equivalence functionality
 //	StructuralEquivalenceContext::NonEquivalentDeclSet neds;
 //	StructuralEquivalenceContext sec;
 	
 	public:	
 	CrossASTGatherer(
-		json& markerFormat, json& findings, json& specEval, json& markerEval, json& humanEval,
+		json& markerFormat, json& findings,
 		ASTContext *oracleAST, ASTContext *decomAST, 
 		bool& nameEncodedMarkers
 	): 
-	markerFormat(markerFormat),	findings(findings), specEval(specEval), markerEval(markerEval), humanEval(humanEval),
+	markerFormat(markerFormat),	findings(findings),
 	oracleAST(oracleAST), decomAST(decomAST), 
 	nameEncodedMarkers(nameEncodedMarkers),
 	
@@ -66,9 +67,9 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	}
 	
 	CrossASTGatherer(
-		json& markerFormat, json& findings, json& specEval, json& markerEval, json& humanEval, 
+		json& markerFormat, json& findings, 
 		bool& nameEncodedMarkers
-	): markerFormat(markerFormat), findings(findings), specEval(specEval), markerEval(markerEval), humanEval(humanEval), nameEncodedMarkers(nameEncodedMarkers)
+	): markerFormat(markerFormat), findings(findings), nameEncodedMarkers(nameEncodedMarkers)
 	{magestring = markerFormat["name"].get<string>();}
 	
 	void setDecomContext(ASTContext *otherAST){
@@ -79,6 +80,10 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	void setOracleContext(ASTContext *otherAST){
 		oracleAST = otherAST;
 		selectedSM = &(otherAST->getSourceManager());
+	}
+	
+	void setFindingsObject(json &findings_ref){
+		findings = findings_ref;
 	}
 	
 	void selectMode(int proc_mode){

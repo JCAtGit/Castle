@@ -16,14 +16,42 @@ using namespace std;
 
 class CmdTasker{
 	private:		
-	
+		filesystem::path inputPath;
+		filesystem::path outputPath;	
+		const string evalSuffix = "_eval.json", devSuffix = "_dev.json";
+		
+		
 	public:
 	CmdTasker(
 		filesystem::path inputPath, 
-		filesystem::path oracleDir, 
-		filesystem::path outputPath, 
-		filesystem::path mrkrFormatsPath,
-		bool& nameEncodedMarkers
-	){}
+		filesystem::path outputPath
+	){
+
+	}
+	
+	/**
+	 * Benodigheden:
+	 * 	- eval.json
+	 *	- dev.json
+	 *
+	 * We analyseren de markers die we hebben kunnen vinden, markers die verloren zijn gegaan gaan in een aparte statistiek?
+	 * Of beschouwen we deze ook als een missed recovery? We kunnen een statistiek "including missed" opnemen?
+	 */
+	void startProcesses(){
+		cout << "Summarizing inputPath: " << inputPath << "\n";
+		if(filesystem::is_directory(inputPath)){
+			processDir();
+		} else {
+			processFile();
+		}		
+	}
+	
+	void processDir(){
+		
+	}
+	
+	void processFile(){
+				
+	}
 };
 	

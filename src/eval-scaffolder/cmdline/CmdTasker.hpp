@@ -73,7 +73,7 @@ class CmdTasker{
 	}
 	
 	// TODO
-	void startEvaluationProcesses(){
+	void startProcesses(){
 		cout << "Starting evaluation processes and outputting to " << es_configData["outputDir"] << "\n";
 		for(auto& toolcfg:et_configData["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}

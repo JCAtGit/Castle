@@ -1,6 +1,6 @@
 
 #include <CLI/CLI.hpp>
-#include "../instrumentation-scaffolder/cmdline/CmdTasker.hpp"
+#include "CmdTasker.hpp"
 
 int main(int argc, char **argv) {
 	CLI::App app{"InstrumentationScaffolder"};
@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 	CLI11_PARSE(app, argc, argv);
 
 	CmdTasker cmdTskr(scaffolderConfig, toolConfig);
-	cmdTskr.startInstrumentationProcesses();
+	cmdTskr.startProcesses();
 	cmdTskr.persistChanges();
 	return 0;
 }

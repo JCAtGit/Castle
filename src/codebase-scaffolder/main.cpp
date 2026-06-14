@@ -1,5 +1,5 @@
 #include <CLI/CLI.hpp>
-#include "../codebase-scaffolder/cmdline/CmdTasker.hpp"
+#include "CmdTasker.hpp"
 
 int main(int argc, char **argv) {
 	CLI::App app{"CodebaseScaffolder"};

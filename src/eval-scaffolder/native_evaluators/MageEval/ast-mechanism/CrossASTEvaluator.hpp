@@ -20,7 +20,7 @@ class CrossASTEvaluator{
 	{
 		dev_report["missing"] = json::array();
 		dev_report["incomplete"] = json::array();
-		dev_report["unevaluated"] = json::array();
+		dev_report["generic_eval"] = json::array();
 	}
 	
 	using EvalFnPtr = bool(CrossASTEvaluator::*)(const string &, json &, json &);
@@ -48,6 +48,17 @@ class CrossASTEvaluator{
 				evalTraverse(markerID, finding["oracle"], finding["decom"]);
 			} else {
 				dev_report["incomplete"].push_back(markerID);
+			}
+		}
+	}
+	
+	void clearEval(){
+		for(auto [markerID, finding] : findings.items()){
+			// TODO: Create dummy fail object, to punish the absence of decom instances.
+			if(!finding.contains("oracle")){
+				findings.erase(markerID);
+			} else {
+				finding.erase("decom");
 			}
 		}
 	}

@@ -9,7 +9,7 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
-#include "../../../../../include/helper.hpp"
+#include "helper.hpp"
 #include "../ast-mechanism/CrossASTEvaluator.hpp"
 #include "../ast-mechanism/CrossASTGatherer.hpp"
 
@@ -19,13 +19,14 @@ using namespace std;
 class CmdTasker{
 	private:		
 		filesystem::path inputPath, oracleDir, outputPath, mrkrFormatsPath;
-		json markerFormats, findings, findings_eval, dev, humanEval;
+		json markerFormats, findings, findings_eval, dev;
 		json selectedFormat;
 		bool &nameEncodedMarkers;
 		
 		const vector<std::string> args = {
-	        "-xc++", // xc++ or xc makes a huge difference for node recovery and is worth consideration
+	        "-xc++", 	// xc++ or xc makes a huge difference for node recovery and is worth consideration
 			"-w",
+			"-std=c17", // voor c and cpp
 //			"-Xclang",
 //	        "-frecovery-ast",
 //			"-Xclang",
@@ -48,33 +49,21 @@ class CmdTasker{
 		}
 		
 		void processDir(){
-			unordered_map<string, unique_ptr<ASTUnit>> astDecomUnits;
 			unordered_map<string, unique_ptr<ASTUnit>> astOracleUnits;
+			unordered_map<string, unique_ptr<ASTUnit>> astDecomUnits;
 			string mapKey;
 			CrossASTGatherer CAGatherer(
-				selectedFormat,
-							findings, 
-							findings_eval, 
-							dev, 
-							humanEval, 
-							nameEncodedMarkers
-						);
-			string fileDecomData;
-			CAGatherer.selectMode(0);
-			for(auto entry :filesystem::recursive_directory_iterator(inputPath)){ // inputPath is nu de dir waar de decompiled c zit
-				if(entry.path().extension() == ".c"){
-					fileDecomData = file2string(entry.path());
-					mapKey = entry.path().filename().string();
-					astDecomUnits[mapKey] = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, entry.path().filename().string());
-					CAGatherer.setDecomContext(&(astDecomUnits[mapKey])->getASTContext());
-					CAGatherer.TraverseDecl(astDecomUnits[mapKey]->getASTContext().getTranslationUnitDecl());
-				}
-			}
-
+			selectedFormat,
+			findings, 
+			nameEncodedMarkers
+		);
+			cout<< "processDir" << "\n";
 			string fileOracleData;
+			string fileDecomData;
+
 			CAGatherer.selectMode(1);
-			for(auto entry :filesystem::recursive_directory_iterator(oracleDir)){ // 
-				if(entry.path().extension() == ".c"){
+			for(auto entry :filesystem::recursive_directory_iterator(oracleDir)){ // voor elke moeten we apart een save to findings, etc maken.
+				if(entry.path().extension() == ".c" || entry.path().extension() == ""){
 					fileOracleData = file2string(entry.path());
 					mapKey = entry.path().filename().string();
 					astOracleUnits[mapKey] = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + entry.path().filename().string());
@@ -82,10 +71,36 @@ class CmdTasker{
 					CAGatherer.TraverseDecl(astOracleUnits[mapKey]->getASTContext().getTranslationUnitDecl());
 				}
  			}
-			CAGatherer.announceFindings();
+			
+			CAGatherer.selectMode(0);
+			for(auto entry :filesystem::recursive_directory_iterator(inputPath)){ // inputPath is nu de dir waar de decompiled c zit
+				// decompilers outputten soms zonder .c extension, maar aan de andere kant krijgen we ook regelmatig troep van bijvoorbeeld retdec.
+				if(entry.path().extension() == ".c" || entry.path().extension().empty()){ 
+					fileDecomData = file2string(entry.path());
+					mapKey = entry.path().filename().string();
+					astDecomUnits[mapKey] = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, entry.path().filename().string());
+					CAGatherer.setDecomContext(&(astDecomUnits[mapKey])->getASTContext());
+					CAGatherer.TraverseDecl(astDecomUnits[mapKey]->getASTContext().getTranslationUnitDecl());
+					// TODO: consolidate findings here
+					CAGatherer.announceFindings();
+					cout << "Starting eval" << "\n";
+					CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
+					
+					CAEvaluator.startEval();
+					cout << "Saving results to json:" << outputPath << "\n";
+					saveJsonToFile(outputPath.string() + "findings/" 	+ mapKey + ".json", findings);
+					saveJsonToFile(outputPath.string() + "eval/" 		+ mapKey + ".json", findings_eval);
+					saveJsonToFile(outputPath.string() + "dev/" 		+ mapKey + ".json", dev);
+					
+					CAEvaluator.clearEval();
+					findings_eval.clear();
+					dev.clear();
+				}
+			}
 		}
 		
 		void processFile(){
+			cout<< "processFile" << "\n";
 			string fileDecomData = file2string(inputPath);
 			string fileOracleData = file2string(oracleDir / inputPath.filename()); // TODO: oraclePath is an dir, which must be changed
 			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputPath.filename().c_str());
@@ -94,9 +109,6 @@ class CmdTasker{
 			CrossASTGatherer CAGatherer(
 				selectedFormat,
 				findings, 
-				findings_eval, 
-				dev, 
-				humanEval, 
 				&(astOracleUnit->getASTContext()), 
 				&(astDecomUnit->getASTContext()),
 				nameEncodedMarkers
@@ -107,6 +119,20 @@ class CmdTasker{
 			CAGatherer.selectMode(1);
 			CAGatherer.TraverseDecl(astOracleUnit->getASTContext().getTranslationUnitDecl());
 			CAGatherer.announceFindings();
+			
+			cout << "Starting eval" << "\n";
+			CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
+			CAEvaluator.startEval();
+			
+			cout << "Saving results to json:" << outputPath.parent_path().string() << "\n"; // outputPath is dir?
+			
+			filesystem::create_directory(outputPath.parent_path().string() + "/findings/");
+			filesystem::create_directory(outputPath.parent_path().string() + "/eval/");
+			filesystem::create_directory(outputPath.parent_path().string() + "/dev/");
+
+			saveJsonToFile(outputPath.parent_path().string() + "/findings/" 	+ inputPath.filename().string() + ".json", findings);
+			saveJsonToFile(outputPath.parent_path().string() + "/eval/" 		+ inputPath.filename().string() + ".json", findings_eval);
+			saveJsonToFile(outputPath.parent_path().string() + "/dev/" 		+ inputPath.filename().string() + ".json", dev);
 		}
 	
 	public:
@@ -137,22 +163,13 @@ class CmdTasker{
 //	    std::cout << "Saved to "<<  path << "\n" << data.dump(2) << "\n";
 	}
 		
-	void startEvaluationProcesses(){
+	void startProcesses(){
 		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
-		
-		if(filesystem::is_directory(inputPath)){
+		if(filesystem::is_directory(inputPath)){// TODO: if it does not exist, then it will proceed to file procession as well
 			processDir();
 		} else {
 			processFile();
-		}
-		
-		cout << "Starting eval" << "\n";
-		CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
-		CAEvaluator.startEval();
-		cout << "Saving results to json:" << outputPath << "\n";
-		saveJsonToFile(outputPath.string() + "findings.json", findings);
-		saveJsonToFile(outputPath.string() + "eval.json", findings_eval);
-		saveJsonToFile(outputPath.string() + "dev.json", dev);
+		}		
 	}
 };
 	

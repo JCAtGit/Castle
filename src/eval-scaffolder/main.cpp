@@ -1,5 +1,10 @@
 #include <CLI/CLI.hpp>
-#include "../eval-scaffolder/cmdline/CmdTasker.hpp"
+#include <string>
+//#include "../eval-scaffolder/cmdline/CmdTasker.hpp"
+
+#include "CmdTasker.hpp"
+
+using namespace std;
 
 int main(int argc, char **argv) {
 	CLI::App app{"EvalScaffolder"};
@@ -12,9 +17,7 @@ int main(int argc, char **argv) {
 	// select oracle map, identify marker function in decompiled code
 	CLI11_PARSE(app, argc, argv);
 	
-	
-	
 	CmdTasker cmdTskr(scaffolderConfig, toolConfig);
-	cmdTskr.startEvaluationProcesses();
+	cmdTskr.startProcesses();
 	cmdTskr.persistChanges();
 }

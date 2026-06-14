@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
 	auto option_excludeDirs = app.add_option("--exclude_dirs", excludeFiles, "TODO: Directories to exclude from processing");
 
 	vector<string> exclusiveFiles;
-	auto option_exclusiveFiles = app.add_option("--exclusive_dir", exclusiveFiles, "TODO: Dir's to exclusively visit for processing enqueuement ");
+	auto option_exclusiveFiles = app.add_option("--exclusive_files", exclusiveFiles, "TODO: Dir's to exclusively visit for processing enqueuement ");
 	
 	vector<string> exclusiveDirs;
 	auto option_exclusiveDirs = app.add_option("--exclusive_dir", exclusiveDirs, "TODO: Dir's to exclusively visit for processing enqueuement ");
