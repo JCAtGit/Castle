@@ -44,7 +44,7 @@ class CrossASTEvaluator{
 			}
 		}
 		for(auto [markerID, finding] : findings.items()){
-			// TODO: Create dummy fail object, to punish the absence of decom instances.
+			// TODO: Create dummy fail object, to punish the absence of decom instances in evaluations?
 			if(finding.contains("oracle") && finding.contains("decom")){
 				evalComparison(markerID, finding["oracle"][0], finding["decom"]);
 			} else {
@@ -55,7 +55,7 @@ class CrossASTEvaluator{
 	
 	void clearEval(){
 		for(auto [markerID, finding] : findings.items()){
-			// TODO: Create dummy fail object, to punish the absence of decom instances.
+			// TODO: Create dummy fail object, to punish the absence of decom instances in evaluations?
 			if(!finding.contains("oracle")){
 				findings.erase(markerID);
 			} else {
@@ -418,6 +418,7 @@ class CrossASTEvaluator{
 	bool processImplicitCastExpr(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
+		
 		// TODO:
 //		if(markerFindingsResult["recovered_construct"]){}
 		return false;
@@ -426,10 +427,9 @@ class CrossASTEvaluator{
 	bool processRecoveryExpr(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
-
-		if(markerFindingsResult["recovered_construct"]){
-					
-		}
+		
+		// TODO:
+//		if(markerFindingsResult["recovered_construct"]){}
 		return false;
 	}
 };

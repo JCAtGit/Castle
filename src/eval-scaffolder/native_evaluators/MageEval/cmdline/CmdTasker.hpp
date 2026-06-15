@@ -24,7 +24,7 @@ class CmdTasker{
 		const vector<std::string> args = {
 	        "-xc++", 	// xc++ or xc makes a huge difference for node recovery and is worth consideration
 			"-w",
-			"-std=c17", // voor c and cpp
+//			"-std=c17", // voor c alleen en dus voor -xc flag
 //			"-Xclang",
 //	        "-frecovery-ast",
 //			"-Xclang",

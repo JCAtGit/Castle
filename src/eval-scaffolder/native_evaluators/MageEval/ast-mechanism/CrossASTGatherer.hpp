@@ -166,16 +166,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 				markerFinding["properties"] = json::object();
 				evalSRDeciderP(const_cast<Stmt*>(CEMarkee->get<Stmt>()), &(markerFinding));
 				findings[mageIndexString][selectedContextString].push_back(markerFinding);
-
-//				findings[mageIndexString][selectedContextString]["ASTNode"] = CEMarkee->getNodeKind().asStringRef();
-//				findings[mageIndexString][selectedContextString]["Source"] = 
-//					llvm::sys::path::filename(selectedSM->getFilename(CE->getBeginLoc())).str() 	+ " (" + 
-//					std::to_string(selectedSM->getSpellingLineNumber(CE->getBeginLoc()))					+ ", "+
-//				 	std::to_string(selectedSM->getSpellingColumnNumber(CE->getBeginLoc()))				+ ") " ;
-//				findings[mageIndexString][selectedContextString]["children"] = json::array();
-//				findings[mageIndexString][selectedContextString]["properties"] = json::object();
-//				
-//				evalSRDeciderP(const_cast<Stmt*>(CEMarkee->get<Stmt>()), &(findings[mageIndexString][selectedContextString]));
 			} else {
 				// TODO: report to dev if not already accounted for
 			}

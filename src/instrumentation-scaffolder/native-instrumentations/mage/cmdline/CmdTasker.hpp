@@ -25,7 +25,7 @@ class CmdTasker{
 	std::vector<filesystem::path> pathQueue;
 	std::vector<std::string> toolArgs = {
 		"-xc", 							// Treat the input as C code
-		"-std=c11", 					// Use a specific C standard
+		"-std=c17", 					// Use a specific C standard
 		"-nostdinc",					// Don't search for system headers
 		"-Wno-all",						// Suppress all warnings, W-prefix stands for warning.
 	};
@@ -114,7 +114,6 @@ class CmdTasker{
 	
 	/**
 	 *  The created file will be placed at the output root.
-	 *  Check the preview folder for an example output.
 	 * 	TODO: Change constant extraction mechanism
 	 */
 	void createMarkerDefinitionHeaderFile(){
