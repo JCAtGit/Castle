@@ -23,7 +23,7 @@ class CrossASTEvaluator{
 		dev_report["generic_eval"] = json::array();
 	}
 	
-	using EvalFnPtr = bool(CrossASTEvaluator::*)(const string &, json &, json &);
+	using EvalFnPtr = bool(CrossASTEvaluator::*)(const string &, json &, json &, json &);
 	unordered_map<string, EvalFnPtr> fnSelector = {
 		{"CallExpr", &CrossASTEvaluator::processCallExpr},
 		{"DeclStmt", &CrossASTEvaluator::processDeclStmt},
@@ -63,15 +63,22 @@ class CrossASTEvaluator{
 		}
 	}
 	
-	// TODO: what if multiple occurences appear of some marker? Push to array instead?
+	/**
+	 *	TODO: what if multiple occurences appear of some marker? Push to array instead?
+	 *		Also see the gatherer indexProcessor, if it has been fixed.
+	 */
 	void evalTraverse(const string &markerID, json &findingsOracle, json &findingsDecom){
 		auto it = fnSelector.find(findingsOracle["ASTNode"].get<string>());
-	   	if (it != fnSelector.end()) {
-            (this->*(it->second))(markerID, findingsOracle, findingsDecom);
-        } else {
-			// Use general eval, and report/record for devs
-			dev_report["generic_eval"].push_back(markerID);
-			processStmtGeneral(markerID, findingsOracle, findingsDecom);
+		for(auto d_finding : findingsDecom){
+			json markerFindingsResult = json::object();
+		   	if (it != fnSelector.end()) {
+				(this->*(it->second))(markerID, findingsOracle, d_finding, markerFindingsResult);
+	        } else {
+				// Use general eval, and report/record for devs
+				dev_report["generic_eval"].push_back(markerID);
+				processStmtGeneral(markerID, findingsOracle, findingsDecom, markerFindingsResult);
+			}
+			findings_eval[markerID].push_back(markerFindingsResult);
 		}
 	}
 	
@@ -81,16 +88,13 @@ class CrossASTEvaluator{
 	json &dev_report;
 	filesystem::path &outputPath;
 	
-	bool processStmtGeneral(const string &markerID, json &findingsOracle,json &findingsDecom){
-		json markerFindingsResult = json::object();
+	bool processStmtGeneral(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
-		findings_eval[markerID] = markerFindingsResult;
 		return false;
 	}
 	
-	bool processCallExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
-		json markerFindingsResult = json::object();
+	bool processCallExpr(const string &markerID, json &findingsOracle, json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 		
@@ -118,6 +122,7 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_side_effects"] = (findingsOracle["properties"]["has_side_effects"] == findingsDecom["properties"]["has_side_effects"]);
 			markerFindingsResult["parity_has_direct_callee"] = (findingsOracle["properties"]["has_direct_callee"] == findingsDecom["properties"]["has_direct_callee"]);
 			
+			// TODO: rework
 			findings_eval[markerID] = markerFindingsResult;
 			return false;
 		}
@@ -130,13 +135,10 @@ class CrossASTEvaluator{
 		markerFindingsResult["parity_variadicity"] = false;
 		markerFindingsResult["parity_side_effects"] = false;
 		markerFindingsResult["parity_has_direct_callee"] = false;
-
-		findings_eval[markerID] = markerFindingsResult;
 		return false;
 	}
 	
-	bool processDeclStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
-		json markerFindingsResult = json::object();
+	bool processDeclStmt(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 		
@@ -147,19 +149,18 @@ class CrossASTEvaluator{
 			sort(findingsDecom["properties"]["init_types"].begin(), findingsDecom["properties"]["init_types"].end());
 
 			markerFindingsResult["parity_init_types"] = findingsOracle["properties"]["init_types"] == findingsDecom["properties"]["init_types"];
-			return false;
+		} else {
+			markerFindingsResult["parity_single_decl"] = false;
+			markerFindingsResult["parity_init_types"] = false;
 		}
 		
-		markerFindingsResult["parity_single_decl"] = false;
-		markerFindingsResult["parity_init_types"] = false;
-		
+		// TODO: rework
 		findings_eval[markerID] = markerFindingsResult;
 		return false;
 
 	}
 
-	bool processIfStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
-		json markerFindingsResult = json::object();
+	bool processIfStmt(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 		
@@ -170,13 +171,13 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_cond_stmt_class"] = false;
 		}
 		
+		// TODO: rework
 		findings_eval[markerID] = markerFindingsResult;
 		return false;
 
 	}
 	
-	bool processForStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
-		json markerFindingsResult = json::object();
+	bool processForStmt(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 
@@ -255,13 +256,13 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_incr_expr_types"] = false;
 		}
 		
+		// TODO: rework
 		findings_eval[markerID] = markerFindingsResult;
 		return false;
 
 	}
 	
-	bool processWhileStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
-		json markerFindingsResult = json::object();
+	bool processWhileStmt(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 
@@ -303,25 +304,23 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_cond_expr_types"] = false;
 		}
 
+		// TODO: rework
 		findings_eval[markerID] = markerFindingsResult;
 		return false;
 	}
 	
-	bool processDoStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
-		json markerFindingsResult = json::object();
+	bool processDoStmt(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 
 		if(markerFindingsResult["recovered_construct"]){
-					
+			// TODO: implement metrics to measure		
 		}
 
-		findings_eval[markerID] = markerFindingsResult;
 		return false;
 	}
 	
-	bool processBinaryOperator(const string &markerID, json &findingsOracle,json &findingsDecom){
-		json markerFindingsResult = json::object();
+	bool processBinaryOperator(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 
@@ -352,12 +351,10 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_rhs_types"] = false;
 		}
 
-		findings_eval[markerID] = markerFindingsResult;
 		return false;
 	}
 	
-	bool processSwitchStmt(const string &markerID, json &findingsOracle,json &findingsDecom){
-		json markerFindingsResult = json::object();
+	bool processSwitchStmt(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 
@@ -421,31 +418,27 @@ class CrossASTEvaluator{
 			// deze info is bugged vanuit clang, dus nog niet zo zinvol
 			markerFindingsResult["parity_has_switch_cases"] = findingsOracle["properties"]["has_switch_cases"] == findingsDecom["properties"]["has_switch_cases"];
 			markerFindingsResult["parity_switch_cases"] = findingsOracle["properties"]["switch_cases"] == findingsDecom["properties"]["switch_cases"];
+			
 			return false;
 		}
 		
 	
-	bool processImplicitCastExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
-		json markerFindingsResult = json::object();
+	bool processImplicitCastExpr(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 		// TODO:
 //		if(markerFindingsResult["recovered_construct"]){}
-
-		findings_eval[markerID] = markerFindingsResult;
 		return false;
 	}
 	
-	bool processRecoveryExpr(const string &markerID, json &findingsOracle,json &findingsDecom){
-		json markerFindingsResult = json::object();
+	bool processRecoveryExpr(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 
 		if(markerFindingsResult["recovered_construct"]){
 					
 		}
-
-		findings_eval[markerID] = markerFindingsResult;
+		
 		return false;
 	}
 };

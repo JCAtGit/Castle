@@ -53,21 +53,27 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	
 	public:	
 	CrossASTGatherer(
-		json& markerFormat, json& findings,
-		ASTContext *oracleAST, ASTContext *decomAST, 
+		json& markerFormat, 
+		json& findings,
+		ASTContext *oracleAST, 
+		ASTContext *decomAST, 
 		bool& nameEncodedMarkers
 	): 
-	markerFormat(markerFormat),	findings(findings),
-	oracleAST(oracleAST), decomAST(decomAST), 
+	markerFormat(markerFormat),	
+	findings(findings),
+	oracleAST(oracleAST), 
+	decomAST(decomAST), 
 	nameEncodedMarkers(nameEncodedMarkers),
 	
-	oracleSM(&oracleAST->getSourceManager()), decomSM(&decomAST->getSourceManager())
+	oracleSM(&oracleAST->getSourceManager()), 
+	decomSM(&decomAST->getSourceManager())
 	{
 		magestring = markerFormat["name"].get<string>();;
 	}
 	
 	CrossASTGatherer(
-		json& markerFormat, json& findings, 
+		json& markerFormat, 
+		json& findings, 
 		bool& nameEncodedMarkers
 	): markerFormat(markerFormat), findings(findings), nameEncodedMarkers(nameEncodedMarkers)
 	{magestring = markerFormat["name"].get<string>();}
@@ -109,7 +115,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		}
 	}
 	
-	// Sommige DC dingen nu dubbel
 	int getMageIndex(CallExpr* markerCE){
 		auto DC = markerCE->getDirectCallee();
 		if (!DC) return -1;
@@ -130,6 +135,12 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return -1;
 	}
 	
+	/**
+	 * 	TODO: Push to findings[mageIndexString][selectedContextString] instead of single assignment, this accounts for multiple occurences.
+	 * 		Rework: 
+	 *			findings[mageIndexString][selectedContextString] becomes an array instead of an object.
+	 *			Evaluation methodology changes to account for this.
+	 */
 	void indexProcessor(CallExpr *CE){
 		if (selectedSM->isInMainFile(CE->getBeginLoc())){				
 			int mageIndex = getMageIndex(CE);
@@ -144,16 +155,29 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			auto CEMarkee = getNextSiblingFromList(siblings, CESibIndex);
 			auto mageIndexString = std::to_string(mageIndex);
 			if(CEMarkee){
-				findings[mageIndexString][selectedContextString]["ASTNode"] = CEMarkee->getNodeKind().asStringRef();
-				findings[mageIndexString][selectedContextString]["Source"] = 
+				// rework starts here
+				json markerFinding = json::object();
+				markerFinding["ASTNode"] = CEMarkee->getNodeKind().asStringRef();
+				markerFinding["Source"] = 
 					llvm::sys::path::filename(selectedSM->getFilename(CE->getBeginLoc())).str() 	+ " (" + 
 					std::to_string(selectedSM->getSpellingLineNumber(CE->getBeginLoc()))					+ ", "+
 				 	std::to_string(selectedSM->getSpellingColumnNumber(CE->getBeginLoc()))				+ ") " ;
-				findings[mageIndexString][selectedContextString]["children"] = json::array();
-				findings[mageIndexString][selectedContextString]["properties"] = json::object();
-				evalSRDeciderP(const_cast<Stmt*>(CEMarkee->get<Stmt>()), &(findings[mageIndexString][selectedContextString]));
+				markerFinding["children"] = json::array();
+				markerFinding["properties"] = json::object();
+				findings[mageIndexString][selectedContextString].push_back(markerFinding);
+				evalSRDeciderP(const_cast<Stmt*>(CEMarkee->get<Stmt>()), &(markerFinding));
+
+//				findings[mageIndexString][selectedContextString]["ASTNode"] = CEMarkee->getNodeKind().asStringRef();
+//				findings[mageIndexString][selectedContextString]["Source"] = 
+//					llvm::sys::path::filename(selectedSM->getFilename(CE->getBeginLoc())).str() 	+ " (" + 
+//					std::to_string(selectedSM->getSpellingLineNumber(CE->getBeginLoc()))					+ ", "+
+//				 	std::to_string(selectedSM->getSpellingColumnNumber(CE->getBeginLoc()))				+ ") " ;
+//				findings[mageIndexString][selectedContextString]["children"] = json::array();
+//				findings[mageIndexString][selectedContextString]["properties"] = json::object();
+//				
+//				evalSRDeciderP(const_cast<Stmt*>(CEMarkee->get<Stmt>()), &(findings[mageIndexString][selectedContextString]));
 			} else {
-				// TODO: report to dev
+				// TODO: report to dev if not already accounted for
 			}
 		}
 	}

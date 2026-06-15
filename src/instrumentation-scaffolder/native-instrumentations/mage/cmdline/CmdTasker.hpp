@@ -13,7 +13,7 @@ using namespace std;
 
 class CmdTasker{
 	private:
-	filesystem::path inputDir, outputDir, mrkrFormatsPath;
+	filesystem::path inputPath, outputPath, mrkrFormatsPath;
 	bool onCopy = false, nameEncodedMarkers = false, clangFormatMode = false;
 	set<string> excludeFilesSet;
 	set<string> excludeDirsSet;
@@ -48,10 +48,10 @@ class CmdTasker{
 	
 	void setupFileQueue(){
 		cout << "Setup File Queue Start. \n";
-		if(filesystem::is_regular_file(inputDir)){
-			pathQueue.push_back(inputDir);
-		} else if(filesystem::is_directory(inputDir)){
-			for (const auto& entry : filesystem::recursive_directory_iterator(inputDir)) {
+		if(filesystem::is_regular_file(inputPath)){
+			pathQueue.push_back(inputPath);
+		} else if(filesystem::is_directory(inputPath)){
+			for (const auto& entry : filesystem::recursive_directory_iterator(inputPath)) {
 				for(auto exclDir: excludeDirsSet){
 					if(is_subpath(exclDir, entry.path())){
 						continue;
@@ -84,13 +84,13 @@ class CmdTasker{
 	
 	void processSingle(){
 		cout 	<< "Process Single. \n";				
-		preprocessQueueItem(inputDir);
-		auto codeString = file2string(inputDir); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
+		preprocessQueueItem(inputPath);
+		auto codeString = file2string(inputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
 		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(
-			inputDir, inputDir, outputDir, outputDir, markerFormatCfg, 
+			inputPath, inputDir, outputPath, outputDir, markerFormatCfg, 
 			idCounter, nameEncodedMarkers, clangFormatMode
 		);
-		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputDir.string());
+		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputPath.string());
 	}
 	
 	void processQueue(){
@@ -105,7 +105,7 @@ class CmdTasker{
 			auto codeString = file2string(path2process);
 	
 			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(
-				path2process, inputDir, outputDir, outputDir,markerFormatCfg, 
+				path2process, inputDir, outputPath, outputDir,markerFormatCfg, 
 				idCounter, nameEncodedMarkers, clangFormatMode
 			);
 			clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, path2process.string());
@@ -147,7 +147,8 @@ class CmdTasker{
 	
 	public:
 	CmdTasker(
-		string inputPath, string outputPath, 
+		string inputPath, 
+		string outputPath, 
 		string mrkrFormatsPath, 
 		bool onCopy, 
 		bool nameEncodedMarkers, 
@@ -155,7 +156,8 @@ class CmdTasker{
 		set<string> exclFilesSet,
 		set<string> excludeDirsSet
 	): 
-		inputDir(inputPath), outputDir(outputPath), 
+		inputPath(inputPath), 
+		outputPath(outputPath), 
 		mrkrFormatsPath(mrkrFormatsPath), 
 		onCopy(onCopy), 
 		nameEncodedMarkers(nameEncodedMarkers), 
@@ -177,19 +179,19 @@ class CmdTasker{
 	 */
 	bool preparePaths(){
 		cout << "Preparing paths. \n";
-		if(onCopy && (outputDir != inputDir)){
+		if(onCopy && (outputPath  != inputPath)){
 			cout << "Performing onCopy procedure. \n";
-			cout << "inputPath: " << inputDir << "\n";
-			cout << "outputPath: " << outputDir << "\n";
+			cout << "inputPath: " << inputPath << "\n";
+			cout << "outputPath: " << outputPath << "\n";
 			filesystem::remove_all(outputDir);
 			filesystem::copy(inputDir, outputDir, filesystem::copy_options::recursive);
 		}	
-		if(filesystem::is_regular_file(inputDir)){
-			inputDir = inputDir.has_parent_path() ? inputDir.parent_path() : ".";
-			outputDir = outputDir.has_parent_path() ? outputDir.parent_path() : ".";
+		if(filesystem::is_regular_file(inputPath)){
+			inputDir = inputPath.has_parent_path() ? inputPath.parent_path() : ".";
+			outputDir = outputPath.has_parent_path() ? outputPath.parent_path() : ".";
 		} else if(filesystem::is_directory(inputDir)){
-			inputDir = inputDir;
-			outputDir = outputDir;
+			inputDir = inputPath;
+			outputDir = outputPath;
 		} else {
 			cout << "Unknown pathtype \n";
 			return false;
@@ -199,7 +201,7 @@ class CmdTasker{
 	
 	void insertInstrumentationEnhancement(){
 		if(!preparePaths()){return;	}
-		if(filesystem::is_regular_file(inputDir)){
+		if(filesystem::is_regular_file(inputPath)){
 			processSingle();
 		} else {
 			setupFileQueue();
@@ -211,7 +213,7 @@ class CmdTasker{
 	void removeInstrumentationEnhancement(){
 		// create dependency files
 		// if a single file is given we just cleanse the file
-		if(filesystem::is_regular_file(inputDir)){
+		if(filesystem::is_regular_file(inputPath)){
 //			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerRemover>(inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
 		} else {
 //			for (const auto& entry : filesystem::recursive_directory_iterator(inputPath)) {

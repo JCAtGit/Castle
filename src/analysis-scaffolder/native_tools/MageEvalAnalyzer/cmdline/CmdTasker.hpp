@@ -19,7 +19,7 @@ class CmdTasker{
 		filesystem::path inputDir;
 		filesystem::path outputDir;
 		int processMode, analysisMode;
-		string findingsFolder = "findings", evalFolder = "eval", devFolder = "dev";
+		string findingsFolder = "findings/", evalFolder = "eval/", devFolder = "dev/";
 		
 	public:
 	CmdTasker(
@@ -34,17 +34,17 @@ class CmdTasker{
 		devFolder 		= inputDir.string() + devFolder;
 	}
 	
-	json loadJSON(filesystem::path jsonFilePath){
+	void loadJSON(filesystem::path jsonFilePath, json& jsonRef){
 		ifstream jsonFile(jsonFilePath);
 		if (!jsonFile.is_open()) {
 		    	cerr << "Error: Could not open required marker formats file, see the source json folder for details." << endl;
-		   		return {};
+		   		return;
 		}
 	   	try {
-			return json::parse(jsonFile);
+			jsonRef = json::parse(jsonFile);
 	   	} catch (const json::parse_error& e) {
 	    	cerr << "MageEvalAnalyzer parse error: " << e.what() << endl;
-	    	return {};
+	    	return;
 	  	}
 	}
 	
@@ -62,13 +62,15 @@ class CmdTasker{
 		
 		json currentJSON;
 		for(auto entry :filesystem::recursive_directory_iterator(findingsFolder)){
+			loadJSON(entry, currentJSON);
 			
 		}
 		for(auto entry :filesystem::recursive_directory_iterator(evalFolder)){
+			loadJSON(entry, currentJSON);
 			
 		}
 		for(auto entry :filesystem::recursive_directory_iterator(devFolder)){
-					
+			loadJSON(entry, currentJSON);
 		}
 	}
 	
