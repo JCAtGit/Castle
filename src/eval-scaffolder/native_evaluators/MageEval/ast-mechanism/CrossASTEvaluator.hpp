@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
@@ -44,8 +45,8 @@ class CrossASTEvaluator{
 		}
 		for(auto [markerID, finding] : findings.items()){
 			// TODO: Create dummy fail object, to punish the absence of decom instances.
-			if(finding.contains("oracle") && finding.contains("decom")){ 
-				evalTraverse(markerID, finding["oracle"], finding["decom"]);
+			if(finding.contains("oracle") && finding.contains("decom")){
+				evalComparison(markerID, finding["oracle"][0], finding["decom"]);
 			} else {
 				dev_report["incomplete"].push_back(markerID);
 			}
@@ -67,7 +68,7 @@ class CrossASTEvaluator{
 	 *	TODO: what if multiple occurences appear of some marker? Push to array instead?
 	 *		Also see the gatherer indexProcessor, if it has been fixed.
 	 */
-	void evalTraverse(const string &markerID, json &findingsOracle, json &findingsDecom){
+	void evalComparison(const string &markerID, json &findingsOracle, json &findingsDecom){
 		auto it = fnSelector.find(findingsOracle["ASTNode"].get<string>());
 		for(auto d_finding : findingsDecom){
 			json markerFindingsResult = json::object();
@@ -76,7 +77,7 @@ class CrossASTEvaluator{
 	        } else {
 				// Use general eval, and report/record for devs
 				dev_report["generic_eval"].push_back(markerID);
-				processStmtGeneral(markerID, findingsOracle, findingsDecom, markerFindingsResult);
+				processStmtGeneral(markerID, findingsOracle, d_finding, markerFindingsResult);
 			}
 			findings_eval[markerID].push_back(markerFindingsResult);
 		}
@@ -122,19 +123,18 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_side_effects"] = (findingsOracle["properties"]["has_side_effects"] == findingsDecom["properties"]["has_side_effects"]);
 			markerFindingsResult["parity_has_direct_callee"] = (findingsOracle["properties"]["has_direct_callee"] == findingsDecom["properties"]["has_direct_callee"]);
 			
-			// TODO: rework
-			findings_eval[markerID] = markerFindingsResult;
-			return false;
+		} else {
+			// TODO, direct callee is niet vanzelfsprekend maar args kunnen soms nog afgeleid worden
+			markerFindingsResult["name_preserved"] = false;
+			markerFindingsResult["parity_params_count"] = false;
+			markerFindingsResult["parity_param_types"] = false;
+			markerFindingsResult["parity_args_count"] = false;
+			markerFindingsResult["parity_arg_types"] = false;
+			markerFindingsResult["parity_variadicity"] = false;
+			markerFindingsResult["parity_side_effects"] = false;
+			markerFindingsResult["parity_has_direct_callee"] = false;
 		}
-		// TODO, direct callee is niet vanzelfsprekend maar args kunnen nog afgeleid worden
-		markerFindingsResult["name_preserved"] = false;
-		markerFindingsResult["parity_params_count"] = false;
-		markerFindingsResult["parity_param_types"] = false;
-		markerFindingsResult["parity_args_count"] = false;
-		markerFindingsResult["parity_arg_types"] = false;
-		markerFindingsResult["parity_variadicity"] = false;
-		markerFindingsResult["parity_side_effects"] = false;
-		markerFindingsResult["parity_has_direct_callee"] = false;
+		
 		return false;
 	}
 	
@@ -153,11 +153,7 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_single_decl"] = false;
 			markerFindingsResult["parity_init_types"] = false;
 		}
-		
-		// TODO: rework
-		findings_eval[markerID] = markerFindingsResult;
 		return false;
-
 	}
 
 	bool processIfStmt(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
@@ -170,9 +166,6 @@ class CrossASTEvaluator{
 		} else {
 			markerFindingsResult["parity_cond_stmt_class"] = false;
 		}
-		
-		// TODO: rework
-		findings_eval[markerID] = markerFindingsResult;
 		return false;
 
 	}
@@ -255,9 +248,6 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_incr_stmt_class"] = false;
 			markerFindingsResult["parity_incr_expr_types"] = false;
 		}
-		
-		// TODO: rework
-		findings_eval[markerID] = markerFindingsResult;
 		return false;
 
 	}
@@ -303,9 +293,6 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_cond_stmt_class"] = false;
 			markerFindingsResult["parity_cond_expr_types"] = false;
 		}
-
-		// TODO: rework
-		findings_eval[markerID] = markerFindingsResult;
 		return false;
 	}
 	
@@ -315,6 +302,11 @@ class CrossASTEvaluator{
 
 		if(markerFindingsResult["recovered_construct"]){
 			// TODO: implement metrics to measure		
+			markerFindingsResult["parity_has_cond_expr"] = findingsOracle["properties"]["has_cond_expr"] == findingsDecom["properties"]["has_cond_expr"];
+			markerFindingsResult["parity_cond_stmt_class"] = findingsOracle["properties"]["cond_stmt_class"] == findingsDecom["properties"]["cond_stmt_class"];
+		} else {
+			markerFindingsResult["parity_has_cond_expr"] = false;
+			markerFindingsResult["parity_cond_stmt_class"] = false;
 		}
 
 		return false;
@@ -438,7 +430,6 @@ class CrossASTEvaluator{
 		if(markerFindingsResult["recovered_construct"]){
 					
 		}
-		
 		return false;
 	}
 };

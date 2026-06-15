@@ -209,23 +209,5 @@ class CmdTasker{
 		}
 		createMarkerDefinitionHeaderFile();
 	}
-	
-	void removeInstrumentationEnhancement(){
-		// create dependency files
-		// if a single file is given we just cleanse the file
-		if(filesystem::is_regular_file(inputPath)){
-//			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeMarkerRemover>(inputPath, inputDir, outputPath, outputDir,markerFormatCfg);
-		} else {
-//			for (const auto& entry : filesystem::recursive_directory_iterator(inputPath)) {
-//				if (entry.path().extension() == ".c") {
-//					cout << "Enqueued: " << entry.path() << endl;
-//					pathQueue.push_back(entry.path());
-//				} else if(entry.path().filename() == markerFormatCfg["definitionFileName"].get<string>()){
-//					filesystem::remove(entry.path());
-//				}
-//		    }
-		}
-		// if a dir is given we try to cleanse the dir recursively and remove any marker headers files we come across
-	}
 };
 
