@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 		->required();
 
 	int processMode = 0;
-	app.add_option("-o,--output", processMode, "set, element-all, element-it")
+	app.add_option("-p, --processMode", processMode, "0 = set, 1 = element-all, 2 = element-it")
 		->required();
 	
 	/**

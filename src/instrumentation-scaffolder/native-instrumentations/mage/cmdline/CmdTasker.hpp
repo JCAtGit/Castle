@@ -21,7 +21,7 @@ class CmdTasker{
 	int idCounter = 0;
 	json markerFormatCfg;
 	filesystem::path inputDir;
-	filesystem::path outputPath;
+	filesystem::path outputDir;
 	std::vector<filesystem::path> pathQueue;
 	std::vector<std::string> toolArgs = {
 		"-xc", 							// Treat the input as C code
@@ -87,7 +87,7 @@ class CmdTasker{
 		preprocessQueueItem(inputPath);
 		auto codeString = file2string(inputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
 		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(
-			inputPath, inputDir, outputPath, outputPath, markerFormatCfg, 
+			inputPath, inputDir, outputPath, outputDir, markerFormatCfg, 
 			idCounter, nameEncodedMarkers, clangFormatMode
 		);
 		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputPath.string());
@@ -99,13 +99,13 @@ class CmdTasker{
 		
 		for(const auto& path2process : pathQueue){
 			cout << "Processing: " << path2process << "\n";
-			filesystem::path outPath = outputPath / rel_outputPath(inputDir, path2process);
+			filesystem::path outPath = outputDir/ rel_outputPath(inputDir, path2process);
 			if(outPath.empty()){outPath = inputDir;}
 			preprocessQueueItem(path2process); //Doe dit voordat AST unit ptr is aangemaakt. Prepare file for marking, this includes fixing dangling statements
 			auto codeString = file2string(path2process);
 	
 			unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(
-				path2process, inputDir, outputPath, outputPath,markerFormatCfg, 
+				path2process, inputDir, outputPath, outputDir,markerFormatCfg, 
 				idCounter, nameEncodedMarkers, clangFormatMode
 			);
 			clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, path2process.string());
@@ -134,7 +134,7 @@ class CmdTasker{
 				"\n"; 
 		}
 		
-		string outFile = (outputPath / (markerFormatCfg["definitionFileName"].get<string>() + ".h")).string(); // Open the file; if it exists, it will be overwritten.
+		string outFile = (outputDir/ (markerFormatCfg["definitionFileName"].get<string>() + ".h")).string(); // Open the file; if it exists, it will be overwritten.
 
 	    error_code EC;
 	    llvm::raw_fd_ostream out(outFile, EC, llvm::sys::fs::OF_None);
@@ -183,14 +183,14 @@ class CmdTasker{
 			cout << "inputPath: " << inputPath << "\n";
 			cout << "outputPath: " << outputPath << "\n";
 			filesystem::remove_all(outputPath);
-			filesystem::copy(inputDir, outputPath, filesystem::copy_options::recursive);
+			filesystem::copy(inputPath, outputPath, filesystem::copy_options::recursive);
 		}	
 		if(filesystem::is_regular_file(inputPath)){
 			inputDir = inputPath.has_parent_path() ? inputPath.parent_path() : ".";
-			outputPath = outputPath.has_parent_path() ? outputPath.parent_path() : ".";
-		} else if(filesystem::is_directory(inputDir)){
-			inputDir = inputPath;
-			outputPath = outputPath;
+			outputDir = outputPath.has_parent_path() ? outputPath.parent_path() : ".";
+		} else if(filesystem::is_directory(inputPath)){
+			inputDir= inputPath;
+			outputDir= outputPath;
 		} else {
 			cout << "Unknown pathtype \n";
 			return false;
@@ -202,9 +202,12 @@ class CmdTasker{
 		if(!preparePaths()){return;	}
 		if(filesystem::is_regular_file(inputPath)){
 			processSingle();
-		} else {
+		} else if(filesystem::is_directory(inputPath)){
 			setupFileQueue();
 			processQueue();
+		} else {
+			cout << "Path doesnt exist" << "\n";
+			return;
 		}
 		createMarkerDefinitionHeaderFile();
 	}
