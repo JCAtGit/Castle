@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <unordered_map>
 
 #include "clang/AST/ASTContext.h"
@@ -21,6 +22,7 @@ class CmdTasker{
 		filesystem::path outputPath;
 
 		int processMode, analysisMode;
+		int it_begin, it_end;
 		string findingsFolder = "findings/", evalFolder = "eval/", devFolder = "dev/";
 		
 	public:
@@ -28,8 +30,10 @@ class CmdTasker{
 		filesystem::path inputPath, 
 		filesystem::path outputPath,
 		int processMode, 
-		int analysisMode
-	) : inputPath(inputPath), outputPath(outputPath), processMode(processMode), analysisMode(analysisMode)
+		int analysisMode,
+		int it_begin, 
+		int it_end
+	) : inputPath(inputPath), outputPath(outputPath), processMode(processMode), analysisMode(analysisMode), it_begin(it_begin), it_end(it_end)
 	{
 		findingsFolder 	= inputPath.string() + findingsFolder;
 		evalFolder 		= inputPath.string() + evalFolder;
@@ -44,6 +48,7 @@ class CmdTasker{
 		}
 	   	try {
 			jsonRef = json::parse(jsonFile);
+//			cout << jsonRef.dump(2) << "\n";
 	   	} catch (const json::parse_error& e) {
 	    	cerr << "MageEvalAnalyzer parse error: " << e.what() << endl;
 	    	return;
@@ -62,14 +67,19 @@ class CmdTasker{
 	void startProcesses(){
 		cout << "Analyzing inputPath: " << inputPath << "\n";
 		
-		json currentJSON, summaryJSON;
+		json currentJSON, summaryJSON = json::object();
 		MageEvalAnalyst MEA;
+		filesystem::create_directories(outputPath.string());
+		filesystem::create_directories(outputPath.string());
+		filesystem::create_directories(outputPath.string());
 
 		switch (processMode) {
 			default:
 				break;
 			case 0:{
 				for(auto entry :filesystem::recursive_directory_iterator(findingsFolder)){
+					cout << "chk1:" << entry.path().string() << "\n";
+
 					loadJSON(entry, currentJSON); // use the names in this dir to fetch related data in corelated directories
 					MEA.statisticizeFindings(currentJSON, summaryJSON);
 					
@@ -79,7 +89,7 @@ class CmdTasker{
 					loadJSON(devFolder + entry.path().filename().string(), currentJSON);
 					MEA.statisticizeDevReports(currentJSON, summaryJSON);
 				}
-				saveJsonToFile(outputPath.string() + inputPath.filename().string() ,summaryJSON);
+				saveJsonToFile(outputPath.string() + "summary.json" ,summaryJSON);
 				break;
 			}
 			case 1:{
@@ -93,21 +103,27 @@ class CmdTasker{
 					loadJSON(devFolder + entry.path().filename().string(), currentJSON);
 					MEA.statisticizeDevReports(currentJSON, summaryJSON);
 					saveJsonToFile(outputPath.string() + entry.path().filename().string() ,summaryJSON);
+					summaryJSON.clear();
 				}
+				break;
 			}
 			case 2:{
-				// TODO:
-				for(auto entry :filesystem::recursive_directory_iterator(findingsFolder)){
-					loadJSON(entry, currentJSON); // use the names in this dir to fetch related data in corelated directories
+				// TODO: is a bit hardcoded, but meh
+				string filename;
+				for(;it_begin<it_end;it_begin++){
+					filename = to_string(it_begin )+ ".c.json";
+					loadJSON(findingsFolder + filename, currentJSON); // use the names in this dir to fetch related data in corelated directories
 					MEA.statisticizeFindings(currentJSON, summaryJSON);
 					
-					loadJSON(evalFolder + entry.path().filename().string(), currentJSON);
+					loadJSON(evalFolder + filename, currentJSON);
 					MEA.statisticizeEvals(currentJSON, summaryJSON);
 
-					loadJSON(devFolder + entry.path().filename().string(), currentJSON);
+					loadJSON(devFolder + filename, currentJSON);
 					MEA.statisticizeDevReports(currentJSON, summaryJSON);
-					saveJsonToFile(outputPath.string() + entry.path().filename().string() ,summaryJSON);
+					saveJsonToFile(outputPath.string() + filename ,summaryJSON);
+					summaryJSON.clear();
 				}
+				break;
 			}
 		}
 		
