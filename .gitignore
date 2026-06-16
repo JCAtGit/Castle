@@ -16,3 +16,5 @@ cmake_install.cmake
 compile_commands.json
 CMakeLists.txt
 .cache/
+
+test-examples/test-result/

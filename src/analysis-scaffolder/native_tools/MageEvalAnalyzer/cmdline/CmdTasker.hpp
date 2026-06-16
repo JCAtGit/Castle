@@ -78,14 +78,15 @@ class CmdTasker{
 				break;
 			case 0:{
 				for(auto entry :filesystem::recursive_directory_iterator(findingsFolder)){
-					cout << "chk1:" << entry.path().string() << "\n";
-
+//					cout << "chk0:" << entry.path().string() << "\n";
 					loadJSON(entry, currentJSON); // use the names in this dir to fetch related data in corelated directories
 					MEA.statisticizeFindings(currentJSON, summaryJSON);
 					
+//					cout << "chk1:" << evalFolder + entry.path().filename().string() << "\n";
 					loadJSON(evalFolder + entry.path().filename().string(), currentJSON);
 					MEA.statisticizeEvals(currentJSON, summaryJSON);
 
+//					cout << "chk2:" << devFolder + entry.path().filename().string() << "\n";
 					loadJSON(devFolder + entry.path().filename().string(), currentJSON);
 					MEA.statisticizeDevReports(currentJSON, summaryJSON);
 				}

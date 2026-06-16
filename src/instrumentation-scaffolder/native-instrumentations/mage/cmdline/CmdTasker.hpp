@@ -120,7 +120,8 @@ class CmdTasker{
 		cout << "Start instrumentation header file creation." << "\n";
 		string content = 
 			markerFormatCfg["pragma_once"].get<string>() + 
-			markerFormatCfg["noOptPragma"].get<string>();
+			markerFormatCfg["noOptPragma"].get<string>() + 
+			"\n";
 		
 		if(nameEncodedMarkers){
 			// ...
@@ -128,7 +129,7 @@ class CmdTasker{
 			content += 
 				markerFormatCfg["noOptAttributes"].get<string>()	+ " " +
 				markerFormatCfg["functionType"].get<string>() 		+ " " +
-				markerFormatCfg["name"].get<string>() 				+ " " +
+				markerFormatCfg["name"].get<string>() 				+
 				markerFormatCfg["paramSignature"].get<string>()		+ "{" +
 				markerFormatCfg["definition"].get<string>()			+ "};"+
 				"\n"; 

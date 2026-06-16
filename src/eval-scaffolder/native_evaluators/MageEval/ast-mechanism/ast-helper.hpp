@@ -42,37 +42,6 @@ optional<DynTypedNode> getPrevSiblingFromList(
     return std::nullopt;
 }
 
-// Search forward from index i for a CallExpr calling the same function
-optional<DynTypedNode> findNextSiblingCall(const llvm::SmallVectorImpl<DynTypedNode> &children,
-                                          size_t startIdx,
-                                          const FunctionDecl *targetCallee) {
-    for (size_t i = startIdx + 1; i < children.size(); ++i) {
-        if (const CallExpr *candidate = children[i].get<CallExpr>()) {
-            if (const FunctionDecl *callee = candidate->getDirectCallee()) {
-                if (callee == targetCallee)
-                    return children[i];
-            }
-        }
-    }
-    return std::nullopt;
-}
-
-// Similarly for previous
-optional<DynTypedNode> findPrevSiblingCall(const llvm::SmallVectorImpl<DynTypedNode> &children,
-                                          size_t startIdx,
-                                          const FunctionDecl *targetCallee) {
-    for (size_t i = startIdx; i > 0; --i) {
-        size_t prevIdx = i - 1;
-        if (const CallExpr *candidate = children[prevIdx].get<CallExpr>()) {
-            if (const FunctionDecl *callee = candidate->getDirectCallee()) {
-                if (callee == targetCallee)
-                    return children[prevIdx];
-            }
-        }
-    }
-    return std::nullopt;
-}
-
 //void recordCTypeInfo(const Type& T, json& storage){
 //	json paramTypeInfo;
 //	paramTypeInfo["type"] = T.getCanonicalType().getAsString();
@@ -95,8 +64,6 @@ void recordQTypeInfo(const QualType& T, json& storage){
 		paramTypeInfo
 	);	
 }
-
-
 
 // TODO:
 //bool hasFallthroughDepth(Stmt * S, bool& conditional, json& switchCases, int depth = -1){
