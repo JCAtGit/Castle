@@ -17,4 +17,4 @@ compile_commands.json
 CMakeLists.txt
 .cache/
 
-test-examples/test-result/
+test-examples/test-result/*

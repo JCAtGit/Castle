@@ -24,8 +24,8 @@ class CmdTasker{
 	filesystem::path outputDir;
 	std::vector<filesystem::path> pathQueue;
 	std::vector<std::string> toolArgs = {
-		"-xc", 							// Treat the input as C code
-		"-std=c17", 					// Use a specific C standard
+		"-xc", 							// Treat the input as C code, can sometimes use xc++ for enhanced recovery.
+		"-std=c17", 					// Use a specific C standard, https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3176.pdf C17 stable bugfix release.
 		"-nostdinc",					// Don't search for system headers
 		"-Wno-all",						// Suppress all warnings, W-prefix stands for warning.
 	};
@@ -85,7 +85,8 @@ class CmdTasker{
 	void processSingle(){
 		cout 	<< "Process Single. \n";				
 		preprocessQueueItem(inputPath);
-		auto codeString = file2string(inputPath); // TODO: should take outputPath instead of inputPath after clang formatting to outputPath
+		// TODO: should take outputPath instead of inputPath after clang formatting to outputPath?
+		auto codeString = file2string(inputPath); 
 		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(
 			inputPath, inputDir, outputPath, outputDir, markerFormatCfg, 
 			idCounter, nameEncodedMarkers, clangFormatMode
@@ -140,7 +141,7 @@ class CmdTasker{
 	    error_code EC;
 	    llvm::raw_fd_ostream out(outFile, EC, llvm::sys::fs::OF_None);
 	    if (EC) {llvm::errs() << "Error opening file: " << EC.message() << "\n";}
-	    out << content; // Write the string to the file and optionally flush (the destructor will close the file automatically).
+	    out << content; // Write the string to the file and optionally flush to manually push buffer contents to the file (the destructor will close the file automatically).
 	    out.flush();
 		cout << "Instrumentation header file written to: " << outFile << "\n";
 	}
