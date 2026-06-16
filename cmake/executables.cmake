@@ -1,10 +1,13 @@
-add_executable(Mage src/instrumentation-scaffolder/native-instrumentations/mage/main.cpp)
 add_executable(CodebaseScaffolder src/codebase-scaffolder/main.cpp)
 add_executable(BuildScaffolder src/build-scaffolder/main.cpp)
 add_executable(DecomScaffolder src/decom-scaffolder/main.cpp)
 add_executable(EvalScaffolder src/eval-scaffolder/main.cpp)
 add_executable(InstrumentationScaffolder src/instrumentation-scaffolder/main.cpp)
+add_executable(AnalysisScaffolder src/analysis-scaffolder/main.cpp)
+
+add_executable(Mage src/instrumentation-scaffolder/native-instrumentations/mage/main.cpp)
 add_executable(MageEval src/eval-scaffolder/native_evaluators/MageEval/main.cpp)
+add_executable(MageEvalAnalyzer src/analysis-scaffolder/native_tools/MageEvalAnalyzer/main.cpp)
 
 #add_executable(SEDiagnosticConsumer src/prototype/SEDiagnosticConsumer/main.cpp)
 #add_executable(PseudoCVisitor src/prototype/PseudoCVisitor/main.cpp)

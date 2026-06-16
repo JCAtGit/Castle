@@ -73,7 +73,8 @@ int main(int argc, char **argv) {
 	set<string> exclusiveDirsSetDirsSet(exclusiveDirs.begin(), excludeDirs.end());
 
 	CmdTasker cmdTskr(
-		inputPath, outputPath, 
+		inputPath, 
+		outputPath, 
 		mrkrFormatsPath, 
 		onCopy, 
 		nameEncodedMarker, 

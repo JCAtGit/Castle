@@ -10,28 +10,33 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
 #include "helper.hpp"
+#include "../analysis/MageEvalAnalyst.hpp"
 
 using namespace nlohmann;
 using namespace std;
 
 class CmdTasker{
 	private:		
+		filesystem::path inputPath;
 		filesystem::path inputDir;
+
+		filesystem::path outputPath;
 		filesystem::path outputDir;
+
 		int processMode, analysisMode;
 		string findingsFolder = "findings/", evalFolder = "eval/", devFolder = "dev/";
 		
 	public:
 	CmdTasker(
-		filesystem::path inputDir, 
-		filesystem::path outputDir,
+		filesystem::path inputPath, 
+		filesystem::path outputPath,
 		int processMode, 
 		int analysisMode
-	) : inputDir(inputDir), outputDir(outputDir), processMode(processMode), analysisMode(analysisMode)
+	) : inputPath(inputPath), outputPath(outputPath), processMode(processMode), analysisMode(analysisMode)
 	{
-		findingsFolder 	= inputDir.string() + findingsFolder;
-		evalFolder 		= inputDir.string() + evalFolder;
-		devFolder 		= inputDir.string() + devFolder;
+		findingsFolder 	= inputPath.string() + findingsFolder;
+		evalFolder 		= inputPath.string() + evalFolder;
+		devFolder 		= inputPath.string() + devFolder;
 	}
 	
 	void loadJSON(filesystem::path jsonFilePath, json& jsonRef){
@@ -58,19 +63,26 @@ class CmdTasker{
 	 * Of beschouwen we deze ook als een missed recovery? We kunnen een statistiek "including missed" opnemen?
 	 */
 	void startProcesses(){
-		cout << "Analyzing inputDir: " << inputDir << "\n";
+		cout << "Analyzing inputPath: " << inputPath << "\n";
 		
-		json currentJSON;
+		json currentJSON, summaryJSON;
+		MageEvalAnalyst MEA;
+		if(filesystem::is_regular_file(inputPath)){
+			
+		} else if(filesystem::is_directory(inputPath)){
+			
+		} else {
+			
+		}
 		for(auto entry :filesystem::recursive_directory_iterator(findingsFolder)){
-			loadJSON(entry, currentJSON);
+			loadJSON(entry, currentJSON); // use the names in this dir to fetch related data in corelated directories
+			MEA.statisticizeFindings(currentJSON, summaryJSON);
 			
-		}
-		for(auto entry :filesystem::recursive_directory_iterator(evalFolder)){
-			loadJSON(entry, currentJSON);
-			
-		}
-		for(auto entry :filesystem::recursive_directory_iterator(devFolder)){
-			loadJSON(entry, currentJSON);
+			loadJSON(evalFolder + entry.path().filename().string(), currentJSON);
+			MEA.statisticizeEvals(currentJSON, summaryJSON);
+
+			loadJSON(devFolder + entry.path().filename().string(), currentJSON);
+			MEA.statisticizeDevReports(currentJSON, summaryJSON);
 		}
 	}
 	
