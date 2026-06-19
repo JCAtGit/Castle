@@ -16,7 +16,7 @@ using namespace std;
 
 class CmdTasker{
 	private:		
-		filesystem::path inputPath, oracleDir, outputPath, mrkrFormatsPath;
+		filesystem::path inputDirs, oracleDir, outputPath, mrkrFormatsPath;
 		json markerFormats, findings, findings_eval, dev;
 		json selectedFormat;
 		bool &nameEncodedMarkers;
@@ -71,7 +71,7 @@ class CmdTasker{
  			}
 			
 			CAGatherer.selectMode(0);
-			for(auto entry :filesystem::recursive_directory_iterator(inputPath)){ // inputPath is nu de dir waar de decompiled c zit
+			for(auto entry :filesystem::recursive_directory_iterator(inputDirs)){ // inputPath is nu de dir waar de decompiled c zit
 				// decompilers outputten soms zonder .c extension, maar aan de andere kant krijgen we ook regelmatig troep van bijvoorbeeld retdec.
 				if(entry.path().extension() == ".c" || entry.path().extension().empty()){ 
 					fileDecomData = file2string(entry.path());
@@ -104,10 +104,10 @@ class CmdTasker{
 		
 		void processFile(){
 			cout<< "processFile" << "\n";
-			string fileDecomData = file2string(inputPath);
-			string fileOracleData = file2string(oracleDir / inputPath.filename()); // TODO: oraclePath is an dir, which must be changed
-			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputPath.filename().c_str());
-			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
+			string fileDecomData = file2string(inputDirs);
+			string fileOracleData = file2string(oracleDir / inputDirs.filename()); // TODO: oraclePath is an dir, which must be changed
+			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputDirs.filename().c_str());
+			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputDirs.filename().string());
 			
 			CrossASTGatherer CAGatherer(
 				selectedFormat,
@@ -133,9 +133,9 @@ class CmdTasker{
 			filesystem::create_directory(outputPath.parent_path().string() + "/eval/");
 			filesystem::create_directory(outputPath.parent_path().string() + "/dev/");
 
-			saveJsonToFile(outputPath.parent_path().string() + "/findings/" 	+ inputPath.filename().string() + ".json", findings);
-			saveJsonToFile(outputPath.parent_path().string() + "/eval/" 		+ inputPath.filename().string() + ".json", findings_eval);
-			saveJsonToFile(outputPath.parent_path().string() + "/dev/" 		+ inputPath.filename().string() + ".json", dev);
+			saveJsonToFile(outputPath.parent_path().string() + "/findings/" 	+ inputDirs.filename().string() + ".json", findings);
+			saveJsonToFile(outputPath.parent_path().string() + "/eval/" 		+ inputDirs.filename().string() + ".json", findings_eval);
+			saveJsonToFile(outputPath.parent_path().string() + "/dev/" 		+ inputDirs.filename().string() + ".json", dev);
 		}
 	
 	public:
@@ -146,7 +146,7 @@ class CmdTasker{
 		filesystem::path mrkrFormatsPath,
 		bool& nameEncodedMarkers
 	): 
-			inputPath(inputPath), 		// file or dir
+			inputDirs(inputPath), 		// file or dir
 			oracleDir(oracleDir), 		// when iterating over files, looks for same name in oracle path
 			outputPath(outputPath),
 			mrkrFormatsPath(mrkrFormatsPath),
@@ -167,10 +167,10 @@ class CmdTasker{
 	}
 		
 	void startProcesses(){
-		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
-		if(filesystem::is_directory(inputPath)){// TODO: if it does not exist, then it will proceed to file procession as well
+		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputDirs << ", " << oracleDir.string() + inputDirs.filename().string() << ")" << "\n";
+		if(filesystem::is_directory(inputDirs)){// TODO: if it does not exist, then it will proceed to file procession as well
 			processDir();
-		} else if (filesystem::is_regular_file(inputPath)){
+		} else if (filesystem::is_regular_file(inputDirs)){
 			processFile();
 		} else {
 			cout << "Path does not exist" << "\n";

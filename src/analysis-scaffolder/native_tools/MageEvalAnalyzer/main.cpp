@@ -1,6 +1,6 @@
 #include <CLI/CLI.hpp>
 
-#include "../MageEvalAnalyzer/cmdline/CmdTasker.hpp"
+#include "cmdline/CmdTasker.hpp"
 
 int main(int argc, char **argv) {
 	CLI::App app{"MageEvalAnalyzer"};
@@ -25,6 +25,7 @@ int main(int argc, char **argv) {
 	int it_end = 0;
 	app.add_option("--it_end", it_end, "Sets end it-counter for index-named files")
 		->needs(option_processMode);
+			
 	/**
 	 *	Separated mode for easier testing later.
 	 * 	0: 	perform every analysis

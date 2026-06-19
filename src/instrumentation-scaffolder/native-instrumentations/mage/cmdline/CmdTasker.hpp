@@ -13,7 +13,7 @@ using namespace std;
 
 class CmdTasker{
 	private:
-	filesystem::path inputPath, outputPath, mrkrFormatsPath;
+	filesystem::path inputDirs, outputPath, mrkrFormatsPath;
 	bool onCopy = false, nameEncodedMarkers = false, clangFormatMode = false;
 	set<string> excludeFilesSet;
 	set<string> excludeDirsSet;
@@ -48,10 +48,10 @@ class CmdTasker{
 	
 	void setupFileQueue(){
 		cout << "Setup File Queue Start. \n";
-		if(filesystem::is_regular_file(inputPath)){
-			pathQueue.push_back(inputPath);
-		} else if(filesystem::is_directory(inputPath)){
-			for (const auto& entry : filesystem::recursive_directory_iterator(inputPath)) {
+		if(filesystem::is_regular_file(inputDirs)){
+			pathQueue.push_back(inputDirs);
+		} else if(filesystem::is_directory(inputDirs)){
+			for (const auto& entry : filesystem::recursive_directory_iterator(inputDirs)) {
 				for(auto exclDir: excludeDirsSet){
 					if(is_subpath(exclDir, entry.path())){
 						continue;
@@ -84,14 +84,14 @@ class CmdTasker{
 	
 	void processSingle(){
 		cout 	<< "Process Single. \n";				
-		preprocessQueueItem(inputPath);
+		preprocessQueueItem(inputDirs);
 		// TODO: should take outputPath instead of inputPath after clang formatting to outputPath?
-		auto codeString = file2string(inputPath); 
+		auto codeString = file2string(inputDirs); 
 		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(
-			inputPath, inputDir, outputPath, outputDir, markerFormatCfg, 
+			inputDirs, inputDir, outputPath, outputDir, markerFormatCfg, 
 			idCounter, nameEncodedMarkers, clangFormatMode
 		);
-		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputPath.string());
+		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputDirs.string());
 	}
 	
 	void processQueue(){
@@ -157,7 +157,7 @@ class CmdTasker{
 		set<string> exclFilesSet,
 		set<string> excludeDirsSet
 	): 
-		inputPath(inputPath), 
+		inputDirs(inputPath), 
 		outputPath(outputPath), 
 		mrkrFormatsPath(mrkrFormatsPath), 
 		onCopy(onCopy), 
@@ -180,18 +180,18 @@ class CmdTasker{
 	 */
 	bool preparePaths(){
 		cout << "Preparing paths. \n";
-		if(onCopy && (outputPath  != inputPath)){
+		if(onCopy && (outputPath  != inputDirs)){
 			cout << "Performing onCopy procedure. \n";
-			cout << "inputPath: " << inputPath << "\n";
+			cout << "inputPath: " << inputDirs << "\n";
 			cout << "outputPath: " << outputPath << "\n";
 			filesystem::remove_all(outputPath);
-			filesystem::copy(inputPath, outputPath, filesystem::copy_options::recursive);
+			filesystem::copy(inputDirs, outputPath, filesystem::copy_options::recursive);
 		}	
-		if(filesystem::is_regular_file(inputPath)){
-			inputDir = inputPath.has_parent_path() ? inputPath.parent_path() : ".";
+		if(filesystem::is_regular_file(inputDirs)){
+			inputDir = inputDirs.has_parent_path() ? inputDirs.parent_path() : ".";
 			outputDir = outputPath.has_parent_path() ? outputPath.parent_path() : ".";
-		} else if(filesystem::is_directory(inputPath)){
-			inputDir= inputPath;
+		} else if(filesystem::is_directory(inputDirs)){
+			inputDir= inputDirs;
 			outputDir= outputPath;
 		} else {
 			cout << "Unknown pathtype \n";
@@ -202,9 +202,9 @@ class CmdTasker{
 	
 	void insertInstrumentationEnhancement(){
 		if(!preparePaths()){return;	}
-		if(filesystem::is_regular_file(inputPath)){
+		if(filesystem::is_regular_file(inputDirs)){
 			processSingle();
-		} else if(filesystem::is_directory(inputPath)){
+		} else if(filesystem::is_directory(inputDirs)){
 			setupFileQueue();
 			processQueue();
 		} else {

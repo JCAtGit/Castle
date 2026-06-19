@@ -135,12 +135,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return -1;
 	}
 	
-	/**
-	 * 	TODO: Push to findings[mageIndexString][selectedContextString] instead of single assignment, this accounts for multiple occurences.
-	 * 		Rework: 
-	 *			findings[mageIndexString][selectedContextString] becomes an array instead of an object.
-	 *			Evaluation methodology changes to account for this.
-	 */
 	void indexProcessor(CallExpr *CE){
 		if (selectedSM->isInMainFile(CE->getBeginLoc())){				
 			int mageIndex = getMageIndex(CE);

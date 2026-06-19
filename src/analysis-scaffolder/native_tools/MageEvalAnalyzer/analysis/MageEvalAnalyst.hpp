@@ -1,5 +1,6 @@
 #include <boost/math/distributions/binomial.hpp>
 #include <iostream>
+#include <unordered_map>
 #include "nlohmann/json.hpp"
 
 using namespace nlohmann;
@@ -17,31 +18,39 @@ class MageEvalAnalyst{
 	 * 	TODO:
 	 *		Total general recovery
 	 *		Test with rufus and then test git
+	 *		add lost oracle markers total
+	 *		add specific processors
+	 *		calculate odds, deviation per stmt for general ASTNode recovery
 	 */
 	void statisticizeFindings(json& jsonData, json& summary){
-		for(auto [markerID, data] : jsonData.items()){
+		for(auto [markerID, finding] : jsonData.items()){
 			if(summary["metadata"]["oracleTotal"].is_null()){
 				summary["metadata"]["oracleTotal"] = 1;
 			} else {
 				summary["metadata"]["oracleTotal"] = summary["metadata"]["oracleTotal"].get<int>() + 1;
 			}
-			if(data.contains("oracle")){
-				auto &oracleData = data["oracle"][0]; // we assume this to be always present
+			
+			if(finding.contains("oracle")){
+				auto &oracleData = finding["oracle"][0]; // we cannot assume this to be always present
 				auto &nodeOracleStats = summary["constructs"][oracleData["ASTNode"].get<string>()];
 				if(nodeOracleStats["oracleTotal"].is_null()){
 					nodeOracleStats["oracleTotal"] = 1;
 				} else {
 					nodeOracleStats["oracleTotal"] = nodeOracleStats["oracleTotal"].get<int>() + 1;
 				}
-				auto &recoveredAsMarkee= summary["constructs"][oracleData["ASTNode"].get<string>()]["recoveredAsMarkee"];
-				if(data["decom"].empty()){
+				
+				statisticizeFindingSpecifics(oracleData["ASTNode"].get<string>(), finding, summary);
+				
+				auto &recoveredAsMarkee= nodeOracleStats["recoveredAsMarkee"];
+				if(finding["decom"].empty()){
 					if(nodeOracleStats["absentCorrespondingDecomMarker"].is_null()){
 						nodeOracleStats["absentCorrespondingDecomMarker"] = 1;
 					} else {
 						nodeOracleStats["absentCorrespondingDecomMarker"] = nodeOracleStats["absentCorrespondingDecomMarker"].get<int>() + 1;
 					}
 				} else {
-					for(const auto& decomData: data["decom"]){
+					for(const auto& decomData: finding["decom"]){
+						
 						if(summary["metadata"]["decomTotal"].is_null()){
 							summary["metadata"]["decomTotal"] = 1;
 						} else {
@@ -64,7 +73,7 @@ class MageEvalAnalyst{
 					}
 				}
 			} else {
-				summary["metadata"]["lostOracleMarkers"][markerID] = data["decom"].size();
+				summary["metadata"]["lostOracleMarkers"][markerID] = finding["decom"].size();
 			}
 		}
 	}
@@ -73,6 +82,12 @@ class MageEvalAnalyst{
 		for(auto [markerID, data] : jsonData.items()){
 			for(const auto& evalElement: data){
 				if(evalElement["recovered_construct"].get<bool>()){
+					if(summary["metadata"]["recoveredConstructsTotal"].is_null()){
+						summary["metadata"]["recoveredConstructsTotal"] = 1;
+					} else {
+						summary["metadata"]["recoveredConstructsTotal"] = summary["metadata"].value("recoveredConstructsTotal", 1) + 1;
+					}
+					
 					auto &crrntItem = summary["constructs"][evalElement["markee_construct"]]["recoveryOfAttr"];
 					for(auto [key, val]: evalElement.items()){
 						if (crrntItem.is_null()) {
@@ -91,5 +106,70 @@ class MageEvalAnalyst{
 
 	void statisticizeDevReports(json& jsonData, json& summary){
 		
+	}
+	
+	// Sample Data Comparison (Statistical Testing)
+	void summaryPass(json& summary){
+		// calculate p and variance for all constructs and in general
+		for(auto [construct, constructData]: summary["constructs"].items()){
+			if(constructData.contains("oracleTotal")){
+				if(constructData.contains("recoveryOfAttr")){
+					constructData["P(X)"] = constructData["recoveryOfAttr"]["recovered_construct"].get<double>() / constructData["oracleTotal"].get<double>();
+					constructData["VAR(X)"] = constructData["P(X)"].get<double>() * (1 - constructData["P(X)"].get<double>());
+				} else {
+					constructData["P(X)"] = 0;
+					constructData["VAR(X)"] = 0;
+				}
+			} else {
+				constructData["P(X)"] = 0;
+				constructData["VAR(X)"] = 0;
+			}
+			
+		}
+	}
+	
+	using FindingsAnalysisFnPtr = void(MageEvalAnalyst::*)(json &, json &);
+	unordered_map<string, FindingsAnalysisFnPtr> fnSelector = {
+//		{"CallExpr", 		&MageEvalAnalyst::statisticizeCallExpr},
+		{"DeclStmt", 		&MageEvalAnalyst::statisticizeDeclStmt},
+//		{"IfStmt", 			&MageEvalAnalyst::statisticizeIfStmt},
+//		{"ForStmt", 		&MageEvalAnalyst::statisticizeForStmt},
+//		{"WhileStmt", 		&MageEvalAnalyst::statisticizeWhileStmt},
+//		{"DoStmt", 			&MageEvalAnalyst::statisticizeDoStmt},
+//		{"BinaryOperator", 	&MageEvalAnalyst::statisticizeBinaryOperator},
+//		{"SwitchStmt", 		&MageEvalAnalyst::statisticizeSwitchStmt}
+	};
+	
+	void statisticizeFindingSpecifics(string ASTNode, json& finding, json& summary){
+		auto it = fnSelector.find(ASTNode);
+		json markerFindingsResult = json::object();
+	   	if (it != fnSelector.end()) {
+			(this->*(it->second))(finding, summary);
+        } else {
+			// Use general eval, and report/record for devs
+			statisticizeStmtGeneral(finding, summary);
+		}
+	}
+	
+	/**
+	 * 	Requires oracle presence
+	 */
+	void statisticizeDeclStmt(json& finding, json& summary){
+		// record declstmt types frequency
+		auto &oracleData = finding["oracle"][0];
+		auto &nodeOracleStats = summary["constructs"][oracleData["ASTNode"].get<string>()];
+		
+		auto &typeStats = nodeOracleStats["oracleMarkedTypes"];
+		for(auto typeInfo : oracleData["properties"]["init_types"]){
+			if(typeStats[typeInfo["type"]].is_null()){
+				typeStats[typeInfo["type"]] = 1;
+			} else {
+				typeStats[typeInfo["type"]] = typeStats.value(typeInfo["type"], 1) + 1;
+			}
+		}		
+	}
+	
+	void statisticizeStmtGeneral(json& finding, json& summary){
+			
 	}
 };

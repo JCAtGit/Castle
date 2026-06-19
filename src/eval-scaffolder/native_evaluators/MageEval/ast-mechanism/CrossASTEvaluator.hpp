@@ -9,7 +9,12 @@
 using namespace nlohmann;
 using namespace std;
 
-// assumes oracle to be free of major errors and to be compilable.
+/**
+ *	Assumes oracle to be free of major errors and to be compilable.
+ * 	TODO:
+ *		Expand to measuring decls using "decl markers"? Consequently symantically refactor current "general markers" to "stmt markers"
+ */
+
 class CrossASTEvaluator{
 	public:
 	CrossASTEvaluator(
@@ -26,14 +31,14 @@ class CrossASTEvaluator{
 	
 	using EvalFnPtr = bool(CrossASTEvaluator::*)(const string &, json &, json &, json &);
 	unordered_map<string, EvalFnPtr> fnSelector = {
-		{"CallExpr", &CrossASTEvaluator::processCallExpr},
-		{"DeclStmt", &CrossASTEvaluator::processDeclStmt},
-		{"IfStmt", &CrossASTEvaluator::processIfStmt},
-		{"ForStmt", &CrossASTEvaluator::processForStmt},
-		{"WhileStmt", &CrossASTEvaluator::processWhileStmt},
-		{"DoStmt", &CrossASTEvaluator::processDoStmt},
-		{"BinaryOperator", &CrossASTEvaluator::processBinaryOperator},
-		{"SwitchStmt", &CrossASTEvaluator::processSwitchStmt}
+		{"CallExpr", 		&CrossASTEvaluator::processCallExpr},
+		{"DeclStmt", 		&CrossASTEvaluator::processDeclStmt},
+		{"IfStmt", 			&CrossASTEvaluator::processIfStmt},
+		{"ForStmt", 		&CrossASTEvaluator::processForStmt},
+		{"WhileStmt", 		&CrossASTEvaluator::processWhileStmt},
+		{"DoStmt", 			&CrossASTEvaluator::processDoStmt},
+		{"BinaryOperator", 	&CrossASTEvaluator::processBinaryOperator},
+		{"SwitchStmt", 		&CrossASTEvaluator::processSwitchStmt}
 	};
 	
 	void startEval(){
@@ -46,7 +51,7 @@ class CrossASTEvaluator{
 		for(auto [markerID, finding] : findings.items()){
 			// TODO: Create dummy fail object, to punish the absence of decom instances in evaluations?
 			if(finding.contains("oracle") && finding.contains("decom")){
-				evalComparison(markerID, finding["oracle"][0], finding["decom"]);
+				findingsComparison(markerID, finding["oracle"][0], finding["decom"]);
 			} else {
 				dev_report["incomplete"].push_back(markerID);
 			}
@@ -68,7 +73,7 @@ class CrossASTEvaluator{
 	 *	TODO: what if multiple occurences appear of some marker? Push to array instead?
 	 *		Also see the gatherer indexProcessor, if it has been fixed.
 	 */
-	void evalComparison(const string &markerID, json &findingsOracle, json &findingsDecom){
+	void findingsComparison(const string &markerID, json &findingsOracle, json &findingsDecom){
 		auto it = fnSelector.find(findingsOracle["ASTNode"].get<string>());
 		for(auto d_finding : findingsDecom){
 			json markerFindingsResult = json::object();

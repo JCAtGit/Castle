@@ -18,11 +18,12 @@ using namespace std;
 
 class CmdTasker{
 	private:		
-		filesystem::path inputPath;
+		filesystem::path inputDirs;
 		filesystem::path outputPath;
 
 		int processMode, analysisMode;
 		int it_begin, it_end;
+		
 		string findingsFolder = "findings/", evalFolder = "eval/", devFolder = "dev/";
 		
 	public:
@@ -33,7 +34,13 @@ class CmdTasker{
 		int analysisMode,
 		int it_begin, 
 		int it_end
-	) : inputPath(inputPath), outputPath(outputPath), processMode(processMode), analysisMode(analysisMode), it_begin(it_begin), it_end(it_end)
+	) : 
+	inputDirs(inputPath), 
+	outputPath(outputPath), 
+	processMode(processMode), 
+	analysisMode(analysisMode), 
+	it_begin(it_begin), 
+	it_end(it_end)
 	{
 		findingsFolder 	= inputPath.string() + findingsFolder;
 		evalFolder 		= inputPath.string() + evalFolder;
@@ -55,6 +62,15 @@ class CmdTasker{
 	  	}
 	}
 	
+	void saveJsonToFile(const std::string& path, const json& data) {
+	    ofstream file(path);
+	    if (!file.is_open()) {
+	        std::cerr << "Error: Could not open file for writing: " << path << "\n";
+	        return;
+	    }
+	    file << data.dump(2);  // pretty print with indentation
+//	    std::cout << "Saved to "<<  path << "\n" << data.dump(2) << "\n";
+	}
 	/**
 	 * Benodigheden mappen met JSON resultaten:
 	 *	- findings
@@ -65,7 +81,7 @@ class CmdTasker{
 	 * Of beschouwen we deze ook als een missed recovery? We kunnen een statistiek "including missed" opnemen?
 	 */
 	void startProcesses(){
-		cout << "Analyzing inputPath: " << inputPath << "\n";
+		cout << "Analyzing inputPath: " << inputDirs << "\n";
 		
 		json currentJSON, summaryJSON = json::object();
 		MageEvalAnalyst MEA;
@@ -90,6 +106,8 @@ class CmdTasker{
 					loadJSON(devFolder + entry.path().filename().string(), currentJSON);
 					MEA.statisticizeDevReports(currentJSON, summaryJSON);
 				}
+				
+				MEA.summaryPass(summaryJSON);
 				saveJsonToFile(outputPath.string() + "summary.json" ,summaryJSON);
 				break;
 			}
@@ -103,6 +121,8 @@ class CmdTasker{
 
 					loadJSON(devFolder + entry.path().filename().string(), currentJSON);
 					MEA.statisticizeDevReports(currentJSON, summaryJSON);
+					
+					MEA.summaryPass(summaryJSON);
 					saveJsonToFile(outputPath.string() + entry.path().filename().string() ,summaryJSON);
 					summaryJSON.clear();
 				}
@@ -121,6 +141,8 @@ class CmdTasker{
 
 					loadJSON(devFolder + filename, currentJSON);
 					MEA.statisticizeDevReports(currentJSON, summaryJSON);
+					
+					MEA.summaryPass(summaryJSON);
 					saveJsonToFile(outputPath.string() + filename ,summaryJSON);
 					summaryJSON.clear();
 				}
@@ -128,16 +150,6 @@ class CmdTasker{
 			}
 		}
 		
-	}
-	
-	void saveJsonToFile(const std::string& path, const json& data) {
-	    ofstream file(path);
-	    if (!file.is_open()) {
-	        std::cerr << "Error: Could not open file for writing: " << path << "\n";
-	        return;
-	    }
-	    file << data.dump(2);  // pretty print with indentation
-//	    std::cout << "Saved to "<<  path << "\n" << data.dump(2) << "\n";
 	}
 };
 	
