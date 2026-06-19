@@ -107,7 +107,7 @@ class CmdTasker{
 					MEA.statisticizeDevReports(currentJSON, summaryJSON);
 				}
 				
-				MEA.summaryPass(summaryJSON);
+				MEA.summaryStochasticPass(summaryJSON);
 				saveJsonToFile(outputPath.string() + "summary.json" ,summaryJSON);
 				break;
 			}
@@ -122,7 +122,7 @@ class CmdTasker{
 					loadJSON(devFolder + entry.path().filename().string(), currentJSON);
 					MEA.statisticizeDevReports(currentJSON, summaryJSON);
 					
-					MEA.summaryPass(summaryJSON);
+					MEA.summaryStochasticPass(summaryJSON);
 					saveJsonToFile(outputPath.string() + entry.path().filename().string() ,summaryJSON);
 					summaryJSON.clear();
 				}
@@ -142,7 +142,7 @@ class CmdTasker{
 					loadJSON(devFolder + filename, currentJSON);
 					MEA.statisticizeDevReports(currentJSON, summaryJSON);
 					
-					MEA.summaryPass(summaryJSON);
+					MEA.summaryStochasticPass(summaryJSON);
 					saveJsonToFile(outputPath.string() + filename ,summaryJSON);
 					summaryJSON.clear();
 				}

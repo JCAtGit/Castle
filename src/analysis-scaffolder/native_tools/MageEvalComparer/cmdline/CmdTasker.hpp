@@ -1,3 +1,4 @@
+#include <cmath>
 #include <filesystem>
 #include "nlohmann/json.hpp"
 #include <fstream>
@@ -12,6 +13,8 @@
 #include "clang/Tooling/Tooling.h"
 #include "helper.hpp"
 #include "../compare/MageEvalComparer.hpp"
+//#include "matrixAlt.hpp"
+#include "matrix.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -24,8 +27,9 @@ class CmdTasker{
 		string 	&centralizeResultsDir;
 		bool 	&centralizeResults;
 		
-		string dataPath		= "data.json";
-		json aggregatedData = 		json::object();
+		string dataPath	= "data.json";
+		Matrix<json> aggregatedData;
+
 	public:
 	CmdTasker(
 		std::vector<filesystem::path> &inputDirs, 
@@ -36,11 +40,10 @@ class CmdTasker{
 	inputDirs(inputDirs), 
 	outputPath(outputPath),
 	centralizeResultsDir(centralizeResultsDir),
-	centralizeResults(centralizeResults)
+	centralizeResults(centralizeResults),
+	aggregatedData(inputDirs.size(), inputDirs.size())
 	{
-		if(filesystem::exists(centralizeResultsDir + dataPath)){
-			loadJSON(centralizeResultsDir, aggregatedData);
-		}
+		
 	}
 	
 	void loadJSON(filesystem::path jsonFilePath, json& jsonRef){
@@ -72,15 +75,21 @@ class CmdTasker{
 		sort(inputDirs.begin(),inputDirs.end());
 		std::vector<filesystem::path> currentChoices;
 		json iData, jData;
+		
+
+		double ZTestResults[inputDirs.size()][inputDirs.size()];
+		unordered_map<string, Matrix<double>*> resultsMatrixStore;
+		
 		for(int i=0 ; i<inputDirs.size() ; i++){
 			loadJSON(inputDirs[i], iData);
 			currentChoices.push_back(inputDirs[i]);
 
-			for(int j = i + 1 ; j<inputDirs.size() ; j++){
-				currentChoices.push_back(inputDirs[j]);
+			for(int j = i + 1 ; j<inputDirs.size() ; j++){				
 				loadJSON(inputDirs[j], jData);
-
-				// haal json bestanden op
+				currentChoices.push_back(inputDirs[j]);
+				
+				aggregatedData.at(i, j) = json::object();
+				calcConstructZTestProportions(iData, jData, aggregatedData.at(i, j));
 				
 				// calc Z-test for proportions, as a whole and if applicable for each construct when enough samples are present
 				
@@ -89,7 +98,7 @@ class CmdTasker{
 		}
 	}
 	
-	void calcZTestProportions(json& iData, json& jData){
+	void calcConstructZTestProportions(json& iData, json& jData, json& resultStore){
 		auto jConstructs = jData["constructs"];
 		for(auto [constructKey, iConstructData]:iData["constructs"].items()){
 			if(jConstructs.contains(constructKey)){
@@ -97,18 +106,22 @@ class CmdTasker{
 
 				// calculate success/failure condition
 				if(iConstructData.contains("oracleTotal") && jConstructData.contains("oracleTotal")){
-					auto niOracle = iConstructData["oracleTotal"].get<int>();
-					auto njOracle = jConstructData["oracleTotal"].get<int>();
+					auto niOracle = iConstructData["oracleTotal"].get<double>();
+					auto piOracle = iConstructData["P[X]"].get<double>();
+
+					auto njOracle = jConstructData["oracleTotal"].get<double>();
+					auto pjOracle = jConstructData["P[X]"].get<double>();
+
 					// success/failure condition expectation test for 3 sds, allows normal approximation to a binomial distribution
 					// ensure both are eligible for proportion test
 					if(
 						(
-							niOracle * iConstructData["P[X]"].get<double>() 	< 10 ||
-							niOracle * (1-iConstructData["P[X]"].get<double>())	< 10
+							niOracle * piOracle 		< 10 ||
+							niOracle * (1 - piOracle)	< 10
 						) ||
 						(
-							njOracle * jConstructData["P[X]"].get<double>() 	< 10 ||
-							njOracle * (1-jConstructData["P[X]"].get<double>()) < 10
+							njOracle * pjOracle 		< 10 ||
+							njOracle * (1 - pjOracle) 	< 10
 						)
 					){
 						continue;
@@ -122,16 +135,33 @@ class CmdTasker{
 							niOracle + njOracle
 						)
 					);
-					// calc Z statistic, for large disproportions between case 1 and 2 use Unpooled (Wald) standard error instead of pooled?
-
-//					auto ZStat;
-					
-					// eval P value
-
+					// calc Z statistic, for large disproportions between case 1 and 2 use unpooled (Wald) standard error instead of pooled?
+					// we have to make/choose certain assumptions, which validate the approach, i.e. pool vs unpooled. 
+					// Do we assume the null hypothesis is true? Or do we remain reserved without assuming H0?
+					// 		H0: p_i  = p_j
+					//		Ha: p_i != p_j, alternative hypothesis
+					// If we assume null is true, then we would be encouraged to use the pooled standard error (SE)
+					// If we group the results by the same decompiler, we assume H0, that is the decompiler is the main determinant for found distribution.
+					auto pooledSE = sqrt(
+						pooledProportion * (1-pooledProportion) *
+						(
+							(1 / niOracle) +
+							(1 / njOracle)
+						)
+					); 
+					auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
+					resultStore[constructKey] = ZStat2Proportions;
 				}
-
 			}
 		}
+	}
+	
+	void calcGeneralZTestProportions(json& iData, json& jData, json& resultStore){
+		auto niOracle = iData["metadata"]["oracleTotal"].get<double>();
+		auto piOracle = iData["metadata"]["P[X]"].get<double>();
+
+		auto njOracle = jData["metadata"]["oracleTotal"].get<double>();
+		auto pjOracle = jData["metadata"]["P[X]"].get<double>();
 	}
 	
 };

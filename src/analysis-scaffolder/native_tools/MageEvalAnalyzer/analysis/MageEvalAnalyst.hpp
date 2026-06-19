@@ -6,6 +6,11 @@
 using namespace nlohmann;
 using namespace std;
 
+/**
+ *	TODO: Remove order of processing coupling
+ * 	Methods require a certain order of processing:
+ *		-
+ */
 class MageEvalAnalyst{
 	private:
 	public:
@@ -109,7 +114,7 @@ class MageEvalAnalyst{
 	}
 	
 	// Sample Data Comparison (Statistical Testing)
-	void summaryPass(json& summary){
+	void summaryStochasticPass(json& summary){
 		// calculate p and variance for all constructs and in general
 		for(auto [construct, constructData]: summary["constructs"].items()){
 			if(constructData.contains("oracleTotal")){
@@ -124,7 +129,11 @@ class MageEvalAnalyst{
 				constructData["P(X)"] = 0;
 				constructData["VAR(X)"] = 0;
 			}
-			
+		}
+		// final metadata stats like P(X) and VAR(X)
+		if(summary.contains("metadata")){
+			summary["metadata"]["P(X)"] 	= summary["metadata"]["recoveredConstructsTotal"].get<double>() / summary["metadata"]["oracleTotal"].get<double>();
+			summary["metadata"]["VAR(X)"] 	= summary["metadata"]["P(X)"].get<double>() * (1 - summary["metadata"]["P(X)"].get<double>());
 		}
 	}
 	
