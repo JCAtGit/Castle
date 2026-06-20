@@ -150,7 +150,7 @@ class CmdTasker{
 						)
 					); 
 					auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
-					resultStore[constructKey] = ZStat2Proportions;
+					resultStore["constructs"][constructKey] = ZStat2Proportions;
 				}
 			}
 		}
@@ -158,10 +158,31 @@ class CmdTasker{
 	
 	void calcGeneralZTestProportions(json& iData, json& jData, json& resultStore){
 		auto niOracle = iData["metadata"]["oracleTotal"].get<double>();
-		auto piOracle = iData["metadata"]["P[X]"].get<double>();
+		auto piOracle = iData["metadata"]["P(X)"].get<double>();
 
 		auto njOracle = jData["metadata"]["oracleTotal"].get<double>();
-		auto pjOracle = jData["metadata"]["P[X]"].get<double>();
+		auto pjOracle = jData["metadata"]["P(X)"].get<double>();
+		
+		auto pooledProportion = 		
+		(
+			(
+				iData["metadata"]["recoveredConstructsTotal"].get<double>() + 
+				jData["metadata"]["recoveredConstructsTotal"].get<double>()
+			) / (
+				niOracle + njOracle
+			)
+		);
+		
+		auto pooledSE = sqrt(
+			pooledProportion * (1-pooledProportion) *
+			(
+				(1 / niOracle) +
+				(1 / njOracle)
+			)
+		); 
+		auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
+		resultStore["general"] = ZStat2Proportions;
+		// TODO: store/report result
 	}
 	
 };
