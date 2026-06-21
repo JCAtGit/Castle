@@ -71,8 +71,14 @@ class CmdTasker{
 		command += 	" " + 
 					pt_config_data["outputFlag"].get<string>() 		+ " " + 							// outputPath
 					ps_configData["outputDir"].get<string>() 		+ 									
-					pt_config_data["name"].get<string>() 			+ "/" +
-					filePath.filename().string();
+					pt_config_data["name"].get<string>() 			+ "/" ;
+					
+		if(ps_configData["output_ext"].get<string>().empty()){
+			command += filePath.filename().string();
+		} else {
+			command += filePath.stem().string() + ps_configData["output_ext"].get<string>();
+		}
+					
 		if(pt_config_data["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 		if(pt_config_data["redirectNull"].get<bool>()){command = command + " > /dev/null 2>&1";}
 		cout << command << "\n";
@@ -84,7 +90,7 @@ class CmdTasker{
 		addStaticPreFlags(command, pt_config_data);
 		if(!pt_config_data["outputFlag"].get<string>().empty()){
 			command += " " + 
-			pt_config_data["outputFlag"].get<string>() 	+ " " + 
+			pt_config_data["outputFlag"].get<string>() 	+ " " +
 			ps_configData["outputDir"].get<string>()	+
 			pt_config_data["name"].get<string>() 		+ "/";
 		}
@@ -129,19 +135,27 @@ class CmdTasker{
 			if(toolcfg["run_per_file"].get<bool>()){
 				if(toolcfg["run_as_it"].get<bool>()){
 					for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
-						processPath(toolcfg["tgtDir"].get<string>() + std::to_string(toolcfg["it_begin"].get<int>()) +".c ", toolcfg);
+						processPath(
+							toolcfg["tgtDir"].get<string>() + 
+							to_string(toolcfg["it_begin"].get<int>()) +
+							toolcfg["it_ext"].get<string>(), 
+							toolcfg);
 					}
 				} else {
 					for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
 						if(toolcfg["continue_checkpoint"].get<bool>()){
-							if(!filesystem::exists(
-								ps_configData["outputDir"].get<string>() + 
-								toolcfg["name"].get<string>()  				+
-								"/"											+ 
-								entry.path().filename().string())
-							){
+							auto dest2check = 	ps_configData["outputDir"].get<string>() 	+ 
+												toolcfg["name"].get<string>()  				+
+												"/";
+							if(ps_configData["output_ext"].empty()){
+								dest2check += entry.path().filename().string();
+							} else {
+								dest2check += entry.path().stem().string() + ps_configData["output_ext"].get<string>();
+							}
+							if(!filesystem::exists(dest2check)){
 								processPath(entry, toolcfg);
 							}
+							cout << "Checkpoint skip \n";
 						} else {
 							processPath(entry, toolcfg);
 						}

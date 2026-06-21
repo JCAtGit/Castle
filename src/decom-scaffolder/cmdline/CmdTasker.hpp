@@ -62,7 +62,7 @@ class CmdTasker{
 		        std::cerr << "Error: Could not open file for writing: " << path << "\n";
 		        return;
 		    }
-		    file << data.dump(4);  // pretty print with 4 spaces indentation
+		    file << data.dump(2);  // pretty print with indentation
 		    std::cout << "Saved config to " << path << "\n";
 		}
 	public:
@@ -75,11 +75,10 @@ class CmdTasker{
 		for(auto& toolcfg:dt_configData["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
 			
-			
 			cout << toolcfg["name"] << "\n";
 			filesystem::create_directories((ds_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
-				// TODO: decompile entry has to be an executable, should have .o, some or no extension
+				// TODO: decompile entry has to be an executable, should have .o, no extension
 				processPath(entry, toolcfg);
 			}
 			toolcfg["timestamp"] = time(NULL);
