@@ -84,7 +84,9 @@ class CrossASTEvaluator{
 				dev_report["generic_eval"].push_back(markerID);
 				processStmtGeneral(markerID, findingsOracle, d_finding, markerFindingsResult);
 			}
-			findings_eval[markerID].push_back(markerFindingsResult);
+			
+			// if eval is null, then no eval was possible. This could be due to the absence of markers in oracle or decom
+			findings_eval[markerID].push_back(markerFindingsResult); 
 		}
 	}
 	
