@@ -23,13 +23,13 @@ class CmdTasker{
 	private:		
 		std::vector<filesystem::path> &inputDirs;
 		filesystem::path &outputPath;				// use outputPath as dir to retrieve previously existing aggregated data from.
+		const string summaryFilename = "summary.json";
 		
 		string 	&centralizeResultsDir;
 		bool 	&centralizeResults;
 		
-		string dataPath	= "data.json";
-		Matrix<json> aggregatedData;
-
+		unordered_map<string, Matrix<double>> matrixContextMap; // contains contexts general and the constructs from the summaries.
+		
 	public:
 	CmdTasker(
 		std::vector<filesystem::path> &inputDirs, 
@@ -40,8 +40,7 @@ class CmdTasker{
 	inputDirs(inputDirs), 
 	outputPath(outputPath),
 	centralizeResultsDir(centralizeResultsDir),
-	centralizeResults(centralizeResults),
-	aggregatedData(inputDirs.size(), inputDirs.size())
+	centralizeResults(centralizeResults)
 	{
 		
 	}
@@ -71,46 +70,95 @@ class CmdTasker{
 //	    std::cout << "Saved to "<<  path << "\n" << data.dump(2) << "\n";
 	}
 	
+
+	template <typename T>
+	void exportZTestsMatrixToCSV(const std::string& path, Matrix<T>& contextData){
+		// export construct and general values to CSV
+		string CSVData = "ZScore";
+		for(int i = 0; i<inputDirs.size();i++){
+			
+		}
+		
+		
+		
+		CSVData = CSVData + "ZScore";
+		for(int i = 0; i<inputDirs.size();i++){
+			CSVData = CSVData + "," + inputDirs[i].string();
+		}
+		CSVData = CSVData + "\n";
+
+		for(int i=0 ; i<inputDirs.size() ; i++){
+			CSVData = CSVData + inputDirs[i].string();
+			for(int j = 0 ; j<inputDirs.size() ; j++){
+				CSVData = CSVData + "," + to_string(contextData.at(i, j));
+			}
+			CSVData = CSVData + "\n";
+		}
+		ofstream file(path);
+	    if (!file.is_open()) {
+	        std::cerr << "Error: Could not open file for writing: " << path << "\n";
+	        return;
+	    }
+	    file << CSVData;  // pretty print with indentation
+	}
+	
 	void startProcesses(){
+		cout << "Start processes \n";
 		sort(inputDirs.begin(),inputDirs.end());
 		std::vector<filesystem::path> currentChoices;
 		json iData, jData;
 		
-
-		double ZTestResults[inputDirs.size()][inputDirs.size()];
-		unordered_map<string, Matrix<double>*> resultsMatrixStore;
-		
 		for(int i=0 ; i<inputDirs.size() ; i++){
-			loadJSON(inputDirs[i], iData);
+			loadJSON(inputDirs[i].string() + summaryFilename, iData);
 			currentChoices.push_back(inputDirs[i]);
+			cout 	<< inputDirs[i].string() + summaryFilename << "\n"
+					<< iData.dump(2) 
+					<< "\n";
 
-			for(int j = i + 1 ; j<inputDirs.size() ; j++){				
-				loadJSON(inputDirs[j], jData);
+			for(int j = i + 1 ; j<inputDirs.size() ; j++){
+				loadJSON(inputDirs[j].string() + summaryFilename, jData);
 				currentChoices.push_back(inputDirs[j]);
-				
-				aggregatedData.at(i, j) = json::object();
-				calcConstructZTestProportions(iData, jData, aggregatedData.at(i, j));
-				
-				// calc Z-test for proportions, as a whole and if applicable for each construct when enough samples are present
-				
+				cout 	<< inputDirs[j].string() + summaryFilename << "\n"
+						<< jData.dump(2)
+						<< "\n";
+
+				calcConstructZTestProportions(iData, jData, i, j, matrixContextMap);
+				// calc Z-test for proportions, as a whole and if applicable for each construct when enough samples are present				
+				calcGeneralZTestProportions(iData, jData, i, j, matrixContextMap);
 				currentChoices.pop_back();
 			}
 		}
+		
+		cout << "Start exports \n";
+		for(auto [contextKey, contextData] : matrixContextMap){
+			cout << outputPath.string() + contextKey + ".csv" << "\n";
+			exportZTestsMatrixToCSV(outputPath.string() + contextKey + ".csv", contextData);
+		}
 	}
 	
-	void calcConstructZTestProportions(json& iData, json& jData, json& resultStore){
+	void calcConstructZTestProportions(json& iData, json& jData, int i, int j, unordered_map<string, Matrix<double>>& matrixContextMap){
+		cout << "calcConstructZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
+		
 		auto jConstructs = jData["constructs"];
-		for(auto [constructKey, iConstructData]:iData["constructs"].items()){
+		for(auto [constructKey, iConstructData] : iData["constructs"].items()){
+			cout 	<< constructKey
+					<< "\n";
+
+			cout << "TEST0 \n";
 			if(jConstructs.contains(constructKey)){
 				auto jConstructData = jConstructs[constructKey];
 
 				// calculate success/failure condition
 				if(iConstructData.contains("oracleTotal") && jConstructData.contains("oracleTotal")){
+					cout << "TEST1 \n";
+
 					auto niOracle = iConstructData["oracleTotal"].get<double>();
-					auto piOracle = iConstructData["P[X]"].get<double>();
+					auto piOracle = iConstructData["P(X)"].get<double>();
 
 					auto njOracle = jConstructData["oracleTotal"].get<double>();
-					auto pjOracle = jConstructData["P[X]"].get<double>();
+					auto pjOracle = jConstructData["P(X)"].get<double>();
+
+					cout << "TEST2 \n";
 
 					// success/failure condition expectation test for 3 sds, allows normal approximation to a binomial distribution
 					// ensure both are eligible for proportion test
@@ -124,9 +172,12 @@ class CmdTasker{
 							njOracle * (1 - pjOracle) 	< 10
 						)
 					){
+						// use Fisher's Exact Test or other test?
 						continue;
 					}
-					// De sample proportions zijn in dit geval hetzelfde als P[X], dus alleen pooled proportions uitrekenen.
+					cout << "TEST3 \n";
+
+					// De sample proportions zijn in dit geval hetzelfde als P(X), dus alleen pooled proportions uitrekenen.
 					auto pooledProportion = (
 						(
 							iConstructData["recoveryOfAttr"]["recovered_construct"].get<double>() + 
@@ -142,26 +193,39 @@ class CmdTasker{
 					//		Ha: p_i != p_j, alternative hypothesis
 					// If we assume null is true, then we would be encouraged to use the pooled standard error (SE)
 					// If we group the results by the same decompiler, we assume H0, that is the decompiler is the main determinant for found distribution.
+					cout << "TEST4 \n";
+
 					auto pooledSE = sqrt(
-						pooledProportion * (1-pooledProportion) *
+						pooledProportion * (1 - pooledProportion) *
 						(
 							(1 / niOracle) +
 							(1 / njOracle)
 						)
 					); 
 					auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
-					resultStore["constructs"][constructKey] = ZStat2Proportions;
+					if(matrixContextMap.find(constructKey) == matrixContextMap.end()){
+						cout << ZStat2Proportions << " - creating construct matrix \n";
+						matrixContextMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
+					}
+					matrixContextMap[constructKey].at(i,j) = ZStat2Proportions;
+					matrixContextMap[constructKey].at(j,i) = ZStat2Proportions;
+					cout << "TEST5 \n";
+
 				}
 			}
 		}
 	}
 	
-	void calcGeneralZTestProportions(json& iData, json& jData, json& resultStore){
+	void calcGeneralZTestProportions(json& iData, json& jData, int i, int j, unordered_map<string, Matrix<double>>& matrixContextMap){
+		cout << "calcGeneralZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
+
 		auto niOracle = iData["metadata"]["oracleTotal"].get<double>();
 		auto piOracle = iData["metadata"]["P(X)"].get<double>();
 
 		auto njOracle = jData["metadata"]["oracleTotal"].get<double>();
 		auto pjOracle = jData["metadata"]["P(X)"].get<double>();
+
+		cout << "TESTA \n";
 		
 		auto pooledProportion = 		
 		(
@@ -172,7 +236,8 @@ class CmdTasker{
 				niOracle + njOracle
 			)
 		);
-		
+		cout << "TESTB \n";
+
 		auto pooledSE = sqrt(
 			pooledProportion * (1-pooledProportion) *
 			(
@@ -180,10 +245,16 @@ class CmdTasker{
 				(1 / njOracle)
 			)
 		); 
+		cout << "TESTC \n";
+
 		auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
-		resultStore["general"] = ZStat2Proportions;
-		// TODO: store/report result
+		
+		if(matrixContextMap.find("general") == matrixContextMap.end()){
+			cout << ZStat2Proportions << " - creating general matrix \n";
+			matrixContextMap["general"] = Matrix<double>(inputDirs.size(),inputDirs.size());
+		}
+		matrixContextMap["general"].at(i,j) = ZStat2Proportions;
+		matrixContextMap["general"].at(j,i) = ZStat2Proportions;
 	}
-	
 };
 	

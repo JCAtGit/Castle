@@ -8,18 +8,15 @@ class Matrix{
 	private:
 		int rowSize;
 		int colSize;
-		vector<T> matrixData; // Handles all memory perfectly
+		vector<T> matrixData;
 		
 	public:
-	Matrix(int rowSize, int colSize) :
-	rowSize(rowSize), colSize(colSize), matrixData(rowSize * colSize, T{})
-	{
-		
-	}
+	Matrix(){}
+	Matrix(int rowSize, int colSize):rowSize(rowSize), colSize(colSize), matrixData(rowSize * colSize, T{}){}
 	
 	T& at(int row, int col) {
 		if (row < 0 || row >= rowSize || col < 0 || col >= colSize) throw std::out_of_range("Index out of bounds");
-        return matrixData[row * colSize + col]; // O(1) access
+        return matrixData[row * colSize + col];
     }
 	
 	// Const access (read-only)

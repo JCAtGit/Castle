@@ -71,6 +71,7 @@ class CmdTasker{
 	    file << data.dump(2);  // pretty print with indentation
 //	    std::cout << "Saved to "<<  path << "\n" << data.dump(2) << "\n";
 	}
+	
 	/**
 	 * Benodigheden mappen met JSON resultaten:
 	 *	- findings
@@ -85,8 +86,6 @@ class CmdTasker{
 		
 		json currentJSON, summaryJSON = json::object();
 		MageEvalAnalyst MEA;
-		filesystem::create_directories(outputPath.string());
-		filesystem::create_directories(outputPath.string());
 		filesystem::create_directories(outputPath.string());
 
 		switch (processMode) {

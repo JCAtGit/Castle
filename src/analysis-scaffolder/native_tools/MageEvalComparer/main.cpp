@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 		->required();
 
 	string centralizeResultsDir = outputDir;
-	auto option_centralizeResultsPath = app.add_option("--centralize_results", centralizeResultsDir, "Result tally path, use with --centralize_results.");	
+	auto option_centralizeResultsPath = app.add_option("--centralize_results_dir", centralizeResultsDir, "Result tally path, use with --centralize_results.");	
 
 	bool centralizeResults = false;
 	app.add_option("--centralize_results", centralizeResults, "Tally all the results in one path, results that are included will be overridden and recalculated.")
