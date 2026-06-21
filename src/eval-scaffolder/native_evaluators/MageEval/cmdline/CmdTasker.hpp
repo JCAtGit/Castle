@@ -106,7 +106,7 @@ class CmdTasker{
 					
 					CAEvaluator.startEval();
 					
-					cout << "Saving dir-entry result to json:" << outputPath << "\n";
+					cout << "Saving result of " << mapKey << " in " << outputPath << "\n";
 					filesystem::create_directory(outputPath.string() + "findings/");
 					filesystem::create_directory(outputPath.string() + "eval/");
 					filesystem::create_directory(outputPath.string() + "dev/");
