@@ -74,21 +74,20 @@ class CmdTasker{
 	template <typename T>
 	void exportZTestsMatrixToCSV(const std::string& path, Matrix<T>& contextData){
 		// export construct and general values to CSV
-		string CSVData = "ZScore";
+		string CSVData = "EntryMapping \n";
 		for(int i = 0; i<inputDirs.size();i++){
-			
+			CSVData = CSVData + to_string(i) + "," + get_leaf_string(inputDirs[i].string()) + "\n";
 		}
-		
-		
+		CSVData = CSVData + "\n";
 		
 		CSVData = CSVData + "ZScore";
 		for(int i = 0; i<inputDirs.size();i++){
-			CSVData = CSVData + "," + inputDirs[i].string();
+			CSVData = CSVData + "," + to_string(i) ;
 		}
 		CSVData = CSVData + "\n";
 
 		for(int i=0 ; i<inputDirs.size() ; i++){
-			CSVData = CSVData + inputDirs[i].string();
+			CSVData = CSVData + to_string(i);
 			for(int j = 0 ; j<inputDirs.size() ; j++){
 				CSVData = CSVData + "," + to_string(contextData.at(i, j));
 			}
@@ -112,14 +111,14 @@ class CmdTasker{
 			loadJSON(inputDirs[i].string() + summaryFilename, iData);
 			currentChoices.push_back(inputDirs[i]);
 			cout 	<< inputDirs[i].string() + summaryFilename << "\n"
-					<< iData.dump(2) 
+//					<< iData.dump(2) 
 					<< "\n";
 
 			for(int j = i + 1 ; j<inputDirs.size() ; j++){
 				loadJSON(inputDirs[j].string() + summaryFilename, jData);
 				currentChoices.push_back(inputDirs[j]);
 				cout 	<< inputDirs[j].string() + summaryFilename << "\n"
-						<< jData.dump(2)
+//						<< jData.dump(2)
 						<< "\n";
 
 				calcConstructZTestProportions(iData, jData, i, j, matrixContextMap);

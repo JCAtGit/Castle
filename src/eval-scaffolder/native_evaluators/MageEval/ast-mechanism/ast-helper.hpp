@@ -23,7 +23,9 @@ size_t findNodeSiblingIndex(const llvm::SmallVectorImpl<DynTypedNode> &siblings,
 llvm::SmallVector<DynTypedNode, 16> getChildrenNodes(const Stmt *parent) {
     llvm::SmallVector<DynTypedNode, 16> children;
     for (auto child : parent->children()) {
-		children.push_back(DynTypedNode::create(*child));
+		if(child){
+			children.push_back(DynTypedNode::create(*child));
+		}
     }
     return children;
 }

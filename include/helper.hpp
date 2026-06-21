@@ -27,8 +27,7 @@ bool substringOnlyAtEndOfBasename(const string &filename,
 	string basename =
 		(dotPos == string::npos) ? filename : filename.substr(0, dotPos);
 
-	// Check that basename ends with 'sub' and that 'sub' does not appear
-	// elsewhere
+	// Check that basename ends with 'sub' and that 'sub' does not appear elsewhere
 	if (basename.length() < sub.length())
 		return false;
 	if (basename.compare(basename.length() - sub.length(), sub.length(), sub) != 0)
@@ -109,67 +108,32 @@ void string2file(string data,  string path){
 	llvm::outs() << "Definition file written. \n";
 }
 
-void removeFirstLineIfStringMatches(clang::Rewriter &rewriter,
-                                    clang::SourceManager &SM,
-                                    const string &matchString) {
-  clang::FileID mainFileID = SM.getMainFileID();
-  clang::SourceLocation start = SM.getLocForStartOfFile(mainFileID);
+std::string get_leaf_string(const std::string& path) {
+    // Edge case: Path consists entirely of slashes (e.g., "///" or "\\")
+    if (path.find_first_not_of("/\\") == std::string::npos) {
+        return "/"; // Return root
+    }
 
-  bool invalid = false;
-  llvm::StringRef buffer = SM.getBufferData(mainFileID, &invalid);
-  if (invalid) return;
+    std::string p = path;
 
-  // Find the first newline character
-  size_t newlinePos = buffer.find('\n');
-  llvm::StringRef firstLine;
-  size_t removeLength;  // length of characters to remove (including newline if present)
+    // 1. Remove ALL trailing slashes (both / and \)
+    while (!p.empty() && (p.back() == '/' || p.back() == '\\')) {
+        p.pop_back();
+    }
 
-  if (newlinePos == llvm::StringRef::npos) {
-    // No newline → the whole file is a single line
-    firstLine = buffer;
-    removeLength = buffer.size();   // remove everything
-  } else {
-    // Normal case: line ends with newline
-    firstLine = buffer.substr(0, newlinePos);
-    removeLength = newlinePos + 1;  // include the newline character
-  }
+    // 2. If the string is now empty (shouldn't happen due to the first check, but safe)
+    if (p.empty()) {
+        return "";
+    }
 
-  // Compare and remove only if the line matches exactly
-  if (firstLine == matchString) {
-    clang::SourceLocation end = start.getLocWithOffset(removeLength);
-    clang::CharSourceRange lineRange = clang::CharSourceRange::getCharRange(start, end);
-    rewriter.RemoveText(lineRange);
-  }
-}
+    // 3. Find the last occurrence of either slash type
+    size_t pos = p.find_last_of("/\\");
 
-void removeFirstLineIfContains(Rewriter &rewriter,
-                               SourceManager &SM,
-                               const std::string &substring) {
-  FileID mainFileID = SM.getMainFileID();
-  SourceLocation start = SM.getLocForStartOfFile(mainFileID);
+    // 4. If no slash found, the whole string is the leaf
+    if (pos == std::string::npos) {
+        return p;
+    }
 
-  bool invalid = false;
-  llvm::StringRef buffer = SM.getBufferData(mainFileID, &invalid);
-  if (invalid) return;
-
-  // Find the first newline character
-  size_t newlinePos = buffer.find('\n');
-  llvm::StringRef firstLine;
-  size_t removeLength;
-
-  if (newlinePos == llvm::StringRef::npos) {
-    // No newline → whole file is a single line
-    firstLine = buffer;
-    removeLength = buffer.size();
-  } else {
-    firstLine = buffer.substr(0, newlinePos);
-    removeLength = newlinePos + 1;   // include the newline
-  }
-
-  // Check if the first line contains the substring
-  if (firstLine.contains(substring)) {
-    SourceLocation end = start.getLocWithOffset(removeLength);
-    CharSourceRange lineRange = CharSourceRange::getCharRange(start, end);
-    rewriter.RemoveText(lineRange);
-  }
+    // 5. Return everything after the last slash
+    return p.substr(pos + 1);
 }

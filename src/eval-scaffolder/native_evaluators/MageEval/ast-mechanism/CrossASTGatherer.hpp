@@ -136,7 +136,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	}
 	
 	void indexProcessor(CallExpr *CE){
-		if (selectedSM->isInMainFile(CE->getBeginLoc())){				
+		if (selectedSM->isInMainFile(CE->getBeginLoc())){
 			int mageIndex = getMageIndex(CE);
 			if(mageIndex == -1){return;}
 			if (parentStack.size() < 2) {return;}
@@ -148,6 +148,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			auto CESibIndex = findNodeSiblingIndex(siblings, DynTypedNode::create(*CE));
 			auto CEMarkee = getNextSiblingFromList(siblings, CESibIndex);
 			auto mageIndexString = std::to_string(mageIndex);
+
 			if(CEMarkee){
 				// rework starts here
 				json markerFinding = json::object();
@@ -158,8 +159,10 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 				 	std::to_string(selectedSM->getSpellingColumnNumber(CE->getBeginLoc()))				+ ") " ;
 				markerFinding["children"] = json::array();
 				markerFinding["properties"] = json::object();
+				
 				evalSRDeciderP(const_cast<Stmt*>(CEMarkee->get<Stmt>()), &(markerFinding));
 				findings[mageIndexString][selectedContextString].push_back(markerFinding);
+
 			} else {
 				// TODO: report to dev if not already accounted for
 			}

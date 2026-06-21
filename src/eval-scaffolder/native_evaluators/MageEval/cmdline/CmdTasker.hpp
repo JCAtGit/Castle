@@ -46,42 +46,62 @@ class CmdTasker{
 		  	}
 		}
 		
+		/**
+		 *	TODO: 
+		 *		Cleanup AST, parentStack when appropriate, currently enormous amounts of memory is used.
+		 *		De unordered map is overgebleven van een andere implementatievorm, rework ooit.
+		 *		Check of parentStack niet stuk gaat bij verwijderen map bij lifetime wijzigingen.
+		 */
 		void processDir(){
-			unordered_map<string, unique_ptr<ASTUnit>> astOracleUnits;
-			unordered_map<string, unique_ptr<ASTUnit>> astDecomUnits;
+//			unordered_map<string, unique_ptr<ASTUnit>> astOracleUnits;
+//			unordered_map<string, unique_ptr<ASTUnit>> astDecomUnits;
 			string mapKey;
+			// gatherer bevat geen verwijzing naar de maps
 			CrossASTGatherer CAGatherer(
-			selectedFormat,
-			findings, 
-			nameEncodedMarkers
-		);
+				selectedFormat,
+				findings, 
+				nameEncodedMarkers
+			);
 			cout<< "processDir" << "\n";
 			string fileOracleData;
 			string fileDecomData;
 
+			
 			CAGatherer.selectMode(1);
 			for(auto entry :filesystem::recursive_directory_iterator(oracleDir)){ // voor elke moeten we apart een save to findings, etc maken.
-				if(entry.path().extension() == ".c" || entry.path().extension() == ""){
+				if(entry.path().extension() == ".c"){ // We nemen aan dat oracle dirs altijd gewoon C extensie gebruiken.
 					fileOracleData = file2string(entry.path());
 					mapKey = entry.path().filename().string();
-					astOracleUnits[mapKey] = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + entry.path().filename().string());
-					CAGatherer.setOracleContext(&(astOracleUnits[mapKey])->getASTContext());
-					CAGatherer.TraverseDecl(astOracleUnits[mapKey]->getASTContext().getTranslationUnitDecl());
+//					astOracleUnits[mapKey] = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + entry.path().filename().string());
+//					CAGatherer.setOracleContext(&(astOracleUnits[mapKey])->getASTContext());
+//					CAGatherer.TraverseDecl(astOracleUnits[mapKey]->getASTContext().getTranslationUnitDecl());
+
+					auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + entry.path().filename().string());
+					CAGatherer.setOracleContext(&astOracleUnit->getASTContext());
+					CAGatherer.TraverseDecl(astOracleUnit->getASTContext().getTranslationUnitDecl());
 				}
  			}
 			
+			cout<< "gathering decomData" << "\n";
 			CAGatherer.selectMode(0);
-			for(auto entry :filesystem::recursive_directory_iterator(inputDirs)){ // inputPath is nu de dir waar de decompiled c zit
-				// decompilers outputten soms zonder .c extension, maar aan de andere kant krijgen we ook regelmatig troep van bijvoorbeeld retdec.
+			for(auto entry :filesystem::recursive_directory_iterator(inputDirs)){ // inputDirs is nu de dir waar de decompiled c zit
+				// Decompilers, zoals Ghidra, outputten soms zonder .c extensie, maar aan de andere kant krijgen we ook regelmatig troep van bijvoorbeeld retdec.
+				// Hier moeten we dus bij de selectie een beetje de nodige aanpassingen maken te zijner tijd.
 				if(entry.path().extension() == ".c" || entry.path().extension().empty()){ 
 					fileDecomData = file2string(entry.path());
 					mapKey = entry.path().filename().string();
-					astDecomUnits[mapKey] = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, entry.path().filename().string());
-					CAGatherer.setDecomContext(&(astDecomUnits[mapKey])->getASTContext());
-					CAGatherer.TraverseDecl(astDecomUnits[mapKey]->getASTContext().getTranslationUnitDecl());
-					// TODO: consolidate findings here
+					
+//					astDecomUnits[mapKey] = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, entry.path().filename().string());
+//					CAGatherer.setDecomContext(&(astDecomUnits[mapKey])->getASTContext());
+//					CAGatherer.TraverseDecl(astDecomUnits[mapKey]->getASTContext().getTranslationUnitDecl());
+					
+					auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, entry.path().filename().string());
+					CAGatherer.setDecomContext(&astDecomUnit->getASTContext());
+					CAGatherer.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());				
+
+					// TODO: consolidate findings here, de maps lijken hier niet meer nodig te zijn.
 					CAGatherer.announceFindings();
-					cout << "Starting eval" << "\n";
+					cout << "Starting eval: " << entry.path().string() <<"\n";
 					CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
 					
 					CAEvaluator.startEval();
@@ -175,6 +195,8 @@ class CmdTasker{
 		} else {
 			cout << "Path does not exist" << "\n";
 		}
+		cout << "startProcesses concluded \n";
+
 	}
 };
 	
