@@ -4,5 +4,5 @@
 using namespace std;
 
 double standard_normal_cdf(double x) {
-    return erfc(-x / sqrt(2)) / 2;
+    return 1.0 - erfc(x / sqrt(2.0)) / 2.0;
 }

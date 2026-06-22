@@ -96,11 +96,11 @@ class MageEvalComparer{
 			}
 			
 			// P-Value
-			CSVData += "PValue";
+			CSVData += "\nPValue";
 			for(int i = 0; i<inputDirs.size();i++){
 				CSVData += "," + to_string(i) ;
 			}
-			CSVData += "\n\n";
+			CSVData += "\n";
 
 			for(int i=0 ; i<inputDirs.size() ; i++){
 				CSVData += to_string(i);
@@ -151,10 +151,10 @@ class MageEvalComparer{
 						CSVData += "," + to_string(contextZData.at(i, j));
 					}
 				}
-				CSVData += "\n\n";
+				CSVData += "\n";
 			}
 			
-			CSVData += "PValue";
+			CSVData += "\nPValue";
 			for(int i = 0; i<inputDirs.size();i++){
 				CSVData += "," + to_string(i) ;
 			}
@@ -239,8 +239,8 @@ class MageEvalComparer{
 							)
 						); 
 						auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
-						double pValue = 2 * (1 - standard_normal_cdf(abs(ZStat2Proportions))); 
-
+						double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
+						cout << "PValue: " << pValue <<"\n";
 						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
 //							cout << ZStat2Proportions << " - creating construct matrix \n";
 							constructZMatrixMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
@@ -287,7 +287,8 @@ class MageEvalComparer{
 			); 
 
 			auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
-			double pValue = 2 * (1 - standard_normal_cdf(abs(ZStat2Proportions))); 
+			double pValue =  erfc(abs(ZStat2Proportions) / sqrt(2.0));
+			cout << "PValue: " << pValue <<"\n";
 
 			generalZMatrix.at(i,j) = ZStat2Proportions;
 			generalZMatrix.at(j,i) = ZStat2Proportions;
