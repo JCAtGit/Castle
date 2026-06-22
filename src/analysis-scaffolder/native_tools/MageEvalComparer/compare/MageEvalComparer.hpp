@@ -5,6 +5,8 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <sstream>
+#include <iomanip>
 
 #include "helper.hpp"
 #include "matrix.hpp"
@@ -61,6 +63,8 @@ class MageEvalComparer{
 	
 		template <typename T>
 		void exportZConstructMatrixToCSV(const string& path, Matrix<T>& contextZData, Matrix<T>& contextPData, const string& contextKey){
+			ostringstream oss;
+			oss << scientific << setprecision(3);
 			// export construct and general values to CSV
 			string CSVData = "EntryMapping," + contextKey + ",viableComparisons \n";
 			
@@ -89,7 +93,10 @@ class MageEvalComparer{
 					if(i!=j && contextZData.at(i, j) == 0){
 						CSVData += ",-";
 					} else {
-						CSVData += "," + to_string(contextZData.at(i, j));
+						oss << contextZData.at(i, j);
+						CSVData += "," + oss.str();
+						oss.clear();
+						oss.str("");
 					}
 				}
 				CSVData += "\n";
@@ -108,7 +115,10 @@ class MageEvalComparer{
 					if(i!=j && contextPData.at(i, j) == 0){
 						CSVData += ",-";
 					} else {
-						CSVData += "," + to_string(contextPData.at(i, j));
+						oss << contextPData.at(i, j);
+						CSVData += "," + oss.str();
+						oss.clear();
+						oss.str("");
 					}
 				}
 				CSVData += "\n";
@@ -123,6 +133,8 @@ class MageEvalComparer{
 	
 		template <typename T>
 		void exportZGeneralMatrixToCSV(const string& path, Matrix<T>& contextZData, Matrix<T>& contextPData, const string& contextKey){
+			ostringstream oss;
+			oss << scientific << setprecision(3);
 			// export construct and general values to CSV
 			string CSVData = "EntryMapping," + contextKey + ",viableComparisons \n";
 			
@@ -148,7 +160,10 @@ class MageEvalComparer{
 					if(i!=j && contextZData.at(i, j) == 0){
 						CSVData += ",-";
 					} else {
-						CSVData += "," + to_string(contextZData.at(i, j));
+						oss << contextZData.at(i, j);
+						CSVData += "," + oss.str();
+						oss.clear();
+						oss.str("");
 					}
 				}
 				CSVData += "\n";
@@ -166,7 +181,10 @@ class MageEvalComparer{
 					if(i!=j && contextPData.at(i, j) == 0){
 						CSVData += ",-";
 					} else {
-						CSVData += "," + to_string(contextPData.at(i, j));
+						oss << contextPData.at(i, j);
+						CSVData += "," + oss.str();
+						oss.clear();
+						oss.str("");
 					}
 				}
 				CSVData += "\n";
