@@ -9,6 +9,7 @@
 #include "helper.hpp"
 #include "matrix.hpp"
 #include "json.hpp"
+#include "stats.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -19,15 +20,20 @@ class MageEvalComparer{
 		vector<filesystem::path> &inputDirs;
 		filesystem::path &outputPath;									// use outputPath as dir to retrieve previously existing aggregated data from.
 		
-		unordered_map<string, Matrix<double>> 	constructZMatrixMap; 	// contains contexts general and the constructs from the summaries.		
-		Matrix<double>							generalZMatrix;
+		unordered_map<string, Matrix<double>> 	constructZMatrixMap; 	// contains constructs - Z value evals related to the summaries.
+		unordered_map<string, Matrix<double>> 	constructPMatrixMap;	// contains constructs - P value evals related to the summaries.
+		Matrix<double>							generalZMatrix;			// contains general    - Z value evals related to the summaries.
+		Matrix<double>							generalPMatrix;			// contains general    - P value evals related to the summaries.
+
 		const string summaryFilename = "summary.json";
 		vector<json> summaryData;
 
 	public:
 	MageEvalComparer(vector<filesystem::path> &inputDirs, filesystem::path &outputPath) :
 	inputDirs(inputDirs), outputPath(outputPath), 
-	generalZMatrix(inputDirs.size(), inputDirs.size())
+	
+	generalZMatrix(inputDirs.size(), inputDirs.size()),
+	generalPMatrix(inputDirs.size(), inputDirs.size())
 	{
 		sort(inputDirs.begin(),inputDirs.end());
 		for(int i=0 ; i<inputDirs.size() ; i++){
@@ -48,22 +54,81 @@ class MageEvalComparer{
 			cout << "Start exports \n";
 			for(auto [contextKey, contextData] : constructZMatrixMap){
 				cout << outputPath.string() + contextKey + ".csv" << "\n";
-				exportZConstructMatrixToCSV(outputPath.string() + contextKey + ".csv", contextData, contextKey);
+				exportZConstructMatrixToCSV(outputPath.string() + contextKey + ".csv", contextData, constructPMatrixMap[contextKey], contextKey);
 			}
-//			exportZTestsMatrixToCSV(outputPath.string() + "General.csv", generalZMatrix, "");
+			exportZGeneralMatrixToCSV(outputPath.string() + "General.csv", generalZMatrix, generalPMatrix, "General");
 		}
 	
 		template <typename T>
-		void exportZConstructMatrixToCSV(const string& path, Matrix<T>& contextZData, const string& contextKey){
+		void exportZConstructMatrixToCSV(const string& path, Matrix<T>& contextZData, Matrix<T>& contextPData, const string& contextKey){
 			// export construct and general values to CSV
 			string CSVData = "EntryMapping," + contextKey + ",viableComparisons \n";
 			
-			// TODO: add amount of construct or related samplesizes to its mapping.
 			for(int i = 0; i<inputDirs.size();i++){
 				int vcCount = 0;
 				if(summaryData[i]["constructs"].contains(contextKey)){
 					vcCount = summaryData[i]["constructs"][contextKey]["viableComparisons"].get<int>();
 				}
+				CSVData += 
+					to_string(i) 																			+ "," + 
+					get_leaf_string(inputDirs[i].string()) 												+ "," +
+					to_string(vcCount)	+ "\n";
+			}
+			CSVData += "\n";
+			
+			// Z-Score
+			CSVData += "ZScore";
+			for(int i = 0; i<inputDirs.size();i++){
+				CSVData += "," + to_string(i) ;
+			}
+			CSVData += "\n";
+
+			for(int i=0 ; i<inputDirs.size() ; i++){
+				CSVData += to_string(i);
+				for(int j = 0 ; j<inputDirs.size() ; j++){
+					if(i!=j && contextZData.at(i, j) == 0){
+						CSVData += ",-";
+					} else {
+						CSVData += "," + to_string(contextZData.at(i, j));
+					}
+				}
+				CSVData += "\n";
+			}
+			
+			// P-Value
+			CSVData += "PValue";
+			for(int i = 0; i<inputDirs.size();i++){
+				CSVData += "," + to_string(i) ;
+			}
+			CSVData += "\n\n";
+
+			for(int i=0 ; i<inputDirs.size() ; i++){
+				CSVData += to_string(i);
+				for(int j = 0 ; j<inputDirs.size() ; j++){
+					if(i!=j && contextPData.at(i, j) == 0){
+						CSVData += ",-";
+					} else {
+						CSVData += "," + to_string(contextPData.at(i, j));
+					}
+				}
+				CSVData += "\n";
+			}
+			ofstream file(path);
+		    if (!file.is_open()) {
+		        std::cerr << "Error: Could not open file for writing: " << path << "\n";
+		        return;
+		    }
+		    file << CSVData;
+		}
+	
+		template <typename T>
+		void exportZGeneralMatrixToCSV(const string& path, Matrix<T>& contextZData, Matrix<T>& contextPData, const string& contextKey){
+			// export construct and general values to CSV
+			string CSVData = "EntryMapping," + contextKey + ",viableComparisons \n";
+			
+			// TODO: add amount of construct or related samplesizes to its mapping.
+			for(int i = 0; i<inputDirs.size();i++){
+				int vcCount = summaryData[i]["metadata"]["viableComparisons"].get<int>();
 				CSVData += 
 					to_string(i) 																			+ "," + 
 					get_leaf_string(inputDirs[i].string()) 												+ "," +
@@ -86,6 +151,24 @@ class MageEvalComparer{
 						CSVData += "," + to_string(contextZData.at(i, j));
 					}
 				}
+				CSVData += "\n\n";
+			}
+			
+			CSVData += "PValue";
+			for(int i = 0; i<inputDirs.size();i++){
+				CSVData += "," + to_string(i) ;
+			}
+			CSVData += "\n";
+
+			for(int i=0 ; i<inputDirs.size() ; i++){
+				CSVData += to_string(i);
+				for(int j = 0 ; j<inputDirs.size() ; j++){
+					if(i!=j && contextPData.at(i, j) == 0){
+						CSVData += ",-";
+					} else {
+						CSVData += "," + to_string(contextPData.at(i, j));
+					}
+				}
 				CSVData += "\n";
 			}
 			ofstream file(path);
@@ -93,9 +176,9 @@ class MageEvalComparer{
 		        std::cerr << "Error: Could not open file for writing: " << path << "\n";
 		        return;
 		    }
-		    file << CSVData;  // pretty print with indentation
+		    file << CSVData;
 		}
-	
+		
 		// TODO: rework to without i, j arguments?
 		void calcConstructZTestProportions(json& iData, json& jData, int i, int j){
 			cout << "calcConstructZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
@@ -156,12 +239,21 @@ class MageEvalComparer{
 							)
 						); 
 						auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
+						double pValue = 2 * (1 - standard_normal_cdf(abs(ZStat2Proportions))); 
+
 						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
 //							cout << ZStat2Proportions << " - creating construct matrix \n";
 							constructZMatrixMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
 						}
 						constructZMatrixMap[constructKey].at(i,j) = ZStat2Proportions;
 						constructZMatrixMap[constructKey].at(j,i) = ZStat2Proportions;
+						
+						if(constructPMatrixMap.find(constructKey) == constructPMatrixMap.end()){
+//							cout << PValue << " - creating construct matrix \n";
+							constructPMatrixMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
+						}
+						constructPMatrixMap[constructKey].at(i,j) = pValue;
+						constructPMatrixMap[constructKey].at(j,i) = pValue;
 					}
 				}
 			}
@@ -195,9 +287,12 @@ class MageEvalComparer{
 			); 
 
 			auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
+			double pValue = 2 * (1 - standard_normal_cdf(abs(ZStat2Proportions))); 
+
 			generalZMatrix.at(i,j) = ZStat2Proportions;
 			generalZMatrix.at(j,i) = ZStat2Proportions;
-
+			generalPMatrix.at(i,j) = pValue;
+			generalPMatrix.at(j,i) = pValue;
 		}
 	
 };
