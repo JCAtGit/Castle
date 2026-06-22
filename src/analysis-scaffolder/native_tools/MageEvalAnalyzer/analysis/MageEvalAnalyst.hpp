@@ -57,18 +57,25 @@ class MageEvalAnalyst{
 					}
 					incrementJSONEntry(nodeOracleStats["absentCorrespondingDecomMarker"]);
 				} else {
-					incrementJSONEntry(nodeOracleStats["viableComparisons"]);
-					incrementJSONEntry(summary["metadata"]["viableComparisonsTotal"]);
-
 					for(const auto& decomData: finding["decom"]){
 						auto &nodeDecomStats = summary["constructs"][decomData["ASTNode"].get<string>()];
 						incrementJSONEntry(nodeDecomStats["decomTotal"]);
 						incrementJSONEntry(recoveredAsMarkee[decomData["ASTNode"].get<string>()]);
 						incrementJSONEntry(summary["metadata"]["decomTotal"]);
+						
+						incrementJSONEntry(nodeOracleStats["viableComparisons"]);
+						incrementJSONEntry(nodeDecomStats["viableComparisons"]);
+						incrementJSONEntry(summary["metadata"]["viableComparisons"]);
 					}
 				}
 			} else {
 				incrementJSONEntry(summary["metadata"]["oracleMissingTotal"]);
+				for(const auto& decomData: finding["decom"]){
+					if(summary["constructs"][decomData["ASTNode"].get<string>()]["viableComparisons"].is_null()){
+						summary["constructs"][decomData["ASTNode"].get<string>()]["viableComparisons"] = 0;
+					}
+				}
+				
 //				summary["metadata"]["oracleMissingTotal"][markerID] = finding["decom"].size(); // useful for diagnostics?
 			}
 			
@@ -137,7 +144,7 @@ class MageEvalAnalyst{
 		}
 		// final metadata stats like P(X) and VAR(X).
 		if(summary.contains("metadata")){
-			summary["metadata"]["P(X)"] 	= summary["metadata"]["recoveredConstructsTotal"].get<double>() / summary["metadata"]["viableComparisonsTotal"].get<double>();
+			summary["metadata"]["P(X)"] 	= summary["metadata"]["recoveredConstructsTotal"].get<double>() / summary["metadata"]["viableComparisons"].get<double>();
 			summary["metadata"]["VAR(X)"] 	= summary["metadata"]["P(X)"].get<double>() * (1 - summary["metadata"]["P(X)"].get<double>());
 		}
 	}

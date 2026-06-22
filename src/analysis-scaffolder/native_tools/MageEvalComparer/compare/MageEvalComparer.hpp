@@ -3,14 +3,9 @@
 #include "nlohmann/json.hpp"
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <string>
 #include <unordered_map>
 
-#include "clang/AST/ASTContext.h"
-#include "clang/Frontend/ASTUnit.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Tooling/Tooling.h"
 #include "helper.hpp"
 #include "matrix.hpp"
 #include "json.hpp"
@@ -22,79 +17,76 @@ using namespace std;
 class MageEvalComparer{
 	private:
 		vector<filesystem::path> &inputDirs;
-		filesystem::path &outputPath;							// use outputPath as dir to retrieve previously existing aggregated data from.
+		filesystem::path &outputPath;									// use outputPath as dir to retrieve previously existing aggregated data from.
 		
-		unordered_map<string, Matrix<double>> matrixContextMap; // contains contexts general and the constructs from the summaries.
+		unordered_map<string, Matrix<double>> 	constructZMatrixMap; 	// contains contexts general and the constructs from the summaries.		
+		Matrix<double>							generalZMatrix;
 		const string summaryFilename = "summary.json";
+		vector<json> summaryData;
 
 	public:
 	MageEvalComparer(vector<filesystem::path> &inputDirs, filesystem::path &outputPath) :
-	inputDirs(inputDirs), outputPath(outputPath)
+	inputDirs(inputDirs), outputPath(outputPath), 
+	generalZMatrix(inputDirs.size(), inputDirs.size())
 	{
-		
+		sort(inputDirs.begin(),inputDirs.end());
+		for(int i=0 ; i<inputDirs.size() ; i++){
+			summaryData.push_back(json::object());
+			loadJSON(inputDirs[i].string() + summaryFilename, summaryData[i]); // TODO
+		}		
 	}	
 	
 		void startComparisons(){
-			sort(inputDirs.begin(),inputDirs.end());
-			vector<filesystem::path> currentChoices;
-			json iData, jData;
-			
 			for(int i=0 ; i<inputDirs.size() ; i++){
-				loadJSON(inputDirs[i].string() + summaryFilename, iData);
-				currentChoices.push_back(inputDirs[i]);
-	//			cout 	<< inputDirs[i].string() + summaryFilename << "\n"
-	//					<< iData.dump(2) 
-	//					<< "\n";
-
 				for(int j = i + 1 ; j<inputDirs.size() ; j++){
-					loadJSON(inputDirs[j].string() + summaryFilename, jData);
-					currentChoices.push_back(inputDirs[j]);
-	//				cout 	<< inputDirs[j].string() + summaryFilename << "\n"
-	//						<< jData.dump(2)
-	//						<< "\n";
-
-					calcConstructZTestProportions(iData, jData, i, j, matrixContextMap);
-					// calc Z-test for proportions, as a whole and if applicable for each construct when enough samples are present				
-					calcGeneralZTestProportions(iData, jData, i, j, matrixContextMap);
-					currentChoices.pop_back();
+					// calc Z-test for proportions, as a whole and if applicable for each construct when enough samples are present	
+					calcConstructZTestProportions(summaryData[i], summaryData[j], i, j);
+					calcGeneralZTestProportions(summaryData[i], summaryData[j], i, j);
 				}
 			}
 			
 			cout << "Start exports \n";
-			for(auto [contextKey, contextData] : matrixContextMap){
+			for(auto [contextKey, contextData] : constructZMatrixMap){
 				cout << outputPath.string() + contextKey + ".csv" << "\n";
-				exportZTestsMatrixToCSV(outputPath.string() + contextKey + ".csv", contextData);
+				exportZConstructMatrixToCSV(outputPath.string() + contextKey + ".csv", contextData, contextKey);
 			}
+//			exportZTestsMatrixToCSV(outputPath.string() + "General.csv", generalZMatrix, "");
 		}
 	
-	// TODO: if no viable comparison is possible, output blank instead of 0 for i!=j
 		template <typename T>
-		void exportZTestsMatrixToCSV(const string& path, Matrix<T>& contextData){
+		void exportZConstructMatrixToCSV(const string& path, Matrix<T>& contextZData, const string& contextKey){
 			// export construct and general values to CSV
-			string CSVData 
-				= "EntryMapping \n"
-				;
-			for(int i = 0; i<inputDirs.size();i++){
-				CSVData = CSVData + to_string(i) + "," + get_leaf_string(inputDirs[i].string()) + "\n";
-			}
-			CSVData = CSVData + "\n";
+			string CSVData = "EntryMapping," + contextKey + ",viableComparisons \n";
 			
-			CSVData = CSVData + "ZScore";
+			// TODO: add amount of construct or related samplesizes to its mapping.
 			for(int i = 0; i<inputDirs.size();i++){
-				CSVData = CSVData + "," + to_string(i) ;
+				int vcCount = 0;
+				if(summaryData[i]["constructs"].contains(contextKey)){
+					vcCount = summaryData[i]["constructs"][contextKey]["viableComparisons"].get<int>();
+				}
+				CSVData += 
+					to_string(i) 																			+ "," + 
+					get_leaf_string(inputDirs[i].string()) 												+ "," +
+					to_string(vcCount)	+ "\n";
 			}
-			CSVData = CSVData + "\n";
+			CSVData += "\n";
+			
+			CSVData += "ZScore";
+			for(int i = 0; i<inputDirs.size();i++){
+				CSVData += "," + to_string(i) ;
+			}
+			CSVData += "\n";
 
 			for(int i=0 ; i<inputDirs.size() ; i++){
-				CSVData = CSVData + to_string(i);
+				CSVData += to_string(i);
 				for(int j = 0 ; j<inputDirs.size() ; j++){
-					if(i!=j && contextData.at(i, j) == 0){
-						CSVData = CSVData + ",-";
+					if(i!=j && contextZData.at(i, j) == 0){
+						CSVData += ",-";
 					} else {
-						CSVData = CSVData + "," + to_string(contextData.at(i, j));
+						CSVData += "," + to_string(contextZData.at(i, j));
 					}
 				}
-				CSVData = CSVData + "\n";
+				CSVData += "\n";
 			}
 			ofstream file(path);
 		    if (!file.is_open()) {
@@ -104,24 +96,23 @@ class MageEvalComparer{
 		    file << CSVData;  // pretty print with indentation
 		}
 	
-		void calcConstructZTestProportions(json& iData, json& jData, int i, int j, unordered_map<string, Matrix<double>>& matrixContextMap){
+		// TODO: rework to without i, j arguments?
+		void calcConstructZTestProportions(json& iData, json& jData, int i, int j){
 			cout << "calcConstructZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
 			
 			auto jConstructs = jData["constructs"];
 			for(auto [constructKey, iConstructData] : iData["constructs"].items()){
-	//			cout 	<< constructKey
-	//					<< "\n";
 
 				if(jConstructs.contains(constructKey)){
 					auto jConstructData = jConstructs[constructKey];
 
 					// calculate success/failure condition
-					if(iConstructData.contains("oracleTotal") && jConstructData.contains("oracleTotal")){
+					if(iConstructData.contains("viableComparisons") && jConstructData.contains("viableComparisons")){
 
-						auto niOracle = iConstructData["oracleTotal"].get<double>();
+						auto niOracle = iConstructData["viableComparisons"].get<double>();
 						auto piOracle = iConstructData["P(X)"].get<double>();
 
-						auto njOracle = jConstructData["oracleTotal"].get<double>();
+						auto njOracle = jConstructData["viableComparisons"].get<double>();
 						auto pjOracle = jConstructData["P(X)"].get<double>();
 
 						// success/failure condition expectation test for 3 sds, allows normal approximation to a binomial distribution
@@ -165,25 +156,24 @@ class MageEvalComparer{
 							)
 						); 
 						auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
-						if(matrixContextMap.find(constructKey) == matrixContextMap.end()){
-							cout << ZStat2Proportions << " - creating construct matrix \n";
-							matrixContextMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
+						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
+//							cout << ZStat2Proportions << " - creating construct matrix \n";
+							constructZMatrixMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
 						}
-						matrixContextMap[constructKey].at(i,j) = ZStat2Proportions;
-						matrixContextMap[constructKey].at(j,i) = ZStat2Proportions;
-
+						constructZMatrixMap[constructKey].at(i,j) = ZStat2Proportions;
+						constructZMatrixMap[constructKey].at(j,i) = ZStat2Proportions;
 					}
 				}
 			}
 		}
 		
-		void calcGeneralZTestProportions(json& iData, json& jData, int i, int j, unordered_map<string, Matrix<double>>& matrixContextMap){
+		void calcGeneralZTestProportions(json& iData, json& jData, int i, int j){
 			cout << "calcGeneralZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
 
-			auto niOracle = iData["metadata"]["viableComparisonsTotal"].get<double>();
+			auto niOracle = iData["metadata"]["viableComparisons"].get<double>();
 			auto piOracle = iData["metadata"]["P(X)"].get<double>();
 
-			auto njOracle = jData["metadata"]["viableComparisonsTotal"].get<double>();
+			auto njOracle = jData["metadata"]["viableComparisons"].get<double>();
 			auto pjOracle = jData["metadata"]["P(X)"].get<double>();
 			
 			auto pooledProportion = 		
@@ -205,13 +195,9 @@ class MageEvalComparer{
 			); 
 
 			auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
-			
-			if(matrixContextMap.find("general") == matrixContextMap.end()){
-				cout << ZStat2Proportions << " - creating general matrix \n";
-				matrixContextMap["general"] = Matrix<double>(inputDirs.size(),inputDirs.size());
-			}
-			matrixContextMap["general"].at(i,j) = ZStat2Proportions;
-			matrixContextMap["general"].at(j,i) = ZStat2Proportions;
+			generalZMatrix.at(i,j) = ZStat2Proportions;
+			generalZMatrix.at(j,i) = ZStat2Proportions;
+
 		}
 	
 };
