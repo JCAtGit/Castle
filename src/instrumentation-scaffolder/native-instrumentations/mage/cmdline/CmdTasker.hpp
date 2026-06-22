@@ -13,22 +13,29 @@ using namespace std;
 
 class CmdTasker{
 	private:
-	filesystem::path inputDirs, outputPath, mrkrFormatsPath;
-	bool onCopy = false, nameEncodedMarkers = false, clangFormatMode = false;
-	set<string> excludeFilesSet;
-	set<string> excludeDirsSet;
+	filesystem::path 			inputDirs, 
+								outputPath, 
+								mrkrFormatsPath,
+								inputDir, 
+								outputDir;
+						
+	bool 						onCopy = false, 
+								nameEncodedMarkers = false, 
+								clangFormatMode = false;
+						
+	set<string> 				excludeFilesSet, 
+								excludeDirsSet;
+
+	int 						idCounter = 0;						
+	json 						markerFormatCfg;
 	
-	int idCounter = 0;
-	json markerFormatCfg;
-	filesystem::path inputDir;
-	filesystem::path outputDir;
-	std::vector<filesystem::path> pathQueue;
-	std::vector<std::string> toolArgs = {
-		"-xc", 							// Treat the input as C code, can sometimes use xc++ for enhanced recovery.
-		"-std=c17", 					// Use a specific C standard, https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3176.pdf C17 stable bugfix release.
-		"-nostdinc",					// Don't search for system headers
-		"-Wno-all",						// Suppress all warnings, W-prefix stands for warning.
-	};
+	vector<filesystem::path> 	pathQueue;
+	vector<string> 				toolArgs = {
+									"-xc", 							// Treat the input as C code, can sometimes use xc++ for enhanced recovery.
+									"-std=c17", 					// Use a C standard, https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3176.pdf C17 stable bugfix release. Hangt echter meer af van gebruiksfrequentie.
+									"-nostdinc",					// Don't search for system headers
+									"-Wno-all",						// Suppress all warnings, W-prefix stands for warning.
+								};
 	
 	void loadConfigs(){
 		cout << "Importing JSON configs.\n";
