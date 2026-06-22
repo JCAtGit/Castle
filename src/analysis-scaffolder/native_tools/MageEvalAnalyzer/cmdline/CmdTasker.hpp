@@ -2,14 +2,9 @@
 #include "nlohmann/json.hpp"
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <string>
 #include <unordered_map>
 
-#include "clang/AST/ASTContext.h"
-#include "clang/Frontend/ASTUnit.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Tooling/Tooling.h"
 #include "helper.hpp"
 #include "../analysis/MageEvalAnalyst.hpp"
 

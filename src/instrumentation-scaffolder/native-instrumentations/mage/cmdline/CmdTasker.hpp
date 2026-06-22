@@ -79,7 +79,7 @@ class CmdTasker{
 	
 	/**
 	 * 	Preprocesses files before instrumentation, which include:
-	 * 	Fixing dangling statements from constructs by adding the compound statement node brackets where necessary.
+	 * 	Fixing dangling statements from constructs by adding the compound statement node brackets where necessary, does not work perfectly and thus can break.
 	 * 	FIXME: 
 	 *		Fix format to be performed on the on the copy-over instead when required. Retain path and dir whilst doing so.
 	 */
