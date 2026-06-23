@@ -12,6 +12,7 @@
 #include "matrix.hpp"
 #include "json.hpp"
 #include "stats.hpp"
+#include "binaries.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -19,16 +20,17 @@ using namespace std;
 // TODO: SE 
 class MageEvalComparer{
 	private:
-		vector<filesystem::path> &inputDirs;
-		filesystem::path &outputPath;									// use outputPath as dir to retrieve previously existing aggregated data from.
+		vector<filesystem::path> 				&inputDirs;
+		filesystem::path 						&outputPath;						// use outputPath as dir to retrieve previously existing aggregated data from.
 		
-		unordered_map<string, Matrix<double>> 	constructZMatrixMap; 	// contains constructs - Z value evals related to the summaries.
-		unordered_map<string, Matrix<double>> 	constructPMatrixMap;	// contains constructs - P value evals related to the summaries.
-		Matrix<double>							generalZMatrix;			// contains general    - Z value evals related to the summaries.
-		Matrix<double>							generalPMatrix;			// contains general    - P value evals related to the summaries.
+		unordered_map<string, Matrix<double>> 	constructZMatrixMap; 				// contains constructs - Z value evals related to the summaries.
+		unordered_map<string, Matrix<double>> 	constructPMatrixMap;				// contains constructs - P value evals related to the summaries.
+		Matrix<double>							generalZMatrix;						// contains general    - Z value evals related to the summaries.
+		Matrix<double>							generalPMatrix;						// contains general    - P value evals related to the summaries.
 
-		const string summaryFilename = "summary.json";
-		vector<json> summaryData;
+		const string 							summaryFilename = "summary.json";
+		const string 							metadataCmd = "llvm-readelf --elf-output-style=JSON --pretty-print -h -p .comment ";
+		vector<json> 							summaryData, binaryMetadata;
 
 	public:
 	MageEvalComparer(vector<filesystem::path> &inputDirs, filesystem::path &outputPath) :
@@ -37,10 +39,17 @@ class MageEvalComparer{
 	generalZMatrix(inputDirs.size(), inputDirs.size()),
 	generalPMatrix(inputDirs.size(), inputDirs.size())
 	{
+		string datastringHolder;
 		sort(inputDirs.begin(),inputDirs.end());
 		for(int i=0 ; i<inputDirs.size() ; i++){
 			summaryData.push_back(json::object());
-			loadJSON(inputDirs[i].string() + summaryFilename, summaryData[i]); // TODO
+			loadJSON(inputDirs[i].string() + summaryFilename, summaryData[i]);
+			
+			// TODO: load/fetch binary metadata
+//			execCommandAndCaptureOutput(metadataCmd + "todo: binpath", datastringHolder);
+			
+//			binaryMetadata.push_back(json::parse(datastringHolder));
+//			datastringHolder.clear();
 		}		
 	}	
 	

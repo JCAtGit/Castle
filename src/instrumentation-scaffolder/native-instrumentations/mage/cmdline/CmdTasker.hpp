@@ -86,7 +86,7 @@ class CmdTasker{
 	void preprocessQueueItem(filesystem::path path2process){
 		if(!clangFormatMode) {return;}
 		string command = "clang-format -i --style=\"{InsertBraces: true, BasedOnStyle: LLVM, SortIncludes: false}\" " + path2process.string(); // als same dir input gefixt is dan deze weer aanpassen?
-	    int status = std::system(command.c_str());
+	    int status = system(command.c_str());
 	}
 	
 	void processSingle(){

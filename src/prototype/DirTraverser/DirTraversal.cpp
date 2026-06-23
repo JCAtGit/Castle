@@ -2,16 +2,12 @@
 #include <filesystem>
 #include "clang/Tooling/Tooling.h"
 
-#include "../marker-injector/filereader/filereader.h"
+#include "helper.hpp"
 
 namespace fs = std::filesystem;
 
 using namespace clang;
-
-string rel_outputPath(string dirIn, string pathIn){
-	fs::path rel_path = fs::relative(pathIn, dirIn);
-	return rel_path;	
-}
+using namespace std;
 
 void ensureDirExists(fs::path src_path, fs::path dst_path){
 	if (fs::is_directory(src_path)) {
@@ -66,5 +62,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     traverse(argv[1], argv[2]);
+	
+	
     return 0;
 }

@@ -1,14 +1,6 @@
 #include <CLI/CLI.hpp>
 #include "cmdline/CmdTasker.hpp"
 
-/**
- * 	TODO:
- * 		Rekening houden met macros
- * 		Naar CLI11 ombouwen
- * 		Niet alleen markers toevoegen maar ook no-inline attribute toevoegen aan methoden/functies
- * 		Rework EVERYTHING SE-wise
- */
-
  struct { // TODO: part of rework
  		set<string> excludeFilesSet;
  		set<string> excludeDirsSet;

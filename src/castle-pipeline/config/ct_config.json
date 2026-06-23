@@ -1,53 +1,10 @@
 {
 	"targets":[
 		{
-			"pipeline":[
-				{
-					"name":"CodebaseScaffolderDev",
-					"tgtDir":"",
-					"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/CodebaseScaffolder",
-					"static_options":[],
-					"run_bin_as_shell":false,
-					"outputFlag":"",
-					"active":true
-				},
-				{
-					"name":"InstrumentationScafolderDev",
-					"tgtDir":"",
-					"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/InstrumentationScaffolder",
-					"static_options":[],
-					"run_bin_as_shell":false,
-					"outputFlag":"",
-					"active":true
-				},
-				{
-					"name":"BuildScaffolderDev",
-					"tgtDir":"",
-					"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/BuildScaffolder",
-					"static_options":[],
-					"run_bin_as_shell":false,
-					"outputFlag":"",
-					"active":true
-				},
-				{
-					"name":"DecomScaffolderDev",
-					"tgtDir":"",
-					"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/DecomScaffolder",
-					"static_options":[],
-					"run_bin_as_shell":false,
-					"outputFlag":"",
-					"active":true
-				},
-				{
-					"name":"EvalScaffolderDev",
-					"tgtDir":"",
-					"binPath":"/home/user/eclipse-workspace/DE_CompilationBenchmarker/build/cmake.run.linux.x86_64.Local/EvalScaffolder",
-					"static_options":[],
-					"run_bin_as_shell":true,
-					"outputFlag":"",
-					"active":true
-				},
-			],
+			"x86_ghidra?":
+				[
+					{"tConfigPath", "sConfigPath"}
+				],
 			"name":"pipeline-default-dev",
 			"tgtDir":"/home/user/Desktop/CASTLE/",
 			"binPath":"",
@@ -57,5 +14,6 @@
 			"active":true,
 			"comments":"Uses no flags for the pipeline items, so they use the specified default configs in the source directories."
 		}
-	]
+	],
+	"comments": "sConfig should hold Scaffolder selection id?, compiler(s) information is extracted from the build section"
 }

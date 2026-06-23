@@ -121,9 +121,6 @@ class MageEvalAnalyst{
 	}
 	
 	/**
-	 *	TODO: 
-	 *		Calc is WRONG, REWORK!
-	 *		Get exact marker totals using Mage's initial instrumentation enhancements
 	 * 	Sample Data Comparison (Statistical Testing).
 	 */
 	void summaryStochasticPass(json& summary){

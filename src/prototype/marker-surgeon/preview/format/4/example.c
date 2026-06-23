@@ -1,1 +1,0 @@
-__sync_synchronize

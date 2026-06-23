@@ -4,7 +4,7 @@
 #include <iostream>
 #include <filesystem>
 #include <string>
-#include "../../../include/helper.hpp"
+#include "helper.hpp"
 namespace fs = std::filesystem;
 
 int main(int argc, char* argv[]) {
@@ -28,5 +28,7 @@ int main(int argc, char* argv[]) {
 	
 	if (argc > 2)
 		std::cout << "rel_path: " << rel_outputPath(argv[1], argv[2]) << "\n";
+	
+	
     return 0;
 }
