@@ -18,7 +18,19 @@
 using namespace nlohmann;
 using namespace std;
 
-// TODO: SE 
+// TODO: SE improvements
+/**
+ * 	TODO: 
+ *		- Unified summary of listed dirs.
+ *		We add all the numbers of the required summaries and then calculate new odds.
+ *		- SE improvements for probabilities?
+ *		Move probabilities under own object
+ *	Considerations:
+ *		- Inclusie oracleMarkedTypes?
+ *		DeclStmt is een stmt waar decompilers moeite mee hebben, de lijst toont een glimps van waar mee geworsteld wordt.
+ *		Echter is de lijst aanzienlijk en is deze voor de summary misschien overbodig.
+ */
+
 class MageEvalComparer{
 	private:
 		vector<filesystem::path> 				&inputDirs;
@@ -88,6 +100,29 @@ class MageEvalComparer{
 			exportZGeneralMatrixToCSV(outputPath.string() + "General.csv", generalZMatrix, generalPMatrix, "General");
 		}
 	
+		// TODO: Implement
+		void createUnifiedSummary(){
+			// count up basic numbers
+			json unifiedSummary = json::object();
+			for(auto summary:summaryData){
+				// tally up constructs
+				for(auto constructData:summary["constructs"]){
+					for(auto [key, val]:constructData.items()){
+						if(val.is_object()){
+							
+						} else {
+							
+						}
+					}
+				}
+				
+				// tally up metadata
+			}
+			
+			// recalc odds for constructs and metadata
+			// save to unifiedSummary or simply summary?
+		}
+		
 		template <typename T>
 		void exportZConstructMatrixToCSV(const string& path, Matrix<T>& contextZData, Matrix<T>& contextPData, const string& contextKey){
 			ostringstream oss;
