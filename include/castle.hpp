@@ -4,18 +4,16 @@
 
 using namespace std;
 
-
-// Does not account for relative constructs such as ../ or ./, just absolute paths.
-filesystem::path getTopLvlDirFromAbsPath(filesystem::path somePath){
-	if(somePath.is_absolute()){
-		
-	} else throw "Path is not absolute";
-}
-
-
-// Als deze heel vaak uitgevoerd wordt, dan kunnen we beter een toegewijde TRIE-datastructuur implementeren.
-void getBinaryPathsFromTConfigName(string &buildScaffolderDir ,string & AnalysisTConfigName){
-	// First we trim until the build dir substring
-	string buildPathSubstr = AnalysisTConfigName.substr();
-
+string getCastleFormatBuildNameFromAnalysisName(string analysisNameFormatString){
+	if((analysisNameFormatString.at(0) == '_') || analysisNameFormatString.size() < 9) {throw "Error: getCastleFormatBuildNameFromAnalysisName";}
+	int cnt = 0;
+	for(int i=1;i<analysisNameFormatString.length();i++){
+		if(analysisNameFormatString.at(i) == '_'){
+			cnt++;
+			if (cnt == 3){
+				return analysisNameFormatString.substr(0, i);
+			}
+		}
+	}
+	return analysisNameFormatString;
 }

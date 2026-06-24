@@ -9,9 +9,12 @@ ninja
 cmake
 make
 boost-devel
-
+radare2
 
 ### Pipeline Packages and instructions
+sudo dnf install qt5-qtbase-devel qt5-qtscript-devel qt5-qttools-devel git make gcc-c++
+sudo dnf install qt6-qtbase-devel qt6-qtscript-devel qt6-qttools-devel qt6-qt5compat-devel qt6-qtdeclarative-devel git make gcc-c++
+
 csmith
 csmith-devel
 

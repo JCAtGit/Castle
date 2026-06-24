@@ -1,7 +1,15 @@
 #include <CLI/CLI.hpp>
 #include "cmdline/CmdTasker.hpp"
 
- struct { // TODO: part of rework
+/**
+ * 	TODO: 
+ *		- Addition of dangling child check, only useful if decompilers get more accurate.
+ *		Include deeper inspection of dangling stmts, which is useful when not using the formatter.
+ *		The inspection should be relatively easy, since without a compound child stmt, we only have a single child to check for.
+ */
+ 
+// TODO: part of arg rework
+ struct { 
  		set<string> excludeFilesSet;
  		set<string> excludeDirsSet;
  		set<string> exclusiveFilesSet;

@@ -1,5 +1,6 @@
 #include <cmath>
 #include <filesystem>
+#include "castle.hpp"
 #include "nlohmann/json.hpp"
 #include <fstream>
 #include <iostream>
@@ -22,6 +23,7 @@ class MageEvalComparer{
 	private:
 		vector<filesystem::path> 				&inputDirs;
 		filesystem::path 						&outputPath;						// use outputPath as dir to retrieve previously existing aggregated data from.
+		const filesystem::path					buildScaffolderDir = "/home/user/Desktop/CCastle/CCastleData/BuildScaffolder/";
 		
 		unordered_map<string, Matrix<double>> 	constructZMatrixMap; 				// contains constructs - Z value evals related to the summaries.
 		unordered_map<string, Matrix<double>> 	constructPMatrixMap;				// contains constructs - P value evals related to the summaries.
@@ -29,9 +31,12 @@ class MageEvalComparer{
 		Matrix<double>							generalPMatrix;						// contains general    - P value evals related to the summaries.
 
 		const string 							summaryFilename = "summary.json";
-		const string 							metadataCmd = "llvm-readelf --elf-output-style=JSON --pretty-print -h -p .comment ";
-		vector<json> 							summaryData, binaryMetadata;
+		const string 							binMetadataCmd 	= "rabin2 -j -I ";
 
+		vector<json> 							summaryData, binaryMetadata;
+		const vector<string>					radare2Keys = {
+			"arch",  "bits", "bintype", "class", "compiler", "endian", "lang", "machine", "os"
+		};
 	public:
 	MageEvalComparer(vector<filesystem::path> &inputDirs, filesystem::path &outputPath) :
 	inputDirs(inputDirs), outputPath(outputPath), 
@@ -39,17 +44,30 @@ class MageEvalComparer{
 	generalZMatrix(inputDirs.size(), inputDirs.size()),
 	generalPMatrix(inputDirs.size(), inputDirs.size())
 	{
-		string datastringHolder;
+		string dataStringHolder;
+		string binaryDirsTarget;
+		string command;
 		sort(inputDirs.begin(),inputDirs.end());
+		cout << inputDirs.size() << "\n";
 		for(int i=0 ; i<inputDirs.size() ; i++){
 			summaryData.push_back(json::object());
 			loadJSON(inputDirs[i].string() + summaryFilename, summaryData[i]);
+			cout << "TEST0 " << inputDirs[i].parent_path().filename().string() << "\n";
+
+			binaryDirsTarget = getCastleFormatBuildNameFromAnalysisName(inputDirs[i].parent_path().filename().string()); 
+			cout << "TEST1 " << binaryDirsTarget << "\n";
+			cout << "TEST2 " << buildScaffolderDir / binaryDirsTarget << "\n";
+			for(const auto& entry : filesystem::recursive_directory_iterator(buildScaffolderDir / binaryDirsTarget)){
+				// TODO perform extraction and then break, assuming all other binaries have comparable settings.
+				command = binMetadataCmd + (buildScaffolderDir / binaryDirsTarget).string() + "/" + entry.path().filename().string();
+				cout << command << "\n";
+				execCommandAndCaptureOutput(command, dataStringHolder);
+				break;
+			}
 			
-			// TODO: load/fetch binary metadata
-//			execCommandAndCaptureOutput(metadataCmd + "todo: binpath", datastringHolder);
-			
-//			binaryMetadata.push_back(json::parse(datastringHolder));
-//			datastringHolder.clear();
+			binaryMetadata.push_back(json::parse(dataStringHolder)["info"]);
+//			cout << "JSONMetadata: \n" << binaryMetadata[i].dump(2) << "\n";
+			dataStringHolder.clear();
 		}		
 	}	
 	
@@ -74,8 +92,14 @@ class MageEvalComparer{
 		void exportZConstructMatrixToCSV(const string& path, Matrix<T>& contextZData, Matrix<T>& contextPData, const string& contextKey){
 			ostringstream oss;
 			oss << scientific << setprecision(3);
-			// export construct and general values to CSV
-			string CSVData = "EntryMapping," + contextKey + ",viableComparisons \n";
+			
+			// Display general characteristics
+			string CSVData = "EntryMapping," + contextKey + ",viableComparisons";
+			
+			for(auto key : radare2Keys){
+				CSVData += "," + key;
+			}
+			CSVData += "\n";
 			
 			for(int i = 0; i<inputDirs.size();i++){
 				int vcCount = 0;
@@ -85,8 +109,21 @@ class MageEvalComparer{
 				CSVData += 
 					to_string(i) 																			+ "," + 
 					get_leaf_string(inputDirs[i].string()) 												+ "," +
-					to_string(vcCount)	+ "\n";
+					to_string(vcCount);
+				
+				for(auto key : radare2Keys){
+					if(binaryMetadata[i][key].is_string()){
+						CSVData	+= "," + binaryMetadata[i][key].get<string>();	
+					} else if(binaryMetadata[i][key].is_number_integer()){
+						CSVData	+= "," + to_string(binaryMetadata[i][key].get<int>());
+					} else {
+						CSVData	+= ", ";
+					}
+				}	
+				CSVData += "\n";	
 			}
+			
+			
 			CSVData += "\n";
 			
 			// Z-Score
@@ -267,7 +304,6 @@ class MageEvalComparer{
 						); 
 						auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
 						double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
-						cout << "PValue: " << pValue <<"\n";
 						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
 //							cout << ZStat2Proportions << " - creating construct matrix \n";
 							constructZMatrixMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
@@ -315,7 +351,6 @@ class MageEvalComparer{
 
 			auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
 			double pValue =  erfc(abs(ZStat2Proportions) / sqrt(2.0));
-			cout << "PValue: " << pValue <<"\n";
 
 			generalZMatrix.at(i,j) = ZStat2Proportions;
 			generalZMatrix.at(j,i) = ZStat2Proportions;
