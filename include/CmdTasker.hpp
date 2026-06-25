@@ -105,14 +105,19 @@ class CmdTasker{
 		for(auto& toolcfg:pt_configData["targets"]){
 			if(!toolcfg["active"].get<bool>()){continue;}
 			cout << toolcfg["name"] << " [" << toolcfg["it_begin"]  << "," << toolcfg["it_end"] << ")\n";
+
 			filesystem::create_directories((ps_configData["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
-				command = 
-					toolcfg["binPath"].get<string>() 	+ " " 	+ 
-					toolcfg["seedFlag"].get<string>() 	+ " " 	+ to_string(toolcfg["it_begin"].get<int>()) 	+ " " 	+
-					toolcfg["outputFlag"].get<string>() + " \"" + ps_configData["outputDir"].get<string>() 				+ 
-					toolcfg["name"].get<string>() 		+ "/" 	+ to_string(toolcfg["it_begin"].get<int>())		+ ".c\"";					
-				
+				command = toolcfg["binPath"].get<string>() 	+ " ";
+				addStaticPreFlags(command, toolcfg);
+				command +=	toolcfg["seedFlag"].get<string>() 	+ " " 	+ to_string(toolcfg["it_begin"].get<int>()) + " ";
+					
+				if(toolcfg["output_arg"].get<bool>()){
+					command += toolcfg["outputFlag"].get<string>() + " " + ps_configData["outputDir"].get<string>();
+					command += toolcfg["name"].get<string>() 		+ "/" 	+ to_string(toolcfg["it_begin"].get<int>()) + toolcfg["it_ext"].get<string>();
+				}
+					
+				addStaticFlags(command, toolcfg);
 				if(toolcfg["run_bin_as_shell"].get<bool>()){command = "bash " + command;}
 				if(toolcfg["redirectNull"].get<bool>()){command = command + " > /dev/null 2>&1";}
 

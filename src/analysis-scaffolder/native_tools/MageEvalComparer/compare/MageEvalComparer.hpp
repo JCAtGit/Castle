@@ -12,7 +12,6 @@
 #include "helper.hpp"
 #include "matrix.hpp"
 #include "json.hpp"
-#include "stats.hpp"
 #include "binaries.hpp"
 
 using namespace nlohmann;
@@ -104,8 +103,12 @@ class MageEvalComparer{
 		void createUnifiedSummary(){
 			// count up basic numbers
 			json unifiedSummary = json::object();
+			unifiedSummary["constructs"] = json::object();
+			unifiedSummary["metadata"] = json::object();
+			
 			for(auto summary:summaryData){
 				// tally up constructs
+				auto& unifiedSummaryConstructs = unifiedSummary["constructs"];
 				for(auto constructData:summary["constructs"]){
 					for(auto [key, val]:constructData.items()){
 						if(val.is_object()){
@@ -117,6 +120,7 @@ class MageEvalComparer{
 				}
 				
 				// tally up metadata
+				auto& unifiedSummaryMetadata = unifiedSummary["metadata"];
 			}
 			
 			// recalc odds for constructs and metadata

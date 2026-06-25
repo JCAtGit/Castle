@@ -452,13 +452,43 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		auto cast_node = llvm::cast<IfStmt>(node);
 		(*findings)["properties"]["has_markee"] = true;
 
+		auto condVar = cast_node->getConditionVariable();
+		if(condVar){
+			(*findings)["properties"]["has_cond_var"] = true;
+			recordQTypeInfo(condVar->getType(), (*findings)["properties"]["cond_var_types"]);
+		} else {
+			(*findings)["properties"]["has_cond_var"] = false;
+		}
+				
 		auto conditionExpr = cast_node->getCond();
 		if(conditionExpr){
+			(*findings)["properties"]["has_cond_expr"] = true;
 			(*findings)["properties"]["cond_stmt_class"] = conditionExpr->getStmtClassName();
 			recordQTypeInfo(conditionExpr->getType(), (*findings)["properties"]["cond_expr_types"]);
 		} else {
+			(*findings)["properties"]["has_cond_expr"] = false;
 			// report to diagnostics, shouldnt happen for C code.
 		}
+		
+		// check for compound or dangling stmt status
+		auto thenStmt = cast_node->getThen();
+		if(thenStmt->getStmtClass() == Stmt::CompoundStmtClass){
+			(*findings)["properties"]["dangling_stmt"] = false;
+			// maybe do more
+		} else {
+			(*findings)["properties"]["dangling_stmt"] = true;
+			// can perform more specific checks if need be
+		}
+
+		auto elseStmt = cast_node->getElse();
+		if(elseStmt){
+			(*findings)["properties"]["has_else"] = true;
+			// maybe do more
+		} else {
+			(*findings)["properties"]["has_else"] = false;
+		}
+		
+		// TODO: Continued branches check
 		return false;
 	}
 	
