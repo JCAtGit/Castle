@@ -45,6 +45,7 @@ class MageEvalComparer{
 		const string 							binMetadataCmd 	= "rabin2 -j -I ";
 
 		vector<json> 							summaryData, binaryMetadata;
+		json									unifiedSummary 	= json::object();
 		const vector<string>					radare2Keys = {
 			"arch",  "bits", "bintype", "class", "compiler", "endian", "lang", "machine", "os"
 		};
@@ -59,15 +60,15 @@ class MageEvalComparer{
 		string binaryDirsTarget;
 		string command;
 		sort(inputDirs.begin(),inputDirs.end());
-		cout << inputDirs.size() << "\n";
+//		cout << inputDirs.size() << "\n";
 		for(int i=0 ; i<inputDirs.size() ; i++){
 			summaryData.push_back(json::object());
 			loadJSON(inputDirs[i].string() + summaryFilename, summaryData[i]);
-			cout << "TEST0 " << inputDirs[i].parent_path().filename().string() << "\n";
+//			cout << "TEST0 " << inputDirs[i].parent_path().filename().string() << "\n";
 
 			binaryDirsTarget = getCastleFormatBuildNameFromAnalysisName(inputDirs[i].parent_path().filename().string()); 
-			cout << "TEST1 " << binaryDirsTarget << "\n";
-			cout << "TEST2 " << buildScaffolderDir / binaryDirsTarget << "\n";
+//			cout << "TEST1 " << binaryDirsTarget << "\n";
+//			cout << "TEST2 " << buildScaffolderDir / binaryDirsTarget << "\n";
 			for(const auto& entry : filesystem::recursive_directory_iterator(buildScaffolderDir / binaryDirsTarget)){
 				// TODO perform extraction and then break, assuming all other binaries have comparable settings.
 				command = binMetadataCmd + (buildScaffolderDir / binaryDirsTarget).string() + "/" + entry.path().filename().string();
@@ -90,6 +91,7 @@ class MageEvalComparer{
 					calcGeneralZTestProportions(summaryData[i], summaryData[j], i, j);
 				}
 			}
+			createUnifiedSummary();
 			
 			cout << "Start exports \n";
 			for(auto [contextKey, contextData] : constructZMatrixMap){
@@ -97,30 +99,50 @@ class MageEvalComparer{
 				exportZConstructMatrixToCSV(outputPath.string() + contextKey + ".csv", contextData, constructPMatrixMap[contextKey], contextKey);
 			}
 			exportZGeneralMatrixToCSV(outputPath.string() + "General.csv", generalZMatrix, generalPMatrix, "General");
+			saveJsonToFile(outputPath.string() + "unified_summary.json", unifiedSummary);
 		}
 	
-		// TODO: Implement
+		// TODO: Implement/Test
 		void createUnifiedSummary(){
 			// count up basic numbers
-			json unifiedSummary = json::object();
 			unifiedSummary["constructs"] = json::object();
 			unifiedSummary["metadata"] = json::object();
 			
 			for(auto summary:summaryData){
 				// tally up constructs
 				auto& unifiedSummaryConstructs = unifiedSummary["constructs"];
-				for(auto constructData:summary["constructs"]){
-					for(auto [key, val]:constructData.items()){
-						if(val.is_object()){
+				for(auto [constructKey, constructData]:summary["constructs"].items()){
+					auto& currentUSConstruct = unifiedSummaryConstructs[constructKey];
+					for(auto [n0Key, n0Val]:constructData.items()){
+						
+						if(n0Val.is_object()){ // currently assumes no further nesting
+							if(currentUSConstruct[n0Key].is_null()){
+								currentUSConstruct[n0Key] = json::object();
+							}
+							for(auto& [n1Key, n1Val]: n0Val.items()){
+								if(currentUSConstruct[n1Key].is_null()){
+									currentUSConstruct[n1Key] = 0;
+								}
+								currentUSConstruct[n1Key] += n1Val;
+							}
 							
 						} else {
-							
+							if(currentUSConstruct[n0Key].is_null()){
+								currentUSConstruct[n0Key] = 0;
+							}
+							currentUSConstruct[n0Key] += n0Val;
 						}
 					}
 				}
 				
 				// tally up metadata
 				auto& unifiedSummaryMetadata = unifiedSummary["metadata"];
+				for(auto& [mKey, mData]:summary["metadata"].items()){
+					if(unifiedSummaryMetadata[mKey].is_null()){
+						unifiedSummaryMetadata[mKey] = 0;
+					}
+					unifiedSummaryMetadata[mKey] += mData;
+				}
 			}
 			
 			// recalc odds for constructs and metadata
