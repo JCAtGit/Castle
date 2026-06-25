@@ -94,7 +94,7 @@ class MageEvalComparer{
 			createUnifiedSummary();
 			
 			cout << "Start exports \n";
-			for(auto [contextKey, contextData] : constructZMatrixMap){
+			for(auto& [contextKey, contextData] : constructZMatrixMap){
 				cout << outputPath.string() + contextKey + ".csv" << "\n";
 				exportZConstructMatrixToCSV(outputPath.string() + contextKey + ".csv", contextData, constructPMatrixMap[contextKey], contextKey);
 			}
@@ -112,20 +112,17 @@ class MageEvalComparer{
 			auto& unifiedSummaryConstructs = unifiedSummary["constructs"];
 			auto& unifiedSummaryMetadata = unifiedSummary["metadata"];
 
-			for(auto summary:summaryData){
+			for(auto& summary:summaryData){
 				// tally up constructs
-				cout << "TEST-1 \n";
 
-				for(auto [constructKey, constructData]:summary["constructs"].items()){
+				for(auto& [constructKey, constructData]:summary["constructs"].items()){
 					if(unifiedSummaryConstructs[constructKey].is_null()){
 						unifiedSummaryConstructs[constructKey] = json::object();
 					}
 					auto& n0USConstruct = unifiedSummaryConstructs[constructKey];
-					cout << "TEST0 \n";
 
-					for(auto [n0Key, n0Val]:constructData.items()){
+					for(auto& [n0Key, n0Val]:constructData.items()){
 						if(n0Val.is_object()){ // currently assumes no further nesting
-							cout << "TEST1 \n";
 
 							if(n0USConstruct[n0Key].is_null()){
 								n0USConstruct[n0Key] = json::object();
@@ -147,7 +144,6 @@ class MageEvalComparer{
 						}
 					}
 				}
-				cout << "tallyho0! \n";
 				// tally up metadata
 				for(auto& [mKey, mData]:summary["metadata"].items()){
 					if(unifiedSummaryMetadata[mKey].is_null()){
@@ -155,33 +151,26 @@ class MageEvalComparer{
 					}
 					unifiedSummaryMetadata[mKey] = unifiedSummaryMetadata[mKey].get<int>() + mData.get<int>();
 				}
-				cout << "tallyho1! \n";
 
 			}
-			cout << "Probs \n";
-
 			
 			for(auto& [constructKey, constructData] :unifiedSummaryConstructs.items()){
-				cout << constructData["viableComparisons"].get<double>() << " : " << constructData["viableComparisons"].get<double>() << " : " << constructKey << " ProbsA \n";
-				if(constructData["viableComparisons"].get<double>() > 0 && constructData["recoveryOfAttr"].contains("recovered_construct")){
-					unifiedSummaryConstructs["P(X)"] = constructData["recoveryOfAttr"]["recovered_construct"].get<double>() / constructData["viableComparisons"].get<double>();
-					unifiedSummaryConstructs["VAR(X)"] = unifiedSummaryConstructs["P(X)"].get<double>() * ( 1 - unifiedSummaryConstructs["P(X)"].get<double>());
+				if(constructData["viableComparisons"].get<double>() > 0 && !constructData["recoveryOfAttr"]["recovered_construct"].is_null()){
+					unifiedSummaryConstructs[constructKey]["P(X)"] = constructData["recoveryOfAttr"]["recovered_construct"].get<double>() / constructData["viableComparisons"].get<double>();
+					unifiedSummaryConstructs[constructKey]["VAR(X)"] = unifiedSummaryConstructs[constructKey]["P(X)"].get<double>() * ( 1 - unifiedSummaryConstructs[constructKey]["P(X)"].get<double>());
 				} else {
-					unifiedSummaryConstructs["P(X)"] = 0;
-					unifiedSummaryConstructs["VAR(X)"] = 0;
+					unifiedSummaryConstructs[constructKey]["P(X)"] = 0;
+					unifiedSummaryConstructs[constructKey]["VAR(X)"] = 0;
 				}
 			}
-			cout << "ProbsB \n";
 
-			if(unifiedSummaryMetadata["viableComparisons"].get<double>() > 0){
+			if(unifiedSummaryMetadata["viableComparisons"].get<double>() > 0 && !unifiedSummaryMetadata["recoveredConstructsTotal"].is_null()){
 				unifiedSummaryMetadata["P(X)"] = unifiedSummaryMetadata["recoveredConstructsTotal"].get<double>() / unifiedSummaryMetadata["viableComparisons"].get<double>();
 				unifiedSummaryMetadata["VAR(X)"] = unifiedSummaryMetadata["P(X)"].get<double>() * (1 - unifiedSummaryMetadata["P(X)"].get<double>());
 			} else {
 				unifiedSummaryMetadata["P(X)"] = 0;
 				unifiedSummaryMetadata["VAR(X)"] = 0;
 			}
-			
-			// TODO: recalc odds for constructs and metadata
 		}
 		
 		template <typename T>
