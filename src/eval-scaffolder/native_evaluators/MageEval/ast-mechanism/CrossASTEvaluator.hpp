@@ -180,9 +180,9 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_has_else"] = false;
 			return false;
 		}
-	
+
 		// condvar tests
-		if(findingsOracle["properties"]["has_init"] && findingsDecom["properties"]["has_init"]){
+		if(findingsOracle["properties"]["has_cond_var"] && findingsDecom["properties"]["has_cond_var"]){
 			markerFindingsResult["parity_has_cond_var"] = true;
 			markerFindingsResult["parity_cond_var_stmt_class"] = findingsOracle["properties"]["cond_var_stmt_class"] == findingsDecom["properties"]["cond_var_stmt_class"];
 			
@@ -237,7 +237,6 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_incr_expr_types"] = false;
 			return false;
 		}
-		
 		// init test
 		if(findingsOracle["properties"]["has_init"] && findingsDecom["properties"]["has_init"]){
 			markerFindingsResult["parity_has_init"] = true;
@@ -254,7 +253,7 @@ class CrossASTEvaluator{
 		}
 		
 		// condvar tests
-		if(findingsOracle["properties"]["has_init"] && findingsDecom["properties"]["has_init"]){
+		if(findingsOracle["properties"]["has_cond_var"] && findingsDecom["properties"]["has_cond_var"]){
 			markerFindingsResult["parity_has_cond_var"] = true;
 			markerFindingsResult["parity_cond_var_stmt_class"] = findingsOracle["properties"]["cond_var_stmt_class"] == findingsDecom["properties"]["cond_var_stmt_class"];
 			
@@ -432,7 +431,7 @@ class CrossASTEvaluator{
 		}
 		
 		// condvar tests
-		if(findingsOracle["properties"]["has_init"] && findingsDecom["properties"]["has_init"]){
+		if(findingsOracle["properties"]["has_cond_var"] && findingsDecom["properties"]["has_cond_var"]){
 			markerFindingsResult["parity_has_cond_var"] = true;
 			markerFindingsResult["parity_cond_var_stmt_class"] = findingsOracle["properties"]["cond_var_stmt_class"] == findingsDecom["properties"]["cond_var_stmt_class"];
 			

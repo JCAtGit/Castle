@@ -471,15 +471,15 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		}
 		
 		// check for compound or dangling stmt status
+		(*findings)["properties"]["dangling_stmt"] = true;
 		auto thenStmt = cast_node->getThen();
-		if(thenStmt->getStmtClass() == Stmt::CompoundStmtClass){
-			(*findings)["properties"]["dangling_stmt"] = false;
-			// maybe do more
-		} else {
-			(*findings)["properties"]["dangling_stmt"] = true;
-			// can perform more specific checks if need be
+		if(thenStmt){
+			if(thenStmt->getStmtClass() == Stmt::CompoundStmtClass){
+				(*findings)["properties"]["dangling_stmt"] = false;
+				// maybe do more
+			}
 		}
-
+		
 		auto elseStmt = cast_node->getElse();
 		if(elseStmt){
 			(*findings)["properties"]["has_else"] = true;
