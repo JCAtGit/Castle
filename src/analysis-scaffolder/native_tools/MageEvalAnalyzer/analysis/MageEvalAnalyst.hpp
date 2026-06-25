@@ -81,6 +81,9 @@ class MageEvalAnalyst{
 					if(summary["constructs"][decomData["ASTNode"].get<string>()]["viableComparisons"].is_null()){
 						summary["constructs"][decomData["ASTNode"].get<string>()]["viableComparisons"] = 0;
 					}
+					if(summary["constructs"][decomData["ASTNode"].get<string>()]["recoveryOfAttr"]["recovered_construct"].is_null()){
+						summary["constructs"][decomData["ASTNode"].get<string>()]["recoveryOfAttr"]["recovered_construct"] = 0;
+					}
 				}
 				
 //				summary["metadata"]["oracleMissingTotal"][markerID] = finding["decom"].size(); // useful for diagnostics?
@@ -88,6 +91,8 @@ class MageEvalAnalyst{
 			
 			if(finding["decom"].size() > 1){
 				incrementJSONEntry(summary["metadata"]["markerDuplication"]);
+			} else if(summary["metadata"]["markerDuplication"].is_null()){
+				summary["metadata"]["markerDuplication"] = 0;
 			}
 		}
 	}
@@ -96,27 +101,23 @@ class MageEvalAnalyst{
 		for(auto [markerID, evalData] : jsonData.items()){
 			for(const auto& evalElement: evalData){
 				auto &crrntItem = summary["constructs"][evalElement["markee_construct"]]["recoveryOfAttr"];
+				if (crrntItem.is_null()) {crrntItem = json::object();}
 				if(evalElement["recovered_construct"].get<bool>()){
-					incrementJSONEntry(summary["metadata"]["recoveredConstructsTotal"]);
-					if (crrntItem.is_null()) {crrntItem = json::object();}
 					for(auto [key, val]: evalElement.items()){
 						if(key == "markee_construct"){continue;} 
-						if(val.get<bool>()){
-							incrementJSONEntry(crrntItem[key]);
-						} else if (crrntItem[key].is_null()){
-							crrntItem[key] = 0;
-						}
+						if (crrntItem[key].is_null()){crrntItem[key] = 0;}
+						if(val.get<bool>()){incrementJSONEntry(crrntItem[key]);}
 					}
-					
+					incrementJSONEntry(summary["metadata"]["recoveredConstructsTotal"]);
+
 				} else {
 					// Unsuccessful recovery is labeled as deterioration, i.e. recovered_construct == false.
 					// TODO: set recoverOfAttr to zero for each attr regardless of any found?
-					if(crrntItem.is_null()){
-						for(auto [key, val]: evalElement.items()){
-							if(key == "markee_construct"){continue;} 
-							crrntItem[key] = 0;
-						}
+					for(auto [key, val]: evalElement.items()){
+						if(key == "markee_construct"){continue;} 
+						if (crrntItem[key].is_null()){crrntItem[key] = 0;}
 					}
+					
 					incrementJSONEntry(summary["metadata"]["deterioratedConstructsTotal"]);
 				}
 			}
@@ -134,7 +135,7 @@ class MageEvalAnalyst{
 		// calculate p and variance for all constructs and in general
 		for(auto [construct, constructData]: summary["constructs"].items()){
 			if(constructData.contains("oracleTotal")){
-				if(constructData.contains("recoveryOfAttr")){
+				if(constructData.contains("recoveryOfAttr") && constructData["viableComparisons"].get<double>() > 0){
 					constructData["P(X)"] = constructData["recoveryOfAttr"]["recovered_construct"].get<double>() / constructData["viableComparisons"].get<double>();
 					constructData["VAR(X)"] = constructData["P(X)"].get<double>() * (1 - constructData["P(X)"].get<double>());
 				} else {

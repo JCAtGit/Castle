@@ -276,40 +276,35 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	// Voor FunctionDecl aparte entries maken op basis van CallExpr
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
-		(*findings)["properties"]["has_markee"] = false;
+		(*findings)["properties"]["has_markee"] = true;
 
 		(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
 		(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
-		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
+//		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
 		
+		(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
+		(*findings)["properties"]["args"] = json::array();
+
+		for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
+			recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
+		}
+
 		auto DC = cast_node->getDirectCallee();
 		if(!DC){
-			(*findings)["properties"]["has_direct_callee"] = false;
-			// TODO: what if DC is null, then the eval will produce errors currently
+			(*findings)["properties"]["has_direct_callee"] = false; // TODO: Rework, because exit is unnecessary
 			return false;
 		}
 		(*findings)["properties"]["has_direct_callee"] = true;
-		
 		auto DCName = DC->getNameInfo().getName().getAsString();
-		if(DCName == markerFormat["name"].get<string>()){
-			return false;
-		}
-		(*findings)["properties"]["has_markee"] = true;
 
 		(*findings)["properties"]["direct_callee_name"] = DCName;
 		(*findings)["properties"]["is_variadic"] = DC->isVariadic();
 		(*findings)["properties"]["num_params"] = DC->getNumParams();
-		(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
 		(*findings)["properties"]["params"] = json::array();
-		(*findings)["properties"]["args"] = json::array();
 
-        for (unsigned i = 0; i < DC->getNumParams(); ++i) {
+		for (unsigned i = 0; i < DC->getNumParams(); ++i) {
 			recordQTypeInfo(DC->getParamDecl(i)->getType(), (*findings)["properties"]["param_types"]);
         }
-		
-		for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
-			recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
-		}
 		return false;
 	}
 	

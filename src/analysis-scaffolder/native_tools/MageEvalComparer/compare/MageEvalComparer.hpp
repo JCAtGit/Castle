@@ -114,13 +114,19 @@ class MageEvalComparer{
 
 			for(auto summary:summaryData){
 				// tally up constructs
+				cout << "TEST-1 \n";
+
 				for(auto [constructKey, constructData]:summary["constructs"].items()){
 					if(unifiedSummaryConstructs[constructKey].is_null()){
 						unifiedSummaryConstructs[constructKey] = json::object();
 					}
 					auto& n0USConstruct = unifiedSummaryConstructs[constructKey];
+					cout << "TEST0 \n";
+
 					for(auto [n0Key, n0Val]:constructData.items()){
 						if(n0Val.is_object()){ // currently assumes no further nesting
+							cout << "TEST1 \n";
+
 							if(n0USConstruct[n0Key].is_null()){
 								n0USConstruct[n0Key] = json::object();
 							}
@@ -141,7 +147,7 @@ class MageEvalComparer{
 						}
 					}
 				}
-				cout << "tallyho! \n";
+				cout << "tallyho0! \n";
 				// tally up metadata
 				for(auto& [mKey, mData]:summary["metadata"].items()){
 					if(unifiedSummaryMetadata[mKey].is_null()){
@@ -149,15 +155,32 @@ class MageEvalComparer{
 					}
 					unifiedSummaryMetadata[mKey] = unifiedSummaryMetadata[mKey].get<int>() + mData.get<int>();
 				}
+				cout << "tallyho1! \n";
+
 			}
-			
+			cout << "Probs \n";
+
 			
 			for(auto& [constructKey, constructData] :unifiedSummaryConstructs.items()){
-				unifiedSummaryConstructs["P(X)"] = constructData["recoveryOfAttr"]["recovered_construct"].get<double>() / constructData["viableComparisons"].get<double>();
-				unifiedSummaryConstructs["VAR(X)"] = unifiedSummaryConstructs["P(X)"].get<double>() * ( 1 - unifiedSummaryConstructs["P(X)"].get<double>());
+				cout << constructData["viableComparisons"].get<double>() << " : " << constructData["viableComparisons"].get<double>() << " : " << constructKey << " ProbsA \n";
+				if(constructData["viableComparisons"].get<double>() > 0 && constructData["recoveryOfAttr"].contains("recovered_construct")){
+					unifiedSummaryConstructs["P(X)"] = constructData["recoveryOfAttr"]["recovered_construct"].get<double>() / constructData["viableComparisons"].get<double>();
+					unifiedSummaryConstructs["VAR(X)"] = unifiedSummaryConstructs["P(X)"].get<double>() * ( 1 - unifiedSummaryConstructs["P(X)"].get<double>());
+				} else {
+					unifiedSummaryConstructs["P(X)"] = 0;
+					unifiedSummaryConstructs["VAR(X)"] = 0;
+				}
 			}
-			unifiedSummaryMetadata["P(X)"] = unifiedSummaryMetadata["recoveredConstructsTotal"].get<double>() / unifiedSummaryMetadata["viableComparisons"].get<double>();
-			unifiedSummaryMetadata["VAR(X)"] = unifiedSummaryMetadata["P(X)"].get<double>() * (1 - unifiedSummaryMetadata["P(X)"].get<double>());
+			cout << "ProbsB \n";
+
+			if(unifiedSummaryMetadata["viableComparisons"].get<double>() > 0){
+				unifiedSummaryMetadata["P(X)"] = unifiedSummaryMetadata["recoveredConstructsTotal"].get<double>() / unifiedSummaryMetadata["viableComparisons"].get<double>();
+				unifiedSummaryMetadata["VAR(X)"] = unifiedSummaryMetadata["P(X)"].get<double>() * (1 - unifiedSummaryMetadata["P(X)"].get<double>());
+			} else {
+				unifiedSummaryMetadata["P(X)"] = 0;
+				unifiedSummaryMetadata["VAR(X)"] = 0;
+			}
+			
 			// TODO: recalc odds for constructs and metadata
 		}
 		
@@ -328,7 +351,6 @@ class MageEvalComparer{
 
 					// calculate success/failure condition
 					if(iConstructData.contains("viableComparisons") && jConstructData.contains("viableComparisons")){
-
 						auto niOracle = iConstructData["viableComparisons"].get<double>();
 						auto piOracle = iConstructData["P(X)"].get<double>();
 
@@ -337,6 +359,8 @@ class MageEvalComparer{
 
 						// success/failure condition expectation test for 3 sds, allows normal approximation to a binomial distribution
 						// ensure both are eligible for proportion test
+						cout << "TESTA \n";
+
 						if(
 							(
 								niOracle * piOracle 		< 10 ||
@@ -352,6 +376,8 @@ class MageEvalComparer{
 						}
 
 						// De sample proportions zijn in dit geval hetzelfde als P(X), dus alleen pooled proportions uitrekenen.
+						cout << "TESTB \n";
+
 						auto pooledProportion = (
 							(
 								iConstructData["recoveryOfAttr"]["recovered_construct"].get<double>() + 
@@ -360,6 +386,8 @@ class MageEvalComparer{
 								niOracle + njOracle
 							)
 						);
+						cout << "TESTC \n";
+
 						// calc Z statistic, for large disproportions between case 1 and 2 use unpooled (Wald) standard error instead of pooled?
 						// We have to make/choose certain assumptions, which validate the approach, i.e. pool vs unpooled. 
 						// Do we assume the null hypothesis is true? Or do we remain reserved without assuming H0?
@@ -375,6 +403,7 @@ class MageEvalComparer{
 								(1 / njOracle)
 							)
 						); 
+						cout << "TESTZERO \n";
 						auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
 						double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
 						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){

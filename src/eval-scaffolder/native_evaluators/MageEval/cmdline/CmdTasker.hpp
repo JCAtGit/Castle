@@ -65,7 +65,6 @@ class CmdTasker{
 			cout<< "processDir" << "\n";
 			string fileOracleData;
 			string fileDecomData;
-
 			
 			CAGatherer.selectMode(1);
 			for(auto entry :filesystem::recursive_directory_iterator(oracleDir)){ // voor elke moeten we apart een save to findings, etc maken.

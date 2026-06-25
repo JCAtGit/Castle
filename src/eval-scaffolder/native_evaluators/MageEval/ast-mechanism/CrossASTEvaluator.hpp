@@ -99,6 +99,8 @@ class CrossASTEvaluator{
 	bool processStmtGeneral(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
+		
+//		if(!markerFindingsResult["recovered_construct"]){}
 		return false;
 	}
 	
@@ -465,22 +467,22 @@ class CrossASTEvaluator{
 	}
 		
 	
-	bool processImplicitCastExpr(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
-		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
-		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
-		
-		// TODO:
-//		if(markerFindingsResult["recovered_construct"]){}
-		return false;
-	}
-	
-	bool processRecoveryExpr(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
-		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
-		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
-		
-		// TODO:
-//		if(markerFindingsResult["recovered_construct"]){}
-		return false;
-	}
+//	bool processImplicitCastExpr(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
+//		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+//		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
+//		
+//		// TODO:
+////		if(markerFindingsResult["recovered_construct"]){}
+//		return false;
+//	}
+//	
+//	bool processRecoveryExpr(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
+//		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
+//		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
+//		
+//		// TODO:
+////		if(markerFindingsResult["recovered_construct"]){}
+//		return false;
+//	}
 };
 
