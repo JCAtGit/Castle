@@ -72,7 +72,7 @@ class MageEvalComparer{
 			for(const auto& entry : filesystem::recursive_directory_iterator(buildScaffolderDir / binaryDirsTarget)){
 				// TODO perform extraction and then break, assuming all other binaries have comparable settings.
 				command = binMetadataCmd + (buildScaffolderDir / binaryDirsTarget).string() + "/" + entry.path().filename().string();
-				cout << command << "\n";
+//				cout << command << "\n";
 				execCommandAndCaptureOutput(command, dataStringHolder);
 				break;
 			}
@@ -104,49 +104,61 @@ class MageEvalComparer{
 	
 		// TODO: Implement/Test
 		void createUnifiedSummary(){
+			cout << "createUnifiedSummary \n";
 			// count up basic numbers
 			unifiedSummary["constructs"] = json::object();
 			unifiedSummary["metadata"] = json::object();
 			
+			auto& unifiedSummaryConstructs = unifiedSummary["constructs"];
+			auto& unifiedSummaryMetadata = unifiedSummary["metadata"];
+
 			for(auto summary:summaryData){
 				// tally up constructs
-				auto& unifiedSummaryConstructs = unifiedSummary["constructs"];
 				for(auto [constructKey, constructData]:summary["constructs"].items()){
-					auto& currentUSConstruct = unifiedSummaryConstructs[constructKey];
+					if(unifiedSummaryConstructs[constructKey].is_null()){
+						unifiedSummaryConstructs[constructKey] = json::object();
+					}
+					auto& n0USConstruct = unifiedSummaryConstructs[constructKey];
 					for(auto [n0Key, n0Val]:constructData.items()){
-						
 						if(n0Val.is_object()){ // currently assumes no further nesting
-							if(currentUSConstruct[n0Key].is_null()){
-								currentUSConstruct[n0Key] = json::object();
+							if(n0USConstruct[n0Key].is_null()){
+								n0USConstruct[n0Key] = json::object();
 							}
+							auto& n1USCOnstruct = n0USConstruct[n0Key];
+
 							for(auto& [n1Key, n1Val]: n0Val.items()){
-								if(currentUSConstruct[n1Key].is_null()){
-									currentUSConstruct[n1Key] = 0;
+								if(n1USCOnstruct[n1Key].is_null()){
+									n1USCOnstruct[n1Key] = 0;
 								}
-								currentUSConstruct[n1Key] += n1Val;
+								n1USCOnstruct[n1Key] = n1USCOnstruct[n1Key].get<int>() + n1Val.get<int>();
 							}
 							
 						} else {
-							if(currentUSConstruct[n0Key].is_null()){
-								currentUSConstruct[n0Key] = 0;
+							if(n0USConstruct[n0Key].is_null()){
+								n0USConstruct[n0Key] = 0;
 							}
-							currentUSConstruct[n0Key] += n0Val;
+							n0USConstruct[n0Key] = n0USConstruct[n0Key].get<int>() + n0Val.get<int>();
 						}
 					}
 				}
-				
+				cout << "tallyho! \n";
 				// tally up metadata
-				auto& unifiedSummaryMetadata = unifiedSummary["metadata"];
 				for(auto& [mKey, mData]:summary["metadata"].items()){
 					if(unifiedSummaryMetadata[mKey].is_null()){
 						unifiedSummaryMetadata[mKey] = 0;
 					}
-					unifiedSummaryMetadata[mKey] += mData;
+					unifiedSummaryMetadata[mKey] = unifiedSummaryMetadata[mKey].get<int>() + mData.get<int>();
 				}
 			}
 			
-			// recalc odds for constructs and metadata
-			// save to unifiedSummary or simply summary?
+			
+			for(auto& [constructKey, constructData] :unifiedSummaryConstructs.items()){
+				unifiedSummaryConstructs["P(X)"] = constructData["recoveryOfAttr"]["recovered_construct"].get<double>() / constructData["viableComparisons"].get<double>();
+				unifiedSummaryConstructs["VAR(X)"] = unifiedSummaryConstructs["P(X)"].get<double>() * ( 1 - unifiedSummaryConstructs["P(X)"].get<double>());
+			}
+			unifiedSummaryMetadata["P(X)"] = unifiedSummaryMetadata["recoveredConstructsTotal"].get<double>() / unifiedSummaryMetadata["viableComparisons"].get<double>();
+			unifiedSummaryMetadata["VAR(X)"] = unifiedSummaryMetadata["P(X)"].get<double>() * (1 - unifiedSummaryMetadata["P(X)"].get<double>());
+			// TODO: recalc odds for constructs and metadata
 		}
 		
 		template <typename T>

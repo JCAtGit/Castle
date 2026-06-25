@@ -56,6 +56,13 @@ class MageEvalAnalyst{
 						nodeOracleStats["viableComparisons"] = 0;
 					}
 					incrementJSONEntry(nodeOracleStats["absentCorrespondingDecomMarker"]);
+					if(recoveredAsMarkee.is_null()){
+						recoveredAsMarkee = json::object();
+					}
+					if(nodeOracleStats["recoveryOfAttr"]["recovered_construct"].is_null()){
+						nodeOracleStats["recoveryOfAttr"]["recovered_construct"] = 0;
+					}
+					
 				} else {
 					for(const auto& decomData: finding["decom"]){
 						auto &nodeDecomStats = summary["constructs"][decomData["ASTNode"].get<string>()];
