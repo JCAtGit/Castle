@@ -1,22 +1,15 @@
 #pragma once
 
-#include "clang/AST/Attr.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclBase.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/Stmt.h"
-#include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Syntax/Tokens.h"
 #include <vector>
 #include <string>
 #include <optional>
 #include "clang/Lex/Lexer.h"
 #include "PPDatastructures.hpp"
-#include "clang/Basic/LangOptions.h"
 
-// --------------------------------------------------------------
 // Helper: get token indices for a source range
-// --------------------------------------------------------------
 struct TokenRange {
     size_t firstIdx, lastIdx;
 };
@@ -41,9 +34,7 @@ static std::optional<TokenRange> getTokenIndicesForRange(
 }
 
 
-// --------------------------------------------------------------
 // Printing helpers
-// --------------------------------------------------------------
 void printEvent(const RecordedPPConstruct &ev, llvm::raw_ostream &OS) {
     if (ev.isMacro) {
         OS << "macro " << ev.name;
@@ -77,9 +68,7 @@ void printEventVectors(const PPEventVectors &vec, const SourceManager &SM) {
     printList("  Events after (adjacent)", vec.after);
 }
 
-// --------------------------------------------------------------
 // PP Predicates
-// --------------------------------------------------------------
 bool isPPSafeStmtMarking(PPEventVectors ppEV){
 	return (
 		ppEV.before.empty() && 
@@ -98,9 +87,7 @@ bool isPPSafeDeclMarking(PPEventVectors ppEV){
 	);	
 }
 
-// --------------------------------------------------------------
 // Attribute helpers
-// --------------------------------------------------------------
 #include "clang/AST/Decl.h"
 #include "clang/AST/Attr.h"
 #include "clang/Rewrite/Core/Rewriter.h"

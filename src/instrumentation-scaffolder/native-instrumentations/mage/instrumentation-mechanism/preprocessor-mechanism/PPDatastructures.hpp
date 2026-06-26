@@ -4,10 +4,10 @@
 
 using namespace clang;
 
-// --------------------------------------------------------------
-// Data structures for recorded preprocessor events
-// --------------------------------------------------------------
-// TODO: use clang::tok::PPKeywordKind instead of DirectiveKind?
+/**
+ *	Data structures for recorded preprocessor events
+ TODO: use clang::tok::PPKeywordKind instead of DirectiveKind?
+ */
 enum class DirectiveKind {
     Include, If, Ifdef, Ifndef, Elif, Else, Endif, Pragma
 };

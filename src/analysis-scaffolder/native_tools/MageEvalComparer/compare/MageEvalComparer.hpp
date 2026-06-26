@@ -266,7 +266,7 @@ class MageEvalComparer{
 			ostringstream oss;
 			oss << scientific << setprecision(3);
 			// export construct and general values to CSV
-			string CSVData = "EntryMapping," + contextKey + ",viableComparisons \n";
+			string CSVData = "EntryMapping," + contextKey + ",viableComparisons";
 			
 			for(auto key : radare2Keys){
 				CSVData += "," + key;

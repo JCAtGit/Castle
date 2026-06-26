@@ -5,6 +5,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ParentMapContext.h"
 #include "clang/AST/Stmt.h"
+#include <iostream>
 
 using namespace std;
 using namespace clang;
@@ -64,7 +65,10 @@ using namespace clang;
 			    continue;
 			}
 //			if(isa<ImplicitCastExpr>(child)){return false;}
-			if(isa<RecoveryExpr>(child)){return false;}
+			if(isa<RecoveryExpr>(child)){
+//				cout << S->getStmtClassName() << " TEST \n";
+				return false;
+			}
 //			if(isa<DeclRefExpr>(child)){return false;}
 		}
 		return true;
