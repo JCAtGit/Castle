@@ -49,6 +49,7 @@ class MageEvalComparer{
 		const vector<string>					radare2Keys = {
 			"arch",  "bits", "bintype", "class", "compiler", "endian", "lang", "machine", "os"
 		};
+		
 	public:
 	MageEvalComparer(vector<filesystem::path> &inputDirs, filesystem::path &outputPath) :
 	inputDirs(inputDirs), outputPath(outputPath), 
@@ -60,17 +61,15 @@ class MageEvalComparer{
 		string binaryDirsTarget;
 		string command;
 		sort(inputDirs.begin(),inputDirs.end());
-//		cout << inputDirs.size() << "\n";
 		for(int i=0 ; i<inputDirs.size() ; i++){
 			summaryData.push_back(json::object());
+			
+
 			loadJSON(inputDirs[i].string() + summaryFilename, summaryData[i]);
-//			cout << "TEST0 " << inputDirs[i].parent_path().filename().string() << "\n";
 
 			binaryDirsTarget = getCastleFormatBuildNameFromAnalysisName(inputDirs[i].parent_path().filename().string()); 
-//			cout << "TEST1 " << binaryDirsTarget << "\n";
-//			cout << "TEST2 " << buildScaffolderDir / binaryDirsTarget << "\n";
 			for(const auto& entry : filesystem::recursive_directory_iterator(buildScaffolderDir / binaryDirsTarget)){
-				// TODO perform extraction and then break, assuming all other binaries have comparable settings.
+				// perform extraction and then break, assuming all other binaries have comparable settings.
 				command = binMetadataCmd + (buildScaffolderDir / binaryDirsTarget).string() + "/" + entry.path().filename().string();
 //				cout << command << "\n";
 				execCommandAndCaptureOutput(command, dataStringHolder);
@@ -269,13 +268,29 @@ class MageEvalComparer{
 			// export construct and general values to CSV
 			string CSVData = "EntryMapping," + contextKey + ",viableComparisons \n";
 			
+			for(auto key : radare2Keys){
+				CSVData += "," + key;
+			}
+			CSVData += "\n";
+			
 			// TODO: add amount of construct or related samplesizes to its mapping.
 			for(int i = 0; i<inputDirs.size();i++){
 				int vcCount = summaryData[i]["metadata"]["viableComparisons"].get<int>();
 				CSVData += 
 					to_string(i) 																			+ "," + 
 					get_leaf_string(inputDirs[i].string()) 												+ "," +
-					to_string(vcCount)	+ "\n";
+					to_string(vcCount);
+					
+					for(auto key : radare2Keys){
+					if(binaryMetadata[i][key].is_string()){
+						CSVData	+= "," + binaryMetadata[i][key].get<string>();	
+					} else if(binaryMetadata[i][key].is_number_integer()){
+						CSVData	+= "," + to_string(binaryMetadata[i][key].get<int>());
+					} else {
+						CSVData	+= ", ";
+					}
+				}	
+				CSVData += "\n";	
 			}
 			CSVData += "\n";
 			
@@ -348,7 +363,6 @@ class MageEvalComparer{
 
 						// success/failure condition expectation test for 3 sds, allows normal approximation to a binomial distribution
 						// ensure both are eligible for proportion test
-						cout << "TESTA \n";
 
 						if(
 							(
@@ -365,7 +379,6 @@ class MageEvalComparer{
 						}
 
 						// De sample proportions zijn in dit geval hetzelfde als P(X), dus alleen pooled proportions uitrekenen.
-						cout << "TESTB \n";
 
 						auto pooledProportion = (
 							(
@@ -375,7 +388,6 @@ class MageEvalComparer{
 								niOracle + njOracle
 							)
 						);
-						cout << "TESTC \n";
 
 						// calc Z statistic, for large disproportions between case 1 and 2 use unpooled (Wald) standard error instead of pooled?
 						// We have to make/choose certain assumptions, which validate the approach, i.e. pool vs unpooled. 
@@ -392,7 +404,6 @@ class MageEvalComparer{
 								(1 / njOracle)
 							)
 						); 
-						cout << "TESTZERO \n";
 						auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
 						double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
 						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
