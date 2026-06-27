@@ -149,15 +149,14 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			auto CEMarkee = getNextSiblingFromList(siblings, CESibIndex);
 			auto mageIndexString = std::to_string(mageIndex);
 
-			if(CEMarkee){
-				// rework starts here
+			if(CEMarkee){ // for some unevaluated markee, which we will later determine to be a legit markee or not.
 				json markerFinding = json::object();
 				markerFinding["ASTNode"] = CEMarkee->getNodeKind().asStringRef();
 				markerFinding["Source"] = 
 					llvm::sys::path::filename(selectedSM->getFilename(CE->getBeginLoc())).str() 	+ " (" + 
 					std::to_string(selectedSM->getSpellingLineNumber(CE->getBeginLoc()))					+ ", "+
 				 	std::to_string(selectedSM->getSpellingColumnNumber(CE->getBeginLoc()))				+ ") " ;
-				markerFinding["children"] = json::array();
+//				markerFinding["children"] = json::array(); // wordt nu niks mee gedaan
 				markerFinding["properties"] = json::object();
 				
 				evalSRDeciderP(const_cast<Stmt*>(CEMarkee->get<Stmt>()), &(markerFinding));
@@ -276,8 +275,47 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	// Voor FunctionDecl aparte entries maken op basis van CallExpr
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
-		(*findings)["properties"]["has_markee"] = true;
+		auto DC = cast_node->getDirectCallee();
+		auto DCName = DC->getNameInfo().getName().getAsString();
 
+		if(DCName.find(markerFormat["name"].get<string>()) == string::npos){ // name contains marker substring, so markee is lost.
+			(*findings)["properties"]["has_markee"] = false;
+			(*findings)["properties"]["has_direct_callee"] = false;
+			return false;
+		}
+		
+		if(!DC){
+			// initialize DC properties with values representing absence.
+			// record args is still possible and other callexpr properties
+			(*findings)["properties"]["has_markee"] = true;
+			(*findings)["properties"]["has_direct_callee"] = false;
+			
+			(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
+			(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
+	//		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
+			
+			(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
+			(*findings)["properties"]["args"] = json::array();
+
+			for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
+				recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
+			}
+			return false; 
+		} 
+		
+		(*findings)["properties"]["has_markee"] = true;
+		(*findings)["properties"]["has_direct_callee"] = true;
+		
+		// DC Properties
+		(*findings)["properties"]["direct_callee_name"] = DCName;
+		(*findings)["properties"]["is_variadic"] = DC->isVariadic();
+		(*findings)["properties"]["num_params"] = DC->getNumParams();
+		(*findings)["properties"]["params"] = json::array();
+		for (unsigned i = 0; i < DC->getNumParams(); ++i) {
+			recordQTypeInfo(DC->getParamDecl(i)->getType(), (*findings)["properties"]["param_types"]);
+        }
+		
+		// CallExpr Properties
 		(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
 		(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
 //		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
@@ -288,23 +326,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
 			recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
 		}
-
-		auto DC = cast_node->getDirectCallee();
-		if(!DC){
-			(*findings)["properties"]["has_direct_callee"] = false; // TODO: Rework, because exit is unnecessary
-			return false;
-		}
-		(*findings)["properties"]["has_direct_callee"] = true;
-		auto DCName = DC->getNameInfo().getName().getAsString();
-
-		(*findings)["properties"]["direct_callee_name"] = DCName;
-		(*findings)["properties"]["is_variadic"] = DC->isVariadic();
-		(*findings)["properties"]["num_params"] = DC->getNumParams();
-		(*findings)["properties"]["params"] = json::array();
-
-		for (unsigned i = 0; i < DC->getNumParams(); ++i) {
-			recordQTypeInfo(DC->getParamDecl(i)->getType(), (*findings)["properties"]["param_types"]);
-        }
+		
 		return false;
 	}
 	

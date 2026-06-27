@@ -31,10 +31,10 @@ class CmdTasker{
 	
 	vector<filesystem::path> 	pathQueue;
 	vector<string> 				toolArgs = {
-									"-xc", 							// Treat the input as C code, can sometimes use xc++ for enhanced recovery.
-									"-std=c17", 					// Use a C standard, https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3176.pdf C17 stable bugfix release. Hangt echter meer af van gebruiksfrequentie.
-									"-nostdinc",					// Don't search for system headers
-									"-Wno-all",						// Suppress all warnings, W-prefix stands for warning.
+									"-xc", 						// Treat the input as C code, can sometimes use xc++ for enhanced recovery.
+									"-std=c17", 				// Use a C standard, https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3176.pdf C17 stable bugfix release. Hangt echter meer af van gebruiksfrequentie.
+									"-nostdinc",				// Don't search for system headers
+									"-Wno-all",					// Suppress all warnings, W-prefix stands for warning.
 								};
 	
 	void loadConfigs(){

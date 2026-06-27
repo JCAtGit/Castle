@@ -277,8 +277,8 @@ class MageEvalComparer{
 			for(int i = 0; i<inputDirs.size();i++){
 				int vcCount = summaryData[i]["metadata"]["viableComparisons"].get<int>();
 				CSVData += 
-					to_string(i) 																			+ "," + 
-					get_leaf_string(inputDirs[i].string()) 												+ "," +
+					to_string(i) 								+ "," + 
+					get_leaf_string(inputDirs[i].string()) 	+ "," +
 					to_string(vcCount);
 					
 					for(auto key : radare2Keys){

@@ -122,7 +122,7 @@ class CrossASTEvaluator{
 		}
 		
 		if(findingsDecom["properties"]["has_direct_callee"]){
-			markerFindingsResult["name_preserved"] = (findingsOracle["properties"]["direct_callee_name"] == findingsDecom["properties"]["direct_callee_name"]);
+			markerFindingsResult["name_preserved"] = (findingsOracle["properties"]["direct_callee_name"] == findingsDecom["properties"]["direct_callee_name"]); // DC name to be more precise
 			markerFindingsResult["parity_params_count"] = (findingsOracle["properties"]["num_params"] == findingsDecom["properties"]["num_params"]);
 			sort(findingsOracle["properties"]["param_types"].begin(),findingsOracle["properties"]["param_types"].end());
 			sort(findingsDecom["properties"]["param_types"].begin(),findingsDecom["properties"]["param_types"].end());

@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 		->required();
 	
 	string outputPath; // overwrite location if no output is given.
-	auto option_outputPath = app.add_option("-o,--output", outputPath, "output path for results");
+	auto option_outputPath = app.add_option("-o,--output", outputPath, "output path for results, needs on-copy");
 	
 	bool onCopy = false;
 	app.add_flag("--on-copy",onCopy, "copy inputdir to outputdir and then perform enhancements on copy.")

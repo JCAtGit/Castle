@@ -91,8 +91,13 @@ class CmdTasker{
 		if(!pt_config_data["outputFlag"].get<string>().empty()){
 			command += " " + 
 			pt_config_data["outputFlag"].get<string>() 	+ " " +
-			ps_configData["outputDir"].get<string>()	+
-			pt_config_data["name"].get<string>() 		+ "/";
+			ps_configData["outputDir"].get<string>();	
+			
+			command += pt_config_data["name"].get<string>() + "/";
+			if(pt_config_data["run_per_dir"]){
+				command += to_string(pt_config_data["it_begin"].get<int>()) + "/";
+			}			
+			
 		}
 		addStaticFlags(command, pt_config_data);
 		cout << command << "\n";
@@ -129,6 +134,7 @@ class CmdTasker{
 		}
 	}
 	
+	// TODO: Implement filesystem::is_* checks if necessary?
 	void startProcesses(){
 		cout << "Starting processes and outputting to " << ps_configData["outputDir"] << "\n";
 		
@@ -166,7 +172,19 @@ class CmdTasker{
 						}
 					}
 				}
-			} else {
+			} else if(toolcfg["run_per_dir"].get<bool>()){ // add this key to all configs
+				// TODO: test
+				if(toolcfg["run_as_it"].get<bool>()){
+					for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
+						processDir(toolcfg["tgtDir"].get<string>() + to_string(toolcfg["it_begin"].get<int>()), toolcfg);
+					}
+				} else {
+					for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
+						processDir(entry, toolcfg);
+					}
+				}
+			} 
+			else {
 				// TODO: add checkpoint continuation
 				processDir(toolcfg["tgtDir"], toolcfg);
 			}
