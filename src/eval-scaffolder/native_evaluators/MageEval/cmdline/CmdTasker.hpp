@@ -67,7 +67,10 @@ class CmdTasker{
 			for(auto entry :filesystem::recursive_directory_iterator(oracleDir)){ // voor elke moeten we apart een save to findings, etc maken.
 				if(entry.path().extension() == ".c"){ // We nemen aan dat oracle dirs altijd gewoon C extensie gebruiken.
 					fileOracleData = file2string(entry.path());
-					auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + entry.path().filename().string());
+					auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(
+						fileOracleData, 
+						args, 
+						oracleDir.string() + entry.path().filename().string());
 					CAGatherer.setOracleContext(&astOracleUnit->getASTContext());
 					CAGatherer.TraverseDecl(astOracleUnit->getASTContext().getTranslationUnitDecl());
 				}

@@ -16,6 +16,13 @@
 struct TokenRange {
     size_t firstIdx, lastIdx;
 };
+
+/**
+ *	Spelled tokens 	- tokens as they appear in the source code.
+ * 	Expanded tokens - tokens as they appear after expansion, no explicitly visible in source but is incorporated in the AST when traversed by an AST-visitor.
+ *	
+ *	Fetches the corresponding spelled tokens for some source range.
+ */
 static std::optional<TokenRange> getTokenIndicesForRange(
     const SourceRange &SR, llvm::ArrayRef<syntax::Token> SpelledTokens,
     const SourceManager &SM) {
@@ -37,6 +44,10 @@ static std::optional<TokenRange> getTokenIndicesForRange(
 }
 
 // Printing helpers
+/**
+*	Prints the details about the recorded preprocessor events.
+* 	Mainly used for debugging.
+ */
 void printEvent(const RecordedPPConstruct &ev, llvm::raw_ostream &OS) {
     if (ev.isMacro) {
         OS << "macro " << ev.name;
@@ -54,6 +65,10 @@ void printEvent(const RecordedPPConstruct &ev, llvm::raw_ostream &OS) {
     }
 }
 
+/**
+ *	Prints the details about the recorded preprocessor events.
+ * 	Mainly used for debugging.
+ */
 void printEventVectors(const PPEventVectors &vec, const SourceManager &SM) {
     auto printList = [&](const char *title, const std::vector<RecordedPPConstruct> &list) {
         if (list.empty()) return;
@@ -71,6 +86,9 @@ void printEventVectors(const PPEventVectors &vec, const SourceManager &SM) {
 }
 
 // PP Predicates
+/**
+ * 	Predicate to check if the surrounding context is safe.
+ */
 bool isPPSafeStmtMarking(PPEventVectors ppEV){
 	return (
 		ppEV.before.empty() && 
@@ -80,6 +98,9 @@ bool isPPSafeStmtMarking(PPEventVectors ppEV){
 	);
 }
 
+/**
+ * 	Predicate to check if the surrounding context is safe.
+ */
 bool isPPSafeDeclMarking(PPEventVectors ppEV){
 	return (
 		ppEV.before.empty() && 
@@ -89,7 +110,14 @@ bool isPPSafeDeclMarking(PPEventVectors ppEV){
 	);	
 }
 
+
 // Attribute helpers
+
+/**
+ *	Checks if a FunctionDecl has conflicting attributes.
+ *	If attributes conflicting with directives to promote no optimization are found, the FunctionDecl is left untouched.
+ * 	In other cases, the attributes will be added.
+ */
 void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter,
                            const SourceManager &SM, const LangOptions &LangOpts) {
     // Already has optnone? Nothing to do.

@@ -32,9 +32,11 @@ int main(int argc, char **argv) {
 	auto option_outputPath = app.add_option("-o,--output", outputPath, "output path for results, needs on-copy");
 	
 	bool onCopy = false;
-	app.add_flag("--on-copy",onCopy, "copy inputdir to outputdir and then perform enhancements on copy.")
+	auto option_onCopy = app.add_flag("--on-copy",onCopy, "copy inputdir to outputdir and then perform enhancements on copy.")
 		->needs(option_outputPath);
 	
+	option_outputPath->needs(option_onCopy); // required when outputting to ensure build process preservation.
+		
 	string mrkrFormatsPath = "/home/user/Desktop/CCastle/CCastleData/configs/CCastlePipeline/formats.json";
 	app.add_option("--marker_formats_path", mrkrFormatsPath, "Marker format used for heuristics");
 	

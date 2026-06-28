@@ -1,16 +1,14 @@
 #pragma once
 
-#include "clang/AST/DeclBase.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/AST/Stmt.h"
-#include "clang/Tooling/Syntax/Tokens.h"
 #include <vector>
-#include <string>
-#include <optional>
-#include <algorithm>
 #include "PPDatastructures.hpp"
 #include "PPHelper.hpp"
 
+/**
+ *	Uses the recorded callback events to check if the surrounding context allows for instrumentation.
+ */
+ 
 PPEventVectors detectPPConstructsAroundDeclaration(
     const Decl *D,
     const syntax::TokenBuffer &Tokens,

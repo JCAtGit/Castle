@@ -3,17 +3,14 @@
 #include "clang/AST/Stmt.h"
 #include "clang/Tooling/Syntax/Tokens.h"
 #include <vector>
-#include <string>
-#include <optional>
-#include <algorithm>
 #include "PPDatastructures.hpp"
 #include "PPHelper.hpp"
 
 using namespace clang;
 
-// --------------------------------------------------------------
-// Generalised detection
-// --------------------------------------------------------------
+/**
+ *	Uses the recorded callback events to check if the surrounding context allows for instrumentation.
+ */
 
 PPEventVectors detectPPConstructsAroundStatement(
     const Stmt *S, const syntax::TokenBuffer &Tokens,
