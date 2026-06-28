@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "clang/AST/Expr.h"
+#include "clang/AST/Stmt.h"
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -117,21 +119,26 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_arg_types"] = false;
 			markerFindingsResult["parity_variadicity"] = false;
 			markerFindingsResult["parity_side_effects"] = false;
-			markerFindingsResult["parity_has_direct_callee"] = false;
+			markerFindingsResult["parity_has_callee"] = false;
 			return false;
 		}
 		
-		if(findingsDecom["properties"]["has_direct_callee"]){
-			markerFindingsResult["name_preserved"] = (findingsOracle["properties"]["direct_callee_name"] == findingsDecom["properties"]["direct_callee_name"]); // DC name to be more precise
+		if(findingsDecom["properties"]["has_callee"]){
+			markerFindingsResult["name_preserved"] = (findingsOracle["properties"]["callee_name"] == findingsDecom["properties"]["callee_name"]);
+			markerFindingsResult["parity_variadicity"] = (findingsOracle["properties"]["is_variadic"] == findingsDecom["properties"]["is_variadic"]);
 			markerFindingsResult["parity_params_count"] = (findingsOracle["properties"]["num_params"] == findingsDecom["properties"]["num_params"]);
 			sort(findingsOracle["properties"]["param_types"].begin(),findingsOracle["properties"]["param_types"].end());
 			sort(findingsDecom["properties"]["param_types"].begin(),findingsDecom["properties"]["param_types"].end());
 			markerFindingsResult["parity_param_types"] = findingsOracle["properties"]["param_types"] == findingsDecom["properties"]["param_types"];
-			markerFindingsResult["parity_has_direct_callee"] = findingsOracle["properties"]["has_direct_callee"] == findingsDecom["properties"]["has_direct_callee"];
+			markerFindingsResult["parity_has_callee"] = findingsOracle["properties"]["has_callee"] == findingsDecom["properties"]["has_callee"];
+
 		} else {
 			markerFindingsResult["name_preserved"] = false;
+			markerFindingsResult["parity_variadicity"] = false;
 			markerFindingsResult["parity_params_count"] = false;
 			markerFindingsResult["parity_param_types"] = false;
+			markerFindingsResult["parity_has_callee"] = false;
+
 		}
 		// TODO: type check kan misschien nog fijndradiger,
 		
@@ -139,14 +146,12 @@ class CrossASTEvaluator{
 		sort(findingsOracle["properties"]["arg_types"].begin(),findingsOracle["properties"]["arg_types"].end());
 		sort(findingsDecom["properties"]["arg_types"].begin(),findingsDecom["properties"]["arg_types"].end());
 		markerFindingsResult["parity_arg_types"] = findingsOracle["properties"]["arg_types"] == findingsDecom["properties"]["arg_types"];
-
-		markerFindingsResult["parity_variadicity"] = (findingsOracle["properties"]["is_variadic"] == findingsDecom["properties"]["is_variadic"]);
 		markerFindingsResult["parity_side_effects"] = (findingsOracle["properties"]["has_side_effects"] == findingsDecom["properties"]["has_side_effects"]);
-		markerFindingsResult["parity_has_direct_callee"] = (findingsOracle["properties"]["has_direct_callee"] == findingsDecom["properties"]["has_direct_callee"]);
 			
 		return false;
 	}
 	
+	//TODO: add reinterpretation for binaryoperators, 
 	bool processDeclStmt(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
@@ -155,13 +160,19 @@ class CrossASTEvaluator{
 			markerFindingsResult["parity_single_decl"] = false;
 			markerFindingsResult["parity_init_types"] = false;
 			return false;
+		} else {
+			markerFindingsResult["parity_single_decl"] = (findingsOracle["properties"]["single_decl"] == findingsDecom["properties"]["single_decl"]);
+			sort(findingsOracle["properties"]["init_types"].begin(), findingsOracle["properties"]["init_types"].end());
+			sort(findingsDecom["properties"]["init_types"].begin(), findingsDecom["properties"]["init_types"].end());
+			markerFindingsResult["parity_init_types"] = findingsOracle["properties"]["init_types"] == findingsDecom["properties"]["init_types"];
 		}
 		
-		markerFindingsResult["parity_single_decl"] = (findingsOracle["properties"]["single_decl"] == findingsDecom["properties"]["single_decl"]);
-		sort(findingsOracle["properties"]["init_types"].begin(), findingsOracle["properties"]["init_types"].end());
-		sort(findingsDecom["properties"]["init_types"].begin(), findingsDecom["properties"]["init_types"].end());
-		markerFindingsResult["parity_init_types"] = findingsOracle["properties"]["init_types"] == findingsDecom["properties"]["init_types"];
-	
+		if(findingsDecom["ASTNode"].get<string>() == "BinaryOperator"){
+			markerFindingsResult["recovered_alt_construct"] = true;
+		} else {
+			markerFindingsResult["recovered_alt_construct"] = false;
+		}
+		
 		return false;
 	}
 

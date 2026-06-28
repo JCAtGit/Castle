@@ -6,6 +6,7 @@
  *		- Addition of dangling child check, only useful if decompilers get more accurate.
  *		Include deeper inspection of dangling stmts, which is useful when not using the formatter.
  *		The inspection should be relatively easy, since without a compound child stmt, we only have a single child to check for.
+ *		- Rework dir/file handling, buggy when using output flag and single file.
  */
  
 // TODO: part of arg rework

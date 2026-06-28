@@ -195,7 +195,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				if(!isPPSafeStmtMarking(detectedEvents)){return true;}
 				if (!isStmtLocationSafe(S, SM, CI.getLangOpts())) return true;
 
-				//--  Clang Macro expansion id check.
+				//-- Clang Macro expansion id check.
 				DynTypedNodeList Parents = context.getParents(*S); // TODO: migrate to parentStack method?
 				for (const auto &Parent : Parents) {
 					if (Parent.getSourceRange().getBegin().isMacroID()) {return true;}

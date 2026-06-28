@@ -153,9 +153,9 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 				json markerFinding = json::object();
 				markerFinding["ASTNode"] = CEMarkee->getNodeKind().asStringRef();
 				markerFinding["Source"] = 
-					llvm::sys::path::filename(selectedSM->getFilename(CE->getBeginLoc())).str() 	+ " (" + 
-					std::to_string(selectedSM->getSpellingLineNumber(CE->getBeginLoc()))					+ ", "+
-				 	std::to_string(selectedSM->getSpellingColumnNumber(CE->getBeginLoc()))				+ ") " ;
+					selectedSM->getFilename(CE->getBeginLoc()).str() 	+ " (" + 
+					to_string(selectedSM->getSpellingLineNumber(CE->getBeginLoc()))					+ ", "+
+				 	to_string(selectedSM->getSpellingColumnNumber(CE->getBeginLoc()))				+ ") " ;
 //				markerFinding["children"] = json::array(); // wordt nu niks mee gedaan
 				markerFinding["properties"] = json::object();
 				
@@ -217,6 +217,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return false;
 	}
 	
+	
 	bool declStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<DeclStmt>(node);
 		(*findings)["properties"]["has_markee"] = true;
@@ -272,27 +273,46 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return false;
 	}
 
-	// Voor FunctionDecl aparte entries maken op basis van CallExpr
+	// Voor FunctionDecl aparte entries maken op basis van CallExpr.
+	// We kunnen altijd de generieke en callexpr metrieken opnemen, behalve als de markee afwezig is.
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
-		auto DC = cast_node->getDirectCallee();
-		auto DCName = DC->getNameInfo().getName().getAsString();
+		string calleeName; // callee is not always available
+		// als een marker wordt bekeken, pseudo of niet, dan is dit altijd een functiondecl in clang-ast
+		// afwezigheid van de functiondecl is dus een indicator voor de aanwezigheid van een legitieme markee, naast de naamcheck
+		auto ceDCCallee = cast_node->getDirectCallee();			
+		auto ceDRECallee= cast_node->getCallee()->IgnoreImpCasts();		// if direct callee is not available we try the DeclRefExpr for unknown templated code.
 
-		if(DCName.find(markerFormat["name"].get<string>()) == string::npos){ // name contains marker substring, so markee is lost.
-			(*findings)["properties"]["has_markee"] = false;
-			(*findings)["properties"]["has_direct_callee"] = false;
-			return false;
-		}
-		
-		if(!DC){
-			// initialize DC properties with values representing absence.
-			// record args is still possible and other callexpr properties
-			(*findings)["properties"]["has_markee"] = true;
-			(*findings)["properties"]["has_direct_callee"] = false;
+		if(ceDCCallee){
+			calleeName = ceDCCallee->getNameInfo().getName().getAsString(); // callee is not always available
+
+			if(calleeName.find(markerFormat["name"].get<string>()) == string::npos){ // name contains marker substring, so markee is lost.
+				// generic metrics only, no markee
+				(*findings)["properties"]["has_markee"] = false;
+				(*findings)["properties"]["has_callee"] = false;
+
+				for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
+					recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
+				}
+				return false;
+			}
 			
+			// generic metrics
+			(*findings)["properties"]["has_markee"] = true;
+			(*findings)["properties"]["has_callee"] = true;
+			
+			// callee metrics
+			(*findings)["properties"]["callee_name"] = calleeName;
+			(*findings)["properties"]["is_variadic"] = ceDCCallee->isVariadic();
+			(*findings)["properties"]["num_params"] = ceDCCallee->getNumParams();
+			(*findings)["properties"]["params"] = json::array();
+			for (unsigned i = 0; i < ceDCCallee->getNumParams(); ++i) {
+				recordQTypeInfo(ceDCCallee->getParamDecl(i)->getType(), (*findings)["properties"]["param_types"]);
+	        }
+			
+			// callexpr metrics
 			(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
 			(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
-	//		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
 			
 			(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
 			(*findings)["properties"]["args"] = json::array();
@@ -300,34 +320,109 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
 				recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
 			}
-			return false; 
-		} 
-		
-		(*findings)["properties"]["has_markee"] = true;
-		(*findings)["properties"]["has_direct_callee"] = true;
-		
-		// DC Properties
-		(*findings)["properties"]["direct_callee_name"] = DCName;
-		(*findings)["properties"]["is_variadic"] = DC->isVariadic();
-		(*findings)["properties"]["num_params"] = DC->getNumParams();
-		(*findings)["properties"]["params"] = json::array();
-		for (unsigned i = 0; i < DC->getNumParams(); ++i) {
-			recordQTypeInfo(DC->getParamDecl(i)->getType(), (*findings)["properties"]["param_types"]);
-        }
-		
-		// CallExpr Properties
-		(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
-		(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
-//		(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
-		
-		(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
-		(*findings)["properties"]["args"] = json::array();
+			return false;
+		} else if(ceDRECallee){
+//			cout << "Handled extra cases: "<< ceDRECallee->getStmtClassName() << "\n";
 
-		for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
-			recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
+			if (const auto *declRef = llvm::dyn_cast<clang::DeclRefExpr>(ceDRECallee)) {
+			   	calleeName = declRef->getNameInfo().getAsString();
+				
+			   	if(calleeName.find(markerFormat["name"].get<string>()) == string::npos){ // name contains marker substring, so markee is lost.
+					// generic metrics only
+		   			(*findings)["properties"]["has_markee"] = false;
+		   			(*findings)["properties"]["has_callee"] = false;
+					
+					return false;
+		   		} 	
+				
+				if(const auto *funcDecl = llvm::dyn_cast_or_null<clang::FunctionDecl>(declRef->getDecl())){
+//					cout << "FunctionDecl \n";
+					
+					// generic metrics
+					(*findings)["properties"]["has_markee"] = true;
+					(*findings)["properties"]["has_callee"] = true;
+					
+					// callee metrics
+					(*findings)["properties"]["callee_name"] = calleeName;
+					(*findings)["properties"]["is_variadic"] = funcDecl->isVariadic();
+					(*findings)["properties"]["num_params"] = funcDecl->getNumParams();
+					(*findings)["properties"]["params"] = json::array();
+					for (unsigned i = 0; i < funcDecl->getNumParams(); ++i) {
+						recordQTypeInfo(funcDecl->getParamDecl(i)->getType(), (*findings)["properties"]["param_types"]);
+					}
+
+					// callexpr metrics
+					(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
+					(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
+
+					(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
+					(*findings)["properties"]["args"] = json::array();
+
+					for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
+						recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
+					}
+					return false;
+				} else {
+					// Er kan dus geen naam verificatie van marker aanwezigheid plaatsvinden, maar er is geen functiondecl.
+					// Dus leiden we af dat er een markee is, we mogen dus minimaal de callexpr details naast de generieke opnemen
+					
+//					cout << "Some unknown decl: " << declRef->getDecl()->getDeclKindName() << "\n";
+					// generic metrics, for unknown cases we set callee to false for now.
+					(*findings)["properties"]["has_markee"] = true;
+					(*findings)["properties"]["has_callee"] = false;
+					
+					// callexpr metrics
+					(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
+					(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
+
+					(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
+					(*findings)["properties"]["args"] = json::array();
+
+					for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
+						recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
+					}
+					return false;
+				}
+			} 
+			else {
+				// Er kan dus geen naam verificatie van marker aanwezigheid plaatsvinden, maar er is geen functiondecl 
+				// (!= Expr (STMT), decls and stmt worden als aparte hierarchieen gezien).
+				// Dus leiden we af dat er een markee is, we mogen dus minimaal de callexpr details naast de generieke opnemen
+				
+				// TODO: MemberExpr, ParenExpr and maybe others?
+				// unknown/unhandled callee stmt, handle as missing callee for now. We cannot verify presence of markee using this case.
+				// No direct callee or DeclRefExpr, report to dev?
+//				cout << "No DC or DRE \n";
+				
+				// generic metrics only
+				(*findings)["properties"]["has_markee"] = false;
+				(*findings)["properties"]["has_callee"] = false;
+				
+				// callexpr metrics
+				(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
+				(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
+
+				(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
+				(*findings)["properties"]["args"] = json::array();
+				return false;
+
+			}
+		} else { 
+			// Er kan dus geen naam verificatie van marker aanwezigheid plaatsvinden, maar er is geen functiondecl 
+			// Dus leiden we af dat er een markee is, we mogen dus minimaal de callexpr details naast de generieke opnemen
+			
+			// generic metrics only
+			(*findings)["properties"]["has_markee"] = false;
+			(*findings)["properties"]["has_callee"] = false;
+			
+			// callexpr metrics
+			(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
+			(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
+
+			(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
+			(*findings)["properties"]["args"] = json::array();
+			return false;
 		}
-		
-		return false;
 	}
 	
 

@@ -3,6 +3,9 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/Stmt.h"
 #include "clang/Tooling/Syntax/Tokens.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/Attr.h"
+#include "clang/Rewrite/Core/Rewriter.h"
 #include <vector>
 #include <string>
 #include <optional>
@@ -32,7 +35,6 @@ static std::optional<TokenRange> getTokenIndicesForRange(
     if (!foundFirst || first > last) return std::nullopt;
     return TokenRange{first, last};
 }
-
 
 // Printing helpers
 void printEvent(const RecordedPPConstruct &ev, llvm::raw_ostream &OS) {
@@ -88,19 +90,14 @@ bool isPPSafeDeclMarking(PPEventVectors ppEV){
 }
 
 // Attribute helpers
-#include "clang/AST/Decl.h"
-#include "clang/AST/Attr.h"
-#include "clang/Rewrite/Core/Rewriter.h"
-#include "clang/Lex/Lexer.h"
-
 void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter,
                            const SourceManager &SM, const LangOptions &LangOpts) {
-    // 1. Already has optnone? Nothing to do.
+    // Already has optnone? Nothing to do.
     if (FD->hasAttr<OptimizeNoneAttr>())
         return;
 
-    // 2. Conflict detection using Clang attribute methods.
-    //    Attributes that are incompatible with optnone.
+    // Conflict detection using Clang attribute methods.
+    // Attributes that are incompatible with optnone.
     if (FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<NakedAttr>() ||
         FD->hasAttr<WeakAttr>() || FD->hasAttr<WeakRefAttr>()) {
         return; // Do not add optnone if any conflict exists.
@@ -132,10 +129,10 @@ void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter,
         return R.isValid() && isLocationSafe(R.getBegin()) && isLocationSafe(R.getEnd());
     };
 
-    // 3. Try to merge into an existing GNU __attribute__((...)).
-    //    Prefer an attribute whose source range is safe and that appears
-    //    before the function body (if any). For functions without a body
-    //    (declarations) we simply insert a new attribute.
+    // Try to merge into an existing GNU __attribute__((...)).
+    // Prefer an attribute whose source range is safe and that appears
+    // before the function body (if any). For functions without a body
+    // declarations) we simply insert a new attribute.
     if (FD->isThisDeclarationADefinition()) {
         // Find the opening brace location of the function body.
         Stmt *Body = FD->getBody();
@@ -178,12 +175,12 @@ void addOrCreateGNUOptnone(FunctionDecl *FD, Rewriter &Rewriter,
                     if (!newAttrText.empty() && isRangeSafe(range))
                         Rewriter.ReplaceText(range, newAttrText);
                 }
-                return; // merged, done.
+                return;
             }
         }
     }
 
-	// 4. Insert a new attribute after the return type.
+	// Insert a new attribute after the return type.
 	SourceRange retRange = FD->getReturnTypeSourceRange();
 	if (retRange.isInvalid()) return;
 
