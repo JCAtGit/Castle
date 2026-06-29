@@ -9,7 +9,7 @@
  *		- Rework dir/file handling, buggy when using output flag and single file.
  */
  
-// TODO: part of arg rework
+// TODO: part of args rework
  struct { 
  		set<string> excludeFilesSet;
  		set<string> excludeDirsSet;
@@ -20,7 +20,11 @@
  		bool nameEncodedMarker = false;
  		bool clangFormatMode = false;
  } cliVars;
- 	
+
+/**
+ *	
+ */
+ 
 int main(int argc, char **argv) {
 	CLI::App app{"Mage"};
 	

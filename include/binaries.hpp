@@ -6,14 +6,6 @@
 
 using namespace std;
 
-void binaryMetadata(string binaryPath){
-	// llvm-readelf --elf-output-style=JSON --pretty-print -h -p .comment binary
-	string command = "llvm-readelf --elf-output-style=JSON --pretty-print -h -p .comment " + binaryPath;
-	int status = system(command.c_str());
-}
-
-
-
 string execCommandAndCaptureOutput(const string& cmd, string& output) {
     FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe) {

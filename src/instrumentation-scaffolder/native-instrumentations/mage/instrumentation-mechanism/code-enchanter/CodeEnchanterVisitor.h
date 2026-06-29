@@ -2,22 +2,16 @@
 
 #include "nlohmann/json.hpp"
 #include "clang/AST/ASTContext.h"
-
 #include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/AST/Stmt.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
-#include "clang/Tooling/Syntax/Tokens.h"
-#include "clang/Sema/Sema.h"
-#include "clang/AST/Attr.h"
+#include "clang/Lex/Lexer.h"
 
 #include <filesystem>
 #include <vector>
 #include <string>
 #include <helper.hpp>
-#include "../preprocessor-mechanism/pp-processor-stmt.hpp"
-#include "../preprocessor-mechanism/pp-processor-decl.hpp"
-#include "../preprocessor-mechanism/PPHelper.hpp"
+#include "../preprocessor/MacroExpansionRecorder.hpp"
 #include "predicates-stmt.hpp"
 #include "predicates-decl.hpp"
 
@@ -25,13 +19,15 @@ using namespace clang;
 using namespace std;
 using namespace nlohmann;
 
+/**
+ *	Visitor class for source code. 
+ *	Implements: Marker, Attribute Graft Enhancements (MAGE)
+ */
 class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 	private:
 		Rewriter& rewriter;
-		syntax::TokenBuffer tokenBuffer;
-		vector<RecordedPPConstruct> recordedPPEventsEvents;
-		CompilerInstance& CI;
-		
+		MacroExpansionRecorder* macroRecorder = nullptr;
+  		CompilerInstance& CI;
 		SourceManager& SM;
 		ASTContext& context;
 
@@ -72,8 +68,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		CodeEnchanterVisitor(
 			CompilerInstance &ci, 
 			Rewriter &rewriter, 
-			syntax::TokenBuffer tokenBuffer, 
-			vector<RecordedPPConstruct>& recordedPPEventsEvents, 
+			MacroExpansionRecorder* macroRecorder,
 			json &markerFormatCfg, 
 			int &idCounter,
 			bool &nameEncodedMarkers,
@@ -81,8 +76,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		):
 			CI(ci), 
 			rewriter(rewriter),	
-			tokenBuffer(std::move(tokenBuffer)), 
-			recordedPPEventsEvents(recordedPPEventsEvents), 
+			macroRecorder(macroRecorder),
 			markerFormatCfg(markerFormatCfg), 
 			idCounter(idCounter),
 			nameEncodedMarker(nameEncodedMarkers),
@@ -113,6 +107,10 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				rewriter.InsertTextBefore(startLoc, synthesizeInclusionDirective(inputPath, inputDir));
 			}
 			
+			/**
+			 * 	Sometimes decompilers do not recover the index of a marker, however they can still succeed in preserving the name (given debug info).
+			 *	Name encoded markers are failsafe mechanism to ensure marker mappability.
+			 */
 			void insertNameEncodedMarkerDefinitions(){
 				SourceLocation startLoc = SM.getLocForStartOfFile(SM.getMainFileID());
 				string localDefinition;
@@ -135,7 +133,6 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				if(!filesystem::exists(outputPath)){
 					filesystem::create_directories(outputPath.parent_path());
 				}
-				// write to file
 				std::error_code EC;
 				llvm::raw_fd_ostream OutFile(outputPath.string(),EC, llvm::sys::fs::OF_Text);
 				if (EC) {
@@ -150,10 +147,6 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 //				cout << "Start commit phase" << "\n";
 				StringRef FilePath = SM.getFilename(SM.getLocForStartOfFile(SM.getMainFileID()));
 				filesystem::path outPath = outputDir / rel_outputPath(inputDir, FilePath.str());
-//				if (outPath.empty() || outPath == "." || outPath == "./" || ".") {
-//				    outPath = FilePath.str();
-//				} 
-//				llvm::outs() << "Commit changes from: " << FilePath << " -> " << outPath << "\n";
 				if(!filesystem::exists(outPath)){
 					filesystem::create_directories(outPath.parent_path());
 				}
@@ -166,34 +159,114 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(OutFile);
 				OutFile.close();	
 			}
+		
+			/**
+			 *	Checks if a FunctionDecl has conflicting attributes.
+			 *	If attributes conflicting with directives to promote no optimization are found, the FunctionDecl is left untouched.
+			 * 	In other cases, the attributes will be added.
+			 */
+			void addOrCreateGNUOptnone(
+				FunctionDecl *FD, 
+				Rewriter &Rewriter,
+				const SourceManager &SM, 
+				const LangOptions &LangOpts
+			) {
+			    // Conflict detection using Clang attribute methods, check attributes that are incompatible with optnone or if attribute already exists.
+			    if (FD->hasAttr<OptimizeNoneAttr>() || FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<NakedAttr>() ||FD->hasAttr<WeakAttr>() || FD->hasAttr<WeakRefAttr>()) {
+			        return; 
+				}
+					
+				// Only rewrite if this is a function definition (has a body) AND it is at file scope.
+				if (!FD->isThisDeclarationADefinition()) return;
+				if (!FD->getLexicalDeclContext()->isFileContext()) return;
 			
-		bool isStmtLocationSafe(Stmt *S, const SourceManager &SM, const LangOptions &LangOpts) {
-		    if (!S) return false;
-		    SourceLocation Begin = S->getBeginLoc();
-		    SourceLocation End = S->getEndLoc();
-		    if (Begin.isInvalid() || End.isInvalid()) return false;
-		    // If either location is a macro ID, the range might be unsafe.
-		    if (Begin.isMacroID() || End.isMacroID()) return false;
-
-		    // Get the full source range of the statement as a char range.
-		    CharSourceRange StmtRange = CharSourceRange::getTokenRange(Begin, End);
-		    CharSourceRange FileRange = Lexer::makeFileCharRange(StmtRange, SM, LangOpts);
-		    if (FileRange.isInvalid()) return false;
-
-		    // Ensure the range is in a file (not a macro expansion buffer).
-		    return FileRange.getBegin().isFileID();
-		}	
+				// Additionally, ensure the source location is in a file with a recognized extension (e.g., .c or .h) but not in a system header.
+				if (SM.isInSystemHeader(FD->getLocation())) return;
+				if (SM.isInExternCSystemHeader(FD->getLocation())) return;
+			
+				// Reject if the declaration is inside a struct/union (shouldn't happen for FunctionDecl, but double-check)
+				if (FD->getDeclContext()->isRecord()) return;
+				
+			    // Helper to check if a source location is safe for rewriting (not inside a macro expansion and maps to a file location).
+			    auto isLocationSafe = [&](SourceLocation Loc) -> bool {
+			        if (Loc.isInvalid()) return false;
+			        if (Loc.isMacroID()) return false;
+			        CharSourceRange TokenRange = CharSourceRange::getTokenRange(Loc, Loc);
+			        CharSourceRange FileRange = Lexer::makeFileCharRange(TokenRange, SM, LangOpts);
+			        if (FileRange.isInvalid()) return false;
+			        return FileRange.getBegin().isFileID();
+			    };
+			
+			    auto isRangeSafe = [&](SourceRange R) -> bool {
+			        return R.isValid() && isLocationSafe(R.getBegin()) && isLocationSafe(R.getEnd());
+			    };
+			
+			    // Try to merge into an existing GNU __attribute__((...)).
+				// For functions without a body declarations we insert a new attribute.
+			    if (FD->isThisDeclarationADefinition()) {
+			        // Find the opening brace location of the function body.
+			        Stmt *Body = FD->getBody();
+			        if (Body) {
+			            SourceLocation BraceLoc = Body->getBeginLoc();
+			            // Find an existing GNU attribute that ends before the brace.
+			            Attr *TargetAttr = nullptr;
+			            for (auto *A : FD->attrs()) {
+			                if (A->getSyntax() != AttributeCommonInfo::AS_GNU)
+			                    continue;
+			                SourceRange R = A->getRange();
+			                if (!isRangeSafe(R))
+			                    continue;
+			                if (SM.isBeforeInTranslationUnit(R.getEnd(), BraceLoc)) {
+			                    TargetAttr = A;
+			                    break; // take the first such attribute
+			                }
+			            }
+			
+			            if (TargetAttr) {
+			                SourceRange range = TargetAttr->getRange();
+			                CharSourceRange charRange = Lexer::getAsCharRange(range, SM, LangOpts);
+			                StringRef attrText = Lexer::getSourceText(charRange, SM, LangOpts);
+			                if (!attrText.empty() && !attrText.contains("optnone")) {
+			                    std::string newAttrText;
+			                    if (attrText.find("()") != StringRef::npos) {
+			                        // Empty argument list: __attribute__(())
+			                        newAttrText = "__attribute__((optimize(\"O0\"), optnone))";
+			                    } else {
+			                        // Insert "optnone, " after the second '('.
+			                        size_t start = attrText.find('(');
+			                        if (start != StringRef::npos) {
+			                            start = attrText.find('(', start + 1);
+			                            if (start != StringRef::npos) {
+			                                newAttrText = attrText.str();
+			                                newAttrText.insert(start + 1, "optimize(\"O0\"), optnone, ");
+			                            }
+			                        }
+			                    }
+			                    if (!newAttrText.empty() && isRangeSafe(range))
+			                        Rewriter.ReplaceText(range, newAttrText);
+			                }
+			                return;
+			            }
+			        }
+			    }
+			
+				// Insert a new attribute after the return type.
+				SourceRange retRange = FD->getReturnTypeSourceRange();
+				if (retRange.isInvalid()) return;
+			
+				SourceLocation insertLoc = Lexer::getLocForEndOfToken(retRange.getEnd(), 0, SM, LangOpts);
+				if (insertLoc.isInvalid() || !isLocationSafe(insertLoc)) return;
+			
+				Rewriter.InsertText(insertLoc, " __attribute__((optimize(\"O0\"), optnone))");
+			}
 		
 		bool VisitStmt(Stmt *S) {
 			if (SM.isInMainFile(S->getBeginLoc())){				
 				//-- Start marker safety checks
-				//-- Surrounding ASTNodes check
-//				if(!stmtHasValidPrevSibling(S, context)){return;}
 				if(!stmtHasValidChildCriteria(S)){return true;}
-				//-- Section: Preprocessor directives check
-				auto detectedEvents = detectPPConstructsAroundStatement(S, tokenBuffer, SM, recordedPPEventsEvents);
-				if(!isPPSafeStmtMarking(detectedEvents)){return true;}
-				if (!isStmtLocationSafe(S, SM, CI.getLangOpts())) return true;
+				if (macroRecorder->hasOverlap(S->getSourceRange())) {
+					return true;
+				}
 
 				//-- Clang Macro expansion id check.
 				DynTypedNodeList Parents = context.getParents(*S); // TODO: migrate to parentStack method?
@@ -212,14 +285,14 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				if(S->getBeginLoc().isMacroID() || S->getBeginLoc().isInvalid()){return true;}
 				//-- End safety checks;
 				switch (S->getStmtClass()) {
-					case Stmt::IfStmtClass: processIfStmt(cast<IfStmt>(S)); break;
-					case Stmt::WhileStmtClass: processWhileStmt(cast<WhileStmt>(S)); break;
-					case Stmt::DeclStmtClass: processDeclStmt(cast<DeclStmt>(S)); break;
-					case Stmt::ForStmtClass: processForStmt(cast<ForStmt>(S)); break;
-					case Stmt::CallExprClass: processCallExpr(cast<CallExpr>(S)); break;
-					case Stmt::SwitchStmtClass: processSwitchStmt(cast<SwitchStmt>(S)); break;
-					case Stmt::CaseStmtClass: processCaseStmt(cast<CaseStmt>(S)); break;
-					case Stmt::GotoStmtClass: processGotoStmt(cast<GotoStmt>(S)); break;
+					case Stmt::IfStmtClass: 	processIfStmt(cast<IfStmt>(S)); 		break;
+					case Stmt::WhileStmtClass: 	processWhileStmt(cast<WhileStmt>(S)); 	break;
+					case Stmt::DeclStmtClass: 	processDeclStmt(cast<DeclStmt>(S)); 	break;
+					case Stmt::ForStmtClass: 	processForStmt(cast<ForStmt>(S)); 		break;
+					case Stmt::CallExprClass: 	processCallExpr(cast<CallExpr>(S)); 	break;
+					case Stmt::SwitchStmtClass: processSwitchStmt(cast<SwitchStmt>(S));break;
+					case Stmt::CaseStmtClass: 	processCaseStmt(cast<CaseStmt>(S)); 	break;
+					case Stmt::GotoStmtClass: 	processGotoStmt(cast<GotoStmt>(S)); 	break;
 					default: break;
 				}
 			}
@@ -229,8 +302,9 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		bool VisitDecl(Decl *D){
 			if (SM.isInMainFile(D->getLocation())){
 				//-- Section: Preprocessor directives check
-				auto detectedEvents = detectPPConstructsAroundDeclaration(D, tokenBuffer, SM, recordedPPEventsEvents);
-				if(!isPPSafeStmtMarking(detectedEvents)){return true;}
+				if (macroRecorder->hasOverlap(D->getSourceRange())) {
+					return true;
+				}
 
 				// Clang Macro expansion id check.
 				DynTypedNodeList Parents = context.getParents(*D);
@@ -265,7 +339,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			if(FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<MinSizeAttr>() || FD->hasAttr<OptimizeNoneAttr>()){return;}
 			addOrCreateGNUOptnone(FD, rewriter, SM, CI.getLangOpts());			
 		}
-			
+		
 		// --Statements--
 		void processDeclStmt(DeclStmt* DS) {
 			DynTypedNodeList Parents = context.getParents(*DS);
@@ -317,7 +391,8 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		}
 		
 		/**
-		 * TODO: Mark cases of niet?
+		 * 	TODO: 
+		 *	Mark cases? or simply retrieve case info from within the switch stmt.
 		 */
 		void processSwitchStmt(SwitchStmt* SS){
 			rewriter.InsertText(
@@ -329,7 +404,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		}
 		
 		/**
-		 * Deze marker statements zijn unreachable, maar de static analyzer geeft verder geen meldingen hierover.
+		 * These markers statements are unreachable, but the static analyzer does not signal any breaking errors.
 		 */
 		void processCaseStmt(CaseStmt* CS){
 			rewriter.InsertText(

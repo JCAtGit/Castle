@@ -3,8 +3,9 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Rewrite/Core/Rewriter.h"
+#include "clang/Tooling/Syntax/Tokens.h"
 #include <vector>
-#include "../preprocessor-mechanism/PPCallbacksRecorder.hpp"
+#include "../preprocessor/MacroExpansionRecorder.hpp"
 #include "CodeEnchanterVisitor.h"
 #include "nlohmann/json.hpp"
 
@@ -23,7 +24,7 @@ class CodeEnchanterAction: public ASTFrontendAction {
 		bool& clangFormatMode;
 		
 		clang::Rewriter rewriter;	
-		vector<RecordedPPConstruct> ppEvents; 
+		MacroExpansionRecorder* macroRecorder = nullptr;
 		unique_ptr<syntax::TokenCollector> tokenCollector; 
 		
 	public:
@@ -53,9 +54,13 @@ class CodeEnchanterAction: public ASTFrontendAction {
 		 */
 		unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI, StringRef InFile) override {		
 			CI.getDiagnostics().setClient(new clang::IgnoringDiagConsumer(), true);
+			
+			auto recorder = std::make_unique<MacroExpansionRecorder>(CI.getSourceManager());
+			macroRecorder = recorder.get();
 			CI.getPreprocessor().addPPCallbacks(
-				make_unique<PPCallbacksRecorder>(ppEvents, CI.getSourceManager())
+				std::move(recorder)
 			);
+						
 			rewriter.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
 			tokenCollector = make_unique<syntax::TokenCollector>(CI.getPreprocessor());						
 			return make_unique<ASTConsumer>();
@@ -67,13 +72,10 @@ class CodeEnchanterAction: public ASTFrontendAction {
 		 */
 		void EndSourceFileAction() override {
 			CompilerInstance &CI = getCompilerInstance();
-	        syntax::TokenBuffer tokenBuffer = std::move(*tokenCollector).consume();
-	        tokenBuffer.indexExpandedTokens();
 			auto visitor = std::make_unique<CodeEnchanterVisitor>(
 				CI, 
 				rewriter, 
-				std::move(tokenBuffer), 
-				ppEvents, 
+				macroRecorder,
 				markerFormatCfg, 
 				idCounter,
 				nameEncodedMarker,
