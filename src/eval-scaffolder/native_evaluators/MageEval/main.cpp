@@ -1,6 +1,10 @@
 #include <CLI/CLI.hpp>
 #include "cmdline/CmdTasker.hpp"
 
+/**
+ *	Castle's native evaluation tool.
+ * 	Gathers findings from oracle, decom sets and performs rudimentary comparisons.
+ */
 int main(int argc, char **argv) {
 	CLI::App app{"MageEval"};
 	
@@ -20,13 +24,8 @@ int main(int argc, char **argv) {
 	app.add_option("--marker_formats_path", mrkrFormatsPath, "Instrumentation config used for heuristics")
 		->required();
 		
-	bool nameEncodedMarkers = false;  // TODO
+	bool nameEncodedMarkers = false;
 	app.add_flag("-n, --name_encoded_marker",nameEncodedMarkers,  "TODO: Evaluate constructs using names instead of indices.");
-		
-	// TODO: integrate option into implementation
-	string astMode = "-xc"; 
-	app.add_option("--astMode", astMode, "TODO: AST mode used for heuristics ('-xc' or '-xc++')")
-	    ->check(CLI::IsMember({"-xc", "-xc++"}));
 
 	CLI11_PARSE(app, argc, argv);
 

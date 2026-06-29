@@ -6,6 +6,9 @@
 
 using namespace std;
 
+/**
+ *	Executes a shell command and captures its output in a string
+ */
 string execCommandAndCaptureOutput(const string& cmd, string& output) {
     FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe) {

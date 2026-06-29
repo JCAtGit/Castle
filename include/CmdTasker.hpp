@@ -225,7 +225,7 @@ class CmdTasker {
 	}
 	
 	/**
-	 *	Commits time of last usage and iteration progress to file.
+	 *	Commits time of last tool utilization and iteration to file.
 	 */
 	void persistChanges(){
 		if(ps_config_data["save_on_exit"].get<bool>()){

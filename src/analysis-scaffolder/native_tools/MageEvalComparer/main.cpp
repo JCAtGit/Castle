@@ -1,6 +1,9 @@
 #include <CLI/CLI.hpp>
 #include "cmdline/CmdTasker.hpp"
-
+/**
+ *	Castle's native cross set analysis/comparison tool.
+ *  Summarizes over multiple sets and performs statistics over the unified numbers.
+ */
 int main(int argc, char **argv) {
 	CLI::App app{"MageEvalAnalyzer"};
 	
