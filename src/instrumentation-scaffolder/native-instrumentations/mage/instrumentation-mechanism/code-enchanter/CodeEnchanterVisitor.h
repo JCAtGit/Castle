@@ -392,7 +392,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		
 		/**
 		 * 	TODO: 
-		 *	Mark cases? or simply retrieve case info from within the switch stmt.
+		 *		Mark cases? or simply retrieve case info from within the switch stmt.
 		 */
 		void processSwitchStmt(SwitchStmt* SS){
 			rewriter.InsertText(

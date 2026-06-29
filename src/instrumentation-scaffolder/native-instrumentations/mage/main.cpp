@@ -6,25 +6,8 @@
  *		- Addition of dangling child check, only useful if decompilers get more accurate.
  *		Include deeper inspection of dangling stmts, which is useful when not using the formatter.
  *		The inspection should be relatively easy, since without a compound child stmt, we only have a single child to check for.
- *		- Rework dir/file handling, buggy when using output flag and single file.
  */
- 
-// TODO: part of args rework
- struct { 
- 		set<string> excludeFilesSet;
- 		set<string> excludeDirsSet;
- 		set<string> exclusiveFilesSet;
- 		set<string> exclusiveDirsSetDirsSet;
- 		bool onCopy = false;
-		string mrkrFormatsPath;
- 		bool nameEncodedMarker = false;
- 		bool clangFormatMode = false;
- } cliVars;
 
-/**
- *	
- */
- 
 int main(int argc, char **argv) {
 	CLI::App app{"Mage"};
 	
@@ -44,10 +27,10 @@ int main(int argc, char **argv) {
 	string mrkrFormatsPath = "/home/user/Desktop/CCastle/CCastleData/configs/CCastlePipeline/formats.json";
 	app.add_option("--marker_formats_path", mrkrFormatsPath, "Marker format used for heuristics");
 	
-	bool toggle = false; // TODO: has been removed due to rework, reimplement someday
+	bool toggle = false; // TODO: has been removed due to rework, reimplement someday?
 	app.add_flag("-t, --toggle",toggle,  "TODO: Toggles marking and removal");
 	
-	bool enchantFunction = false; // TODO: Is used automatically currently, implement as optional function 
+	bool enchantFunction = false;
 	app.add_flag("-e, --enchant_function",enchantFunction,  "TODO: Adds (optnone, etc.) attributes to function decls.");
 
 	bool nameEncodedMarker = false;
@@ -58,26 +41,22 @@ int main(int argc, char **argv) {
 	
 	vector<string> excludeFiles;
 	auto option_excludeFiles = app.add_option("--exclude_files", excludeFiles, "Files to exclude from processing");
-	
+
 	vector<string> excludeDirs;
-	auto option_excludeDirs = app.add_option("--exclude_dirs", excludeFiles, "TODO: Directories to exclude from processing");
+	auto option_excludeDirs = app.add_option("--exclude_dirs", excludeDirs, "Directories to exclude from processing");
 
-	vector<string> exclusiveFiles;
-	auto option_exclusiveFiles = app.add_option("--exclusive_files", exclusiveFiles, "TODO: Dir's to exclusively visit for processing enqueuement ");
-	
-	vector<string> exclusiveDirs;
-	auto option_exclusiveDirs = app.add_option("--exclusive_dir", exclusiveDirs, "TODO: Dir's to exclusively visit for processing enqueuement ");
-
-	option_excludeFiles->excludes(option_exclusiveFiles, option_exclusiveDirs);
-	option_excludeDirs->excludes(option_exclusiveFiles, option_exclusiveDirs);
-	option_exclusiveFiles->excludes(option_excludeFiles, option_excludeDirs);
-	option_exclusiveDirs->excludes(option_excludeFiles, option_excludeDirs);
+//	vector<string> exclusiveFiles;
+//	auto option_exclusiveFiles = app.add_option("--exclusive_files", exclusiveFiles, "TODO: Dir's to exclusively visit for processing enqueuement ");
+//
+//	vector<string> exclusiveDirs;
+//	auto option_exclusiveDirs = app.add_option("--exclusive_dirs", exclusiveDirs, "TODO: Dir's to exclusively visit for processing enqueuement ");
 
 	CLI11_PARSE(app, argc, argv);
+
 	set<string> excludeFilesSet(excludeFiles.begin(), excludeFiles.end());
 	set<string> excludeDirsSet(excludeDirs.begin(), excludeDirs.end());
-	set<string> exclusiveFilesSet(exclusiveFiles.begin(), exclusiveFiles.end());
-	set<string> exclusiveDirsSetDirsSet(exclusiveDirs.begin(), excludeDirs.end());
+//	set<string> exclusiveFilesSet(exclusiveFiles.begin(), exclusiveFiles.end());
+//	set<string> exclusiveDirsSet(exclusiveDirs.begin(), excludeDirs.end());
 
 	CmdTasker cmdTskr(
 		inputPath, 

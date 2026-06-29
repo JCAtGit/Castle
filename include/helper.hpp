@@ -2,9 +2,11 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <set>
 #include <string>
 #include "clang/Basic/SourceManager.h"
 
+namespace fs = std::filesystem;
 using namespace std;
 using namespace clang;
 
@@ -35,11 +37,38 @@ bool substringOnlyAtEndOfBasename(const string &filename,
 	return firstOccurrence == basename.length() - sub.length();
 }
 
-bool is_subpath(const filesystem::path& base, const filesystem::path& sub) {
-    auto base_norm = filesystem::weakly_canonical(base);
-    auto sub_norm = filesystem::weakly_canonical(sub);
-    auto rel = sub_norm.lexically_relative(base_norm);
-    return !rel.empty() && rel.native()[0] != '.' && rel.native()[0] != '/' || rel == ".";
+
+bool is_subpath(const fs::path& base, const fs::path& sub) {
+    // Make both absolute (uses current path for relative ones)
+    auto base_abs = fs::absolute(base);
+    auto sub_abs  = fs::absolute(sub);
+
+    // Normalise (remove "." and "..", resolve symlinks if they exist)
+    auto base_norm = fs::weakly_canonical(base_abs);
+    auto sub_norm  = fs::weakly_canonical(sub_abs);
+
+    // Compare component‑by‑component to check if base is a prefix of sub
+    auto base_it = base_norm.begin();
+    auto sub_it  = sub_norm.begin();
+
+    while (base_it != base_norm.end() && sub_it != sub_norm.end()) {
+        if (*base_it != *sub_it)
+            return false;
+        ++base_it;
+        ++sub_it;
+    }
+
+    // If we exhausted all components of base, then base is a parent of sub
+    return base_it == base_norm.end();
+}
+
+bool is_subpathOfDirs(set<string> &excludeDirsSet, const filesystem::path &entry){
+	for(auto exclDir: excludeDirsSet){
+		if(is_subpath(exclDir, entry)){
+			return true;
+		}
+	}
+	return false;
 }
 
 /**

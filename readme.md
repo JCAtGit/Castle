@@ -1,17 +1,25 @@
-# Castle - A C Assisted Source Translation Evaluator.
-## Setup 
-### Tool Packages
-llvm-devel
-clang-devel
-mingw64-gcc-c++
-automake
-ninja
-cmake
-make
-boost-devel
-radare2
+# Castle - Code Assisted Source Translation Evaluator.
+### Setup 
+The setup consists for the following requirements:
 
-### Pipeline Packages and instructions
+```
+1. Downloading the dependencies for native tools and pipeline used in CASTLE.
+2. Build from source.
+3. (Optional, Eclipse) making the source code indexable for development.
+4. Once the binaries are built, additional dependencies are necessary to build the binaries from different codebases to evaluate.
+```
+
+#### 1. Tool Packages
+
+Fedora WS 43:
+```
+sudo dnf install llvm-devel clang-devel mingw64-gcc-c++ mingw32-gcc-c++ automake ninja cmake make boost-devel radare2
+```
+
+#### 3. (optional) Pipeline Packages and instructions
+```
+```
+
 sudo dnf install qt5-qtbase-devel qt5-qtscript-devel qt5-qttools-devel git make gcc-c++
 sudo dnf install qt6-qtbase-devel qt6-qtscript-devel qt6-qttools-devel qt6-qt5compat-devel qt6-qtdeclarative-devel git make gcc-c++
 

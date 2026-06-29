@@ -59,14 +59,11 @@ class CmdTasker{
 			pathQueue.push_back(inputDirs);
 		} else if(filesystem::is_directory(inputDirs)){
 			for (const auto& entry : filesystem::recursive_directory_iterator(inputDirs)) {
-				for(auto exclDir: excludeDirsSet){
-					if(is_subpath(exclDir, entry.path())){
-						continue;
-					}
-				}
-
 				if (entry.path().extension() == ".c") {
-					if(excludeFilesSet.find(entry.path().filename().string()) != excludeFilesSet.end()){
+					if(
+						excludeFilesSet.find(entry.path().filename().string()) != excludeFilesSet.end() ||
+						is_subpathOfDirs(excludeDirsSet, entry.path())
+					){
 						cout << "Excluded: " << entry.path().string() << "\n";
 					} else {
 						cout << "Enqueued: " << entry.path() << "\n";
