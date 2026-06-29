@@ -19,7 +19,7 @@ void loadJSON(filesystem::path jsonFilePath, json& jsonRef){
    	try {
 		jsonRef = json::parse(jsonFile);
    	} catch (const json::parse_error& e) {
-    	cerr << "MageEvalComparer parse error: " << e.what() << endl;
+    	cerr << "loadJSON parse error: " << e.what() << endl;
     	return;
   	}
 }

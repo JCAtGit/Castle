@@ -16,6 +16,7 @@ using namespace std;
  */
 class MageEvalAnalyst{
 	private:
+	
 		void incrementJSONEntry(json& entry){
 			if(entry.is_null()){
 				entry = 1;
@@ -26,9 +27,7 @@ class MageEvalAnalyst{
 		
 	public:
 	
-	MageEvalAnalyst()
-	{	
-	}
+	MageEvalAnalyst(){}
 	
 	/**
 	 * 	TODO:

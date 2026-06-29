@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "helper.hpp"
+#include "json.hpp"
 #include "../analysis/MageEvalAnalyst.hpp"
 
 using namespace nlohmann;
@@ -16,7 +17,7 @@ class CmdTasker{
 		filesystem::path inputDirs;
 		filesystem::path outputPath;
 
-		int processMode, analysisMode;
+		int processMode;
 		int it_begin, it_end;
 		
 		string findingsFolder = "findings/", evalFolder = "eval/", devFolder = "dev/";
@@ -26,45 +27,18 @@ class CmdTasker{
 		filesystem::path inputPath, 
 		filesystem::path outputPath,
 		int processMode, 
-		int analysisMode,
 		int it_begin, 
 		int it_end
 	) : 
 	inputDirs(inputPath), 
 	outputPath(outputPath), 
 	processMode(processMode), 
-	analysisMode(analysisMode), 
 	it_begin(it_begin), 
 	it_end(it_end)
 	{
 		findingsFolder 	= inputPath.string() + findingsFolder;
 		evalFolder 		= inputPath.string() + evalFolder;
 		devFolder 		= inputPath.string() + devFolder;
-	}
-	
-	void loadJSON(filesystem::path jsonFilePath, json& jsonRef){
-		ifstream jsonFile(jsonFilePath);
-		if (!jsonFile.is_open()) {
-		    	cerr << "Error: Could not open required marker formats file, see the source json folder for details." << endl;
-		   		return;
-		}
-	   	try {
-			jsonRef = json::parse(jsonFile);
-//			cout << jsonRef.dump(2) << "\n";
-	   	} catch (const json::parse_error& e) {
-	    	cerr << "MageEvalAnalyzer parse error: " << e.what() << endl;
-	    	return;
-	  	}
-	}
-	
-	void saveJsonToFile(const std::string& path, const json& data) {
-	    ofstream file(path);
-	    if (!file.is_open()) {
-	        std::cerr << "Error: Could not open file for writing: " << path << "\n";
-	        return;
-	    }
-	    file << data.dump(2);  // pretty print with indentation
-//	    std::cout << "Saved to "<<  path << "\n" << data.dump(2) << "\n";
 	}
 	
 	/**

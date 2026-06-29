@@ -5,7 +5,7 @@
  *  Summarizes over multiple sets and performs statistics over the unified numbers.
  */
 int main(int argc, char **argv) {
-	CLI::App app{"MageEvalAnalyzer"};
+	CLI::App app{"MageEvalComparer"};
 	
 	vector<filesystem::path> inputDirs;
 	app.add_option("inputDirs", inputDirs, "Input directories to aggregate results from.")
