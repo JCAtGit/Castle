@@ -128,32 +128,21 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			void commitToSingleFile(filesystem::path inputPath, filesystem::path outputPath, filesystem::path outputDir){
 				// returns empty if path is on same dir.
 				StringRef FilePath = SM.getFilename(SM.getLocForStartOfFile(SM.getMainFileID()));	
-				if(!filesystem::exists(outputPath)){
-					filesystem::create_directories(outputPath.parent_path());
-				}
+				if(!filesystem::exists(outputPath)){filesystem::create_directories(outputPath.parent_path());}
 				std::error_code EC;
 				llvm::raw_fd_ostream OutFile(outputPath.string(),EC, llvm::sys::fs::OF_Text);
-				if (EC) {
-					llvm::errs() << "Error 1 opening output file: " << EC.message() << "\n";
-					return;
-				}
+				if (EC) {llvm::errs() << "commitToSingleFile: error opening output file: " << EC.message() << "\n"; return;}
 				rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(OutFile);
 				OutFile.close();	
 			}
 			
 			void commitToQueueFile(filesystem::path inputDir, filesystem::path outputDir){
-//				cout << "Start commit phase" << "\n";
 				StringRef FilePath = SM.getFilename(SM.getLocForStartOfFile(SM.getMainFileID()));
 				filesystem::path outPath = outputDir / rel_outputPath(inputDir, FilePath.str());
-				if(!filesystem::exists(outPath)){
-					filesystem::create_directories(outPath.parent_path());
-				}
+				if(!filesystem::exists(outPath)){filesystem::create_directories(outPath.parent_path());}
 				std::error_code EC;
 				llvm::raw_fd_ostream OutFile(outPath.string(),EC, llvm::sys::fs::OF_Text);
-				if (EC) {
-					llvm::errs() << "Error 2 opening output file: " << EC.message()<< "\n";
-					return;
-				}
+				if (EC) {llvm::errs() << "commitToQueueFile: error opening output file: " << EC.message()<< "\n"; return;}
 				rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(OutFile);
 				OutFile.close();	
 			}
@@ -170,10 +159,8 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				const LangOptions &LangOpts
 			) {
 			    // Conflict detection using Clang attribute methods, check attributes that are incompatible with optnone or if attribute already exists.
-			    if (FD->hasAttr<OptimizeNoneAttr>() || FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<NakedAttr>() ||FD->hasAttr<WeakAttr>() || FD->hasAttr<WeakRefAttr>()) {
-			        return; 
-				}
-					
+			    if (FD->hasAttr<OptimizeNoneAttr>() || FD->hasAttr<AlwaysInlineAttr>() || FD->hasAttr<NakedAttr>() ||FD->hasAttr<WeakAttr>() || FD->hasAttr<WeakRefAttr>()) {return;}
+				
 				// Only rewrite if this is a function definition (has a body) AND it is at file scope.
 				if (!FD->isThisDeclarationADefinition()) return;
 				if (!FD->getLexicalDeclContext()->isFileContext()) return;
@@ -209,11 +196,9 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			            // Find an existing GNU attribute that ends before the brace.
 			            Attr *TargetAttr = nullptr;
 			            for (auto *A : FD->attrs()) {
-			                if (A->getSyntax() != AttributeCommonInfo::AS_GNU)
-			                    continue;
+			                if (A->getSyntax() != AttributeCommonInfo::AS_GNU) continue;
 			                SourceRange R = A->getRange();
-			                if (!isRangeSafe(R))
-			                    continue;
+			                if (!isRangeSafe(R)) continue;
 			                if (SM.isBeforeInTranslationUnit(R.getEnd(), BraceLoc)) {
 			                    TargetAttr = A;
 			                    break; // take the first such attribute
@@ -248,10 +233,8 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			        }
 			    }
 			
-				// Insert a new attribute after the return type.
-				SourceRange retRange = FD->getReturnTypeSourceRange();
+				SourceRange retRange = FD->getReturnTypeSourceRange();	// Insert a new attribute after the return type.
 				if (retRange.isInvalid()) return;
-			
 				SourceLocation insertLoc = Lexer::getLocForEndOfToken(retRange.getEnd(), 0, SM, LangOpts);
 				if (insertLoc.isInvalid() || !isLocationSafe(insertLoc)) return;
 			
@@ -333,7 +316,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			return true;
 		}
 		
-		// --Declarations--
+//------	Declarations	------
 		void processDecl(Decl* D) {}
 		
 		/**
@@ -348,7 +331,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			addOrCreateGNUOptnone(FD, rewriter, SM, CI.getLangOpts());			
 		}
 		
-		// --Statements--
+//------	Statements		------
 		void processDeclStmt(DeclStmt* DS) {
 			DynTypedNodeList Parents = context.getParents(*DS);
 			for (const auto &Parent : Parents) {

@@ -8,12 +8,11 @@ using namespace nlohmann;
 using namespace std;
 
 /**
+ *	Aggregates stats from various sources, then produces probabilities using the aggregated data.
  *	TODO: 
  *		Remove order of processing coupling
  *		Track potential duplication of markers in using the oracle
  *		Get accurate amount of inserted markers from instrumentation origin, e.g. Mage.
- * 	Methods require a certain order of processing:
- *		-
  */
 class MageEvalAnalyst{
 	private:
@@ -21,12 +20,9 @@ class MageEvalAnalyst{
 	MageEvalAnalyst(){}
 	
 	/**
-	 * 	TODO:
-	 *		Total general recovery
-	 *		Test with rufus and then test git
-	 *		add lost oracle markers total
-	 *		add specific processors
-	 *		calculate odds, deviation per stmt for general ASTNode recovery
+	 *	Aggregates stats from the findings data.
+	 *	@param	jsonData	Findings data object
+	 *	@param	summary		Object for recording/querying results
 	 */
 	void statisticizeFindings(json& jsonData, json& summary){
 		for(auto [markerID, finding] : jsonData.items()){
@@ -52,7 +48,6 @@ class MageEvalAnalyst{
 					if(nodeOracleStats["recoveryOfAttr"]["recovered_construct"].is_null()){
 						nodeOracleStats["recoveryOfAttr"]["recovered_construct"] = 0;
 					}
-					
 				} else {
 					for(const auto& decomData: finding["decom"]){
 						auto &nodeDecomStats = summary["constructs"][decomData["ASTNode"].get<string>()];
@@ -85,6 +80,11 @@ class MageEvalAnalyst{
 		}
 	}
 
+	/**
+	 *	Aggregates stats from the eval data.
+	 *	@param	jsonData	Eval data object
+	 *	@param 	summary		Object for recording/querying results
+	 */
 	void statisticizeEvals(json& jsonData, json& summary){
 		for(auto [markerID, evalData] : jsonData.items()){
 			for(const auto& evalElement: evalData){
@@ -104,7 +104,6 @@ class MageEvalAnalyst{
 						if(key == "markee_construct"){continue;} 
 						if (crrntItem[key].is_null()){crrntItem[key] = 0;}
 					}
-					
 					incrementJSONEntry(summary["metadata"]["deterioratedConstructsTotal"]);
 				}
 			}
@@ -112,7 +111,7 @@ class MageEvalAnalyst{
 	}
 
 	/**
-	 *	Unimplemented methods for processing dev information, currently unimplemented.
+	 *	Unimplemented method for processing dev information, currently unimplemented.
 	 *	@param	jsonData	Dev data object
 	 *	@param	summary		Object for recording/querying results
 	 */
@@ -124,7 +123,6 @@ class MageEvalAnalyst{
 	 *	@param summary	Object for recording/querying results
 	 */
 	void summaryStochasticPass(json& summary){
-		// 
 		for(auto [construct, constructData]: summary["constructs"].items()){
 			if(constructData.contains("oracleTotal")){
 				if(constructData.contains("recoveryOfAttr") && constructData["viableComparisons"].get<double>() > 0){
@@ -139,13 +137,15 @@ class MageEvalAnalyst{
 				constructData["VAR(X)"] = 0;
 			}
 		}
-		// final metadata stats like P(X) and VAR(X).
 		if(summary.contains("metadata")){
 			summary["metadata"]["P(X)"] 	= summary["metadata"]["recoveredConstructsTotal"].get<double>() / summary["metadata"]["viableComparisons"].get<double>();
 			summary["metadata"]["VAR(X)"] 	= summary["metadata"]["P(X)"].get<double>() * (1 - summary["metadata"]["P(X)"].get<double>());
 		}
 	}
 	
+	/**
+	 *	Map for quick selection of required stmt-processor based on the AST-string.
+	 */
 	using FindingsAnalysisFnPtr = void(MageEvalAnalyst::*)(json &, json &);
 	unordered_map<string, FindingsAnalysisFnPtr> fnSelector = {
 //		{"CallExpr", 		&MageEvalAnalyst::statisticizeCallExpr},
