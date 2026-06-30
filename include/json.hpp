@@ -36,3 +36,14 @@ void saveJsonToFile(const string& path, const json& data) {
     file << data.dump(2);  // pretty print with indentation
 	cout << "Saved config to " << path << "\n";
 }
+
+/**
+ *	Increments a json entry, initializes with 1 if no value was present.
+ */
+void incrementJSONEntry(json& entry){
+	if(entry.is_null()){
+		entry = 1;
+	} else {
+		entry = entry.get<int>() + 1;
+	}
+}

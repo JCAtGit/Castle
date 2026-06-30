@@ -30,10 +30,13 @@ int main(int argc, char **argv) {
 		->needs(option_outputPath);
 	
 	option_outputPath->needs(option_onCopy); // required when outputting to ensure build process preservation.
-		
+	
 	string mrkrFormatsPath = "/home/user/Desktop/CCastle/CCastleData/configs/CCastlePipeline/formats.json";
-	app.add_option("--marker_formats_path", mrkrFormatsPath, "Marker details used for heuristics");
+	app.add_option("--marker_formats_path", mrkrFormatsPath, "Marker details used for heuristics.");
 
+	string metadataResultsPath = "/home/user/Desktop/CCastle/CCastleData/InstrumentationScaffolder/metadata/";
+	app.add_option("--metadata_results_path", metadataResultsPath, "Path for Storing metadata from the instrumentation process.");
+	
 	bool nameEncodedMarker = false;
 	app.add_flag("-n, --name_encoded_marker",nameEncodedMarker,  "Mark constructs using names instead of indices.");
 	
@@ -55,6 +58,7 @@ int main(int argc, char **argv) {
 		inputPath, 
 		outputPath, 
 		mrkrFormatsPath, 
+		metadataResultsPath,
 		onCopy, 
 		nameEncodedMarker, 
 		clangFormatMode, 

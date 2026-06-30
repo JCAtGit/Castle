@@ -6,11 +6,10 @@
 using namespace nlohmann;
 using namespace std;
 
-// TODO: blablabla SE-principles: extraction, refactor and yada yada yada.
 class CmdTasker{
 	private:		
 		vector<filesystem::path> &inputDirs;
-		filesystem::path &outputPath;							// use outputPath as dir to retrieve previously existing aggregated data from.
+		filesystem::path &outputPath;
 				
 	public:
 	CmdTasker(
@@ -21,12 +20,10 @@ class CmdTasker{
 	outputPath(outputPath)
 	{}
 
-	
 	void startProcesses(){
 		cout << "Start processes \n";
 		MageEvalComparer mec(inputDirs, outputPath);
 		mec.startComparisons();
 	}
-	
 };
 	

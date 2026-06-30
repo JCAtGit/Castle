@@ -2,6 +2,7 @@
 #include <iostream>
 #include <unordered_map>
 #include "nlohmann/json.hpp"
+#include "json.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -16,17 +17,7 @@ using namespace std;
  */
 class MageEvalAnalyst{
 	private:
-	
-		void incrementJSONEntry(json& entry){
-			if(entry.is_null()){
-				entry = 1;
-			} else {
-				entry = entry.get<int>() + 1;
-			}
-		}
-		
 	public:
-	
 	MageEvalAnalyst(){}
 	
 	/**
@@ -84,10 +75,8 @@ class MageEvalAnalyst{
 						summary["constructs"][decomData["ASTNode"].get<string>()]["recoveryOfAttr"]["recovered_construct"] = 0;
 					}
 				}
-				
 //				summary["metadata"]["oracleMissingTotal"][markerID] = finding["decom"].size(); // useful for diagnostics?
 			}
-			
 			if(finding["decom"].size() > 1){
 				incrementJSONEntry(summary["metadata"]["markerDuplication"]);
 			} else if(summary["metadata"]["markerDuplication"].is_null()){
@@ -111,7 +100,6 @@ class MageEvalAnalyst{
 
 				} else {
 					// Unsuccessful recovery is labeled as deterioration, i.e. recovered_construct == false.
-					// TODO: set recoverOfAttr to zero for each attr regardless of any found?
 					for(auto [key, val]: evalElement.items()){
 						if(key == "markee_construct"){continue;} 
 						if (crrntItem[key].is_null()){crrntItem[key] = 0;}
@@ -123,15 +111,20 @@ class MageEvalAnalyst{
 		}
 	}
 
-	void statisticizeDevReports(json& jsonData, json& summary){
-		
-	}
+	/**
+	 *	Unimplemented methods for processing dev information, currently unimplemented.
+	 *	@param	jsonData	Dev data object
+	 *	@param	summary		Object for recording/querying results
+	 */
+	void statisticizeDevReports(json& jsonData, json& summary){}
 	
 	/**
 	 * 	Sample Data Comparison (Statistical Testing).
+	 *	Calculate P and Variance for each constructs separately and in collectively.
+	 *	@param summary	Object for recording/querying results
 	 */
 	void summaryStochasticPass(json& summary){
-		// calculate p and variance for all constructs and in general
+		// 
 		for(auto [construct, constructData]: summary["constructs"].items()){
 			if(constructData.contains("oracleTotal")){
 				if(constructData.contains("recoveryOfAttr") && constructData["viableComparisons"].get<double>() > 0){
@@ -165,6 +158,12 @@ class MageEvalAnalyst{
 //		{"SwitchStmt", 		&MageEvalAnalyst::statisticizeSwitchStmt}
 	};
 	
+	/**
+	 *	Applies a specific statistication method or a general one.
+	 *	@param ASTNode	String designation of selected ASTNode
+	 *	@param finding	A specific finding related to some markerID
+	 *	@param summary	Object for recording/querying results
+	 */
 	void statisticizeFindingSpecifics(string ASTNode, json& finding, json& summary){
 		auto it = fnSelector.find(ASTNode);
 		json markerFindingsResult = json::object();
@@ -177,7 +176,9 @@ class MageEvalAnalyst{
 	}
 	
 	/**
-	 * 	Requires oracle presence
+	 * 	A specific statistication method for DeclStmt.
+	 *	@param	finding	A specific finding related to some markerID (Required: oracle node) 
+	 *	@param 	summary	Object for recording/querying results
 	 */
 	void statisticizeDeclStmt(json& finding, json& summary){
 		// record declstmt types frequency
@@ -190,7 +191,12 @@ class MageEvalAnalyst{
 		}		
 	}
 	
-	void statisticizeStmtGeneral(json& finding, json& summary){
-			
-	}
+	/**
+	 *	General method for unspecified procession.
+	 *	TODO:
+	 *		Dev reports or otherwise other useful methods can be implemented here
+	 *	@param	finding	A specific finding related to some markerID
+	 *	@param	summary	Object for recording/querying results
+	 */
+	void statisticizeStmtGeneral(json& finding, json& summary){}
 };

@@ -19,7 +19,13 @@ int main(int argc, char **argv) {
 
 	// element-it assumes filename has starting incrementing integer or ending incrementing integer before the file extension.
 	int processMode = 0;
-	auto option_processMode = app.add_option("-p, --processMode", processMode, "0 = set, 1 = element-all, 2 = element-it")
+	auto option_processMode = app.add_option(
+		"-p, --processMode", 
+		processMode, 
+		"0 = set, process all files as part of a single set;  \
+							 1 = element-all, process all files as their own entity; \
+							 2 = element-it, process all it-elemented files as their own entity."
+	)
 		->required();
 	
 	int it_begin = 0;

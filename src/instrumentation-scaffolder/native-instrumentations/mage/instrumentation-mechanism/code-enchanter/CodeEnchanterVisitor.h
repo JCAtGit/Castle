@@ -302,10 +302,15 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		bool VisitDecl(Decl *D){
 			if (SM.isInMainFile(D->getLocation())){
 				//-- Section: Preprocessor directives check
-				if (macroRecorder->hasOverlap(D->getSourceRange())) {
-					return true;
-				}
+//				if (macroRecorder->hasOverlap(D->getSourceRange())) {
+//					return true;
+//				}
 
+				unsigned stmtStart = SM.getFileOffset(SM.getSpellingLoc(D->getBeginLoc()));
+				if (macroRecorder->isOffsetInsideMacro(stmtStart)) {
+				    return true;   // cannot inject before – start is inside a macro
+				}
+				
 				// Clang Macro expansion id check.
 				DynTypedNodeList Parents = context.getParents(*D);
 				for (const auto &Parent : Parents) {

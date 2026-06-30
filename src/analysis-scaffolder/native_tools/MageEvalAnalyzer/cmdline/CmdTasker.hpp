@@ -3,7 +3,6 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <unordered_map>
 
 #include "helper.hpp"
 #include "json.hpp"
@@ -12,15 +11,24 @@
 using namespace nlohmann;
 using namespace std;
 
+/**
+ *	Schedules the necessary tasks for analysis.
+ */
 class CmdTasker{
 	private:		
-		filesystem::path inputDirs;
-		filesystem::path outputPath;
+		filesystem::path 	inputDirs, 
+							outputPath;
 
-		int processMode;
-		int it_begin, it_end;
+		int 				processMode,
+							it_begin, it_end;
 		
-		string findingsFolder = "findings/", evalFolder = "eval/", devFolder = "dev/";
+		string 				findingsFolder = "findings/", evalFolder = "eval/", devFolder = "dev/",
+							itEntryExt = ".c.json", summaryFilename = "summary.json";
+		
+		json 				currentJSON, 
+							summaryJSON = json::object();
+							
+		MageEvalAnalyst 	MEA;
 		
 	public:
 	CmdTasker(
@@ -42,82 +50,88 @@ class CmdTasker{
 	}
 	
 	/**
-	 * Benodigheden mappen met JSON resultaten:
-	 *	- findings
-	 * 	- eval
-	 *	- dev
-	 *
-	 * We analyseren de markers die we hebben kunnen vinden, markers die verloren zijn gegaan gaan in een aparte statistiek?
-	 * Of beschouwen we deze ook als een missed recovery? We kunnen een statistiek "including missed" opnemen?
+	 *	Entry function, starts performing the analysis.
 	 */
 	void startProcesses(){
 		cout << "Analyzing inputPath: " << inputDirs << "\n";
-		
-		json currentJSON, summaryJSON = json::object();
-		MageEvalAnalyst MEA;
 		filesystem::create_directories(outputPath.string());
-
 		switch (processMode) {
-			default:
-				break;
-			case 0:{
-				for(auto entry :filesystem::recursive_directory_iterator(findingsFolder)){
-//					cout << "chk0:" << entry.path().string() << "\n";
-					loadJSON(entry, currentJSON); // use the names in this dir to fetch related data in corelated directories
-					MEA.statisticizeFindings(currentJSON, summaryJSON);
-					
-//					cout << "chk1:" << evalFolder + entry.path().filename().string() << "\n";
-					loadJSON(evalFolder + entry.path().filename().string(), currentJSON);
-					MEA.statisticizeEvals(currentJSON, summaryJSON);
+			default:break;
+			case 0: processDirAsSet(MEA, currentJSON, summaryJSON); 					break;
+			case 1: processAsSeparateEntities(MEA, currentJSON, summaryJSON); 			break;
+			case 2: processAsSeparateIterationEntities(MEA, currentJSON, summaryJSON); break;
+		}
+	}
+	
+	/**
+	 *	Treats the dir contents as related entities, thus summarizing its findings as a collective.
+	 * 	@param MEA			Performs the analysis and summarization.
+	 * 	@param currentJSON	Structure containing data from: findings, eval and optionally dev.
+	 *	@param summaryJSON	Structure containing end results.
+	 */
+	void processDirAsSet(MageEvalAnalyst& MEA, json& currentJSON, json& summaryJSON){
+		for(auto entry :filesystem::recursive_directory_iterator(findingsFolder)){
+			loadJSON(entry, currentJSON); // use the names in this dir to fetch related data in corelated directories
+			MEA.statisticizeFindings(currentJSON, summaryJSON);
+			
+			loadJSON(evalFolder + entry.path().filename().string(), currentJSON);
+			MEA.statisticizeEvals(currentJSON, summaryJSON);
 
-//					cout << "chk2:" << devFolder + entry.path().filename().string() << "\n";
-					loadJSON(devFolder + entry.path().filename().string(), currentJSON);
-					MEA.statisticizeDevReports(currentJSON, summaryJSON);
-				}
-				
-				MEA.summaryStochasticPass(summaryJSON);
-				saveJsonToFile(outputPath.string() + "summary.json" ,summaryJSON);
-				break;
-			}
-			case 1:{
-				for(auto entry :filesystem::recursive_directory_iterator(findingsFolder)){
-					loadJSON(entry, currentJSON); // use the names in this dir to fetch related data in corelated directories
-					MEA.statisticizeFindings(currentJSON, summaryJSON);
-					
-					loadJSON(evalFolder + entry.path().filename().string(), currentJSON);
-					MEA.statisticizeEvals(currentJSON, summaryJSON);
-
-					loadJSON(devFolder + entry.path().filename().string(), currentJSON);
-					MEA.statisticizeDevReports(currentJSON, summaryJSON);
-					
-					MEA.summaryStochasticPass(summaryJSON);
-					saveJsonToFile(outputPath.string() + entry.path().filename().string() ,summaryJSON);
-					summaryJSON.clear();
-				}
-				break;
-			}
-			case 2:{
-				// TODO: is a bit hardcoded, but meh
-				string filename;
-				for(;it_begin<it_end;it_begin++){
-					filename = to_string(it_begin )+ ".c.json";
-					loadJSON(findingsFolder + filename, currentJSON); // use the names in this dir to fetch related data in corelated directories
-					MEA.statisticizeFindings(currentJSON, summaryJSON);
-					
-					loadJSON(evalFolder + filename, currentJSON);
-					MEA.statisticizeEvals(currentJSON, summaryJSON);
-
-					loadJSON(devFolder + filename, currentJSON);
-					MEA.statisticizeDevReports(currentJSON, summaryJSON);
-					
-					MEA.summaryStochasticPass(summaryJSON);
-					saveJsonToFile(outputPath.string() + filename ,summaryJSON);
-					summaryJSON.clear();
-				}
-				break;
-			}
+			loadJSON(devFolder + entry.path().filename().string(), currentJSON);
+			MEA.statisticizeDevReports(currentJSON, summaryJSON);
 		}
 		
+		MEA.summaryStochasticPass(summaryJSON);
+		saveJsonToFile(outputPath.string() + summaryFilename ,summaryJSON);
+	}
+	
+	/**
+	 *	Treats each file in the dir as its own separate entity, producing summaries for each one of them.
+	 * 	@param MEA			Performs the analysis and summarization.
+	 * 	@param currentJSON	Structure containing data from: findings, eval and optionally dev.
+	 *	@param summaryJSON	Structure containing end results.
+	 */
+	void processAsSeparateEntities(MageEvalAnalyst& MEA, json& currentJSON, json& summaryJSON){
+		for(auto entry :filesystem::recursive_directory_iterator(findingsFolder)){
+			loadJSON(entry, currentJSON); // use the names in this dir to fetch related data in corelated directories
+			MEA.statisticizeFindings(currentJSON, summaryJSON);
+			
+			loadJSON(evalFolder + entry.path().filename().string(), currentJSON);
+			MEA.statisticizeEvals(currentJSON, summaryJSON);
+
+			loadJSON(devFolder + entry.path().filename().string(), currentJSON);
+			MEA.statisticizeDevReports(currentJSON, summaryJSON);
+			
+			MEA.summaryStochasticPass(summaryJSON);
+			saveJsonToFile(outputPath.string() + entry.path().filename().string() ,summaryJSON);
+			summaryJSON.clear();
+		}
+	}
+	
+	/**
+	 *	Treats each file in the dir as its own separate entity, producing summaries for each one of them.
+	 * 	Processes only the files designated within the index range, using an index namestem.
+	 * 	@param MEA			Performs the analysis and summarization.
+	 * 	@param currentJSON	Structure containing data from: findings, eval and optionally dev.
+	 *	@param summaryJSON	Structure containing end results.
+	 */
+	void processAsSeparateIterationEntities(MageEvalAnalyst& MEA, json& currentJSON, json& summaryJSON){
+		string filename;
+		for(;it_begin<it_end;it_begin++){
+			filename = to_string(it_begin )+ itEntryExt;
+			loadJSON(findingsFolder + filename, currentJSON); // use the names in this dir to fetch related data in related directories
+			MEA.statisticizeFindings(currentJSON, summaryJSON);
+			
+			loadJSON(evalFolder + filename, currentJSON);
+			MEA.statisticizeEvals(currentJSON, summaryJSON);
+
+			loadJSON(devFolder + filename, currentJSON);
+			MEA.statisticizeDevReports(currentJSON, summaryJSON);
+			
+			MEA.summaryStochasticPass(summaryJSON);
+			saveJsonToFile(outputPath.string() + filename ,summaryJSON);
+			summaryJSON.clear();
+		}
 	}
 };
 	

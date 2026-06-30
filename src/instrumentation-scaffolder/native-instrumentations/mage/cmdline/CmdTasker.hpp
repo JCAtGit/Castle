@@ -5,8 +5,9 @@
 #include <clang/Frontend/FrontendAction.h>
 #include <string>
 #include "clang/Tooling/Tooling.h"
-#include <helper.hpp>
 #include "../instrumentation-mechanism/code-enchanter/CodeEnchanterAction.h"
+#include "helper.hpp"
+#include "json.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -16,6 +17,7 @@ class CmdTasker{
 	filesystem::path 			inputDirs, 
 								outputPath, 
 								mrkrFormatsPath,
+								metadataResultsPath,
 								inputDir, 
 								outputDir;
 						
@@ -154,7 +156,8 @@ class CmdTasker{
 	CmdTasker(
 		string inputPath, 
 		string outputPath, 
-		string mrkrFormatsPath, 
+		string mrkrFormatsPath,
+		string metadataResultsPath,
 		bool onCopy, 
 		bool nameEncodedMarkers, 
 		bool formatMode, 
@@ -164,6 +167,7 @@ class CmdTasker{
 		inputDirs(inputPath), 
 		outputPath(outputPath), 
 		mrkrFormatsPath(mrkrFormatsPath), 
+		metadataResultsPath(metadataResultsPath),
 		onCopy(onCopy), 
 		nameEncodedMarkers(nameEncodedMarkers), 
 		clangFormatMode(formatMode), 
@@ -216,6 +220,10 @@ class CmdTasker{
 			return;
 		}
 		createMarkerDefinitionHeaderFile();
+		saveJsonToFile(
+			metadataResultsPath.string() + outputPath.filename().string(), 
+			json::object({{"MarkersInserted", idCounter} })
+		);
 	}
 };
 

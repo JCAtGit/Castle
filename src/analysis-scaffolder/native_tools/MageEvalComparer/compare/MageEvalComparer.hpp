@@ -17,13 +17,11 @@
 using namespace nlohmann;
 using namespace std;
 
-// TODO: SE improvements
 /**
- * 	TODO: 
- *		- Unified summary of listed dirs.
- *		We add all the numbers of the required summaries and then calculate new odds.
- *		- SE improvements for probabilities?
- *		Move probabilities under own object
+ * 	MaveEvalComparer.
+ * 	This classes takes the summary.json from each inputdir, then it proceeds to aggregate , recalculate and output the combined summary.
+ *		
+ *	TODO: 
  *	Considerations:
  *		- Inclusie oracleMarkedTypes?
  *		DeclStmt is een stmt waar decompilers moeite mee hebben, de lijst toont een glimps van waar mee geworsteld wordt.
@@ -46,6 +44,8 @@ class MageEvalComparer{
 
 		vector<json> 							summaryData, binaryMetadata;
 		json									unifiedSummary 	= json::object();
+		
+		// Keys to determine which binary metadata to pull from radare2 output.
 		const vector<string>					radare2Keys = {
 			"arch",  "bits", "bintype", "class", "compiler", "endian", "lang", "machine", "os"
 		};
@@ -63,13 +63,10 @@ class MageEvalComparer{
 		sort(inputDirs.begin(),inputDirs.end());
 		for(int i=0 ; i<inputDirs.size() ; i++){
 			summaryData.push_back(json::object());
-			
-
 			loadJSON(inputDirs[i].string() + summaryFilename, summaryData[i]);
-
 			binaryDirsTarget = getCastleFormatBuildNameFromAnalysisName(inputDirs[i].parent_path().filename().string()); 
 			for(const auto& entry : filesystem::recursive_directory_iterator(buildScaffolderDir / binaryDirsTarget)){
-				// perform extraction and then break, assuming all other binaries have comparable settings.
+				// perform extraction and then break, assuming all other related binaries have the same general settings.
 				command = binMetadataCmd + (buildScaffolderDir / binaryDirsTarget).string() + "/" + entry.path().filename().string();
 //				cout << command << "\n";
 				execCommandAndCaptureOutput(command, dataStringHolder);
@@ -77,11 +74,10 @@ class MageEvalComparer{
 			}
 			
 			binaryMetadata.push_back(json::parse(dataStringHolder)["info"]);
-//			cout << "JSONMetadata: \n" << binaryMetadata[i].dump(2) << "\n";
 			dataStringHolder.clear();
 		}		
 	}	
-	
+		
 		void startComparisons(){
 			for(int i=0 ; i<inputDirs.size() ; i++){
 				for(int j = i + 1 ; j<inputDirs.size() ; j++){
@@ -98,10 +94,12 @@ class MageEvalComparer{
 				exportZConstructMatrixToCSV(outputPath.string() + contextKey + ".csv", contextData, constructPMatrixMap[contextKey], contextKey);
 			}
 			exportZGeneralMatrixToCSV(outputPath.string() + "General.csv", generalZMatrix, generalPMatrix, "General");
-			saveJsonToFile(outputPath.string() + "unified_summary.json", unifiedSummary);
+			saveJsonToFile(outputPath.string() + summaryFilename, unifiedSummary);
 		}
 	
-		// TODO: Implement/Test
+		/**
+		 *	Aggregates and recomputes the necessary data related to all the inputdirs.
+		 */
 		void createUnifiedSummary(){
 			cout << "createUnifiedSummary \n";
 			// count up basic numbers
@@ -113,7 +111,6 @@ class MageEvalComparer{
 
 			for(auto& summary:summaryData){
 				// tally up constructs
-
 				for(auto& [constructKey, constructData]:summary["constructs"].items()){
 					if(unifiedSummaryConstructs[constructKey].is_null()){
 						unifiedSummaryConstructs[constructKey] = json::object();
@@ -142,8 +139,9 @@ class MageEvalComparer{
 							n0USConstruct[n0Key] = n0USConstruct[n0Key].get<int>() + n0Val.get<int>();
 						}
 					}
-				}
-				// tally up metadata
+
+								}
+				// Tally up metadata
 				for(auto& [mKey, mData]:summary["metadata"].items()){
 					if(unifiedSummaryMetadata[mKey].is_null()){
 						unifiedSummaryMetadata[mKey] = 0;
@@ -261,6 +259,9 @@ class MageEvalComparer{
 		    file << CSVData;
 		}
 	
+		/**
+		 *	Exports the data for the general criteria to csv format.
+		 */
 		template <typename T>
 		void exportZGeneralMatrixToCSV(const string& path, Matrix<T>& contextZData, Matrix<T>& contextPData, const string& contextKey){
 			ostringstream oss;
@@ -273,7 +274,6 @@ class MageEvalComparer{
 			}
 			CSVData += "\n";
 			
-			// TODO: add amount of construct or related samplesizes to its mapping.
 			for(int i = 0; i<inputDirs.size();i++){
 				int vcCount = summaryData[i]["metadata"]["viableComparisons"].get<int>();
 				CSVData += 
@@ -343,7 +343,9 @@ class MageEvalComparer{
 		    file << CSVData;
 		}
 		
-		// TODO: rework to without i, j arguments?
+		/**
+		 *	
+		 */
 		void calcConstructZTestProportions(json& iData, json& jData, int i, int j){
 			cout << "calcConstructZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
 			
@@ -355,11 +357,11 @@ class MageEvalComparer{
 
 					// calculate success/failure condition
 					if(iConstructData.contains("viableComparisons") && jConstructData.contains("viableComparisons")){
-						auto niOracle = iConstructData["viableComparisons"].get<double>();
-						auto piOracle = iConstructData["P(X)"].get<double>();
+						double niOracle = iConstructData["viableComparisons"].get<double>();
+						double piOracle = iConstructData["P(X)"].get<double>();
 
-						auto njOracle = jConstructData["viableComparisons"].get<double>();
-						auto pjOracle = jConstructData["P(X)"].get<double>();
+						double njOracle = jConstructData["viableComparisons"].get<double>();
+						double pjOracle = jConstructData["P(X)"].get<double>();
 
 						// success/failure condition expectation test for 3 sds, allows normal approximation to a binomial distribution
 						// ensure both are eligible for proportion test
@@ -374,13 +376,13 @@ class MageEvalComparer{
 								njOracle * (1 - pjOracle) 	< 10
 							)
 						){
-							// use Fisher's Exact Test or other test?
+							// TODO: use Fisher's Exact Test or other test?
 							continue;
 						}
 
 						// De sample proportions zijn in dit geval hetzelfde als P(X), dus alleen pooled proportions uitrekenen.
 
-						auto pooledProportion = (
+						double pooledProportion = (
 							(
 								iConstructData["recoveryOfAttr"]["recovered_construct"].get<double>() + 
 								jConstructData["recoveryOfAttr"]["recovered_construct"].get<double>()
@@ -397,14 +399,14 @@ class MageEvalComparer{
 						// If we assume null is true, then we would be encouraged to use the pooled standard error (SE)
 						// If we group the results by the same decompiler, we assume H0, that is the decompiler is the main determinant for found distribution.
 
-						auto pooledSE = sqrt(
+						double pooledSE = sqrt(
 							pooledProportion * (1 - pooledProportion) *
 							(
 								(1 / niOracle) +
 								(1 / njOracle)
 							)
 						); 
-						auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
+						double ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
 						double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
 						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
 //							cout << ZStat2Proportions << " - creating construct matrix \n";
@@ -459,5 +461,4 @@ class MageEvalComparer{
 			generalPMatrix.at(i,j) = pValue;
 			generalPMatrix.at(j,i) = pValue;
 		}
-	
 };
