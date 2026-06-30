@@ -8,12 +8,10 @@
 #include "clang/Lex/Lexer.h"
 
 #include <filesystem>
-#include <vector>
 #include <string>
 #include <helper.hpp>
 #include "../preprocessor/MacroExpansionRecorder.hpp"
 #include "predicates-stmt.hpp"
-#include "predicates-decl.hpp"
 
 using namespace clang;
 using namespace std;
@@ -25,25 +23,25 @@ using namespace nlohmann;
  */
 class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 	private:
-		Rewriter& rewriter;
+		Rewriter& 				rewriter;
 		MacroExpansionRecorder* macroRecorder = nullptr;
-  		CompilerInstance& CI;
-		SourceManager& SM;
-		ASTContext& context;
+  		CompilerInstance& 		CI;
+		SourceManager& 			SM;
+		ASTContext& 			context;
 
-		json markerFormatCfg;
-		int lastStart;
-		int& idCounter;
-		bool& nameEncodedMarker;
-		bool& clangFormatMode;
+		json 					markerFormatCfg;
+		int 					lastStart,
+								&idCounter;
+		bool 					&nameEncodedMarker, 
+								&clangFormatMode;
 		
-		string markerName;
-		string markerKeyword;
-		string markerType;
-		string markerSignature;
-		string markerEndString = "; \n";
-		string headerInclusion;
-		string definitionFilename;
+		string 					markerName,
+								markerKeyword,
+		 						markerType,
+		 						markerSignature,
+		 						markerEndString = "; \n",
+		 						headerInclusion,
+								definitionFilename;
 
 		string synthesizeCallMarkerString(){
 			string markerCallString = markerName;
@@ -66,13 +64,13 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		
 	public:
 		CodeEnchanterVisitor(
-			CompilerInstance &ci, 
-			Rewriter &rewriter, 
+			CompilerInstance 		&ci, 
+			Rewriter 				&rewriter, 
 			MacroExpansionRecorder* macroRecorder,
-			json &markerFormatCfg, 
-			int &idCounter,
-			bool &nameEncodedMarkers,
-			bool &clangFormatMode
+			json 					&markerFormatCfg, 
+			int 					&idCounter,
+			bool 					&nameEncodedMarkers,
+			bool 					&clangFormatMode
 		):
 			CI(ci), 
 			rewriter(rewriter),	
@@ -264,8 +262,13 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			if (SM.isInMainFile(S->getBeginLoc())){				
 				//-- Start marker safety checks
 				if(!stmtHasValidChildCriteria(S)){return true;}
-				if (macroRecorder->hasOverlap(S->getSourceRange())) {
-					return true;
+//				if (macroRecorder->hasOverlap(S->getSourceRange())) {
+//					return true;
+//				}
+				
+				unsigned stmtStart = SM.getFileOffset(SM.getSpellingLoc(S->getBeginLoc()));
+				if (macroRecorder->isOffsetInsideMacro(stmtStart)) {
+				    return true;   // cannot inject before – start is inside a macro
 				}
 
 				//-- Clang Macro expansion id check.

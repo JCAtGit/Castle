@@ -34,7 +34,6 @@ void saveJsonToFile(const string& path, const json& data) {
         return;
     }
     file << data.dump(2);  // pretty print with indentation
-	cout << "Saved config to " << path << "\n";
 }
 
 /**

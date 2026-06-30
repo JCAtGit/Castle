@@ -43,7 +43,6 @@ class MacroExpansionRecorder : public clang::PPCallbacks {
         sorted = false;
     }
 
-    // Finalize: sort intervals once after all callbacks 
     void sortIntervals() {
         if (!sorted) {
             std::sort(intervals.begin(), intervals.end(),
@@ -104,7 +103,6 @@ class MacroExpansionRecorder : public clang::PPCallbacks {
 	    return offset <= it->end;   // true if offset is inside that macro
 	}
 	
-    // Optional: query a single offset (for injection at a point)
     bool isPointInsideMacro(unsigned offset) const {
         if (!sorted) {
             const_cast<MacroExpansionRecorder*>(this)->sortIntervals();

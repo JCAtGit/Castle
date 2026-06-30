@@ -220,8 +220,10 @@ class CmdTasker{
 			return;
 		}
 		createMarkerDefinitionHeaderFile();
+		cout << "Markers inserted: " << idCounter << "\n";
+		fs::create_directory(metadataResultsPath.string());
 		saveJsonToFile(
-			metadataResultsPath.string() + outputPath.filename().string(), 
+			metadataResultsPath.string() + outputPath.parent_path().filename().string(), 
 			json::object({{"MarkersInserted", idCounter} })
 		);
 	}
