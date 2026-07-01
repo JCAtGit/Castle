@@ -3,14 +3,14 @@
 #include <iostream>
 #include <unordered_map>
 #include "../../../../../include/paths.hpp"
+#include "../ast-mechanism/ContextGatherer.hpp"
 
 #include "nlohmann/json.hpp"
 #include "clang/AST/ASTContext.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Tooling/Tooling.h"
 #include "json.hpp"
-#include "../ast-mechanism/CrossASTEvaluator.hpp"
-#include "../ast-mechanism/CrossASTGatherer.hpp"
+#include "../ast-mechanism/CrossContextEvaluator.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -34,10 +34,6 @@ class CmdTasker{
 							        "-xc++", 			// xc++ or xc makes a huge difference for node recovery and is worth considering for C files as well
 									"-w",
 						//			"-std=c17", 			// voor c alleen en dus voor -xc flag
-						//			"-Xclang",
-						//	        "-frecovery-ast",
-						//			"-Xclang",
-						//	        "-frecovery-ast-type",
 									"-ferror-limit=1",
 							    };
 		
@@ -56,12 +52,13 @@ class CmdTasker{
 		}
 		
 		/**
-		 *	
+		 *	Directory processing function.
+		 *	If a directory is given as input target, then it will cross evaluate each source file inside the directory against the full oracle map.
 		 */
 		void processDir(){
 			cout<< "processDir" << "\n";
 			string mapKey;
-			CrossASTGatherer CAGatherer(
+			ContextGatherer CAGatherer(
 				selectedFormat,
 				findings, 
 				nameEncodedMarkers
@@ -97,7 +94,7 @@ class CmdTasker{
 
 					CAGatherer.announceFindings();
 					cout << "Starting eval: " << entry.path().string() <<"\n";
-					CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
+					CrossContextEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
 					
 					CAEvaluator.startEval();
 					cout << "Saving result of " << mapKey << " in " << outputPath << "\n";
@@ -116,6 +113,10 @@ class CmdTasker{
 			}
 		}
 		
+		/**
+		 *	File processing function.
+		 *	If a file is given as input target, then it will evaluate this single file against the full oracle map.
+		 */
 		void processFile(){
 			cout<< "processFile" << "\n";
 			string fileDecomData = file2string(inputPath);
@@ -123,7 +124,7 @@ class CmdTasker{
 			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, inputPath.filename().c_str());
 			auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(fileOracleData, args, oracleDir.string() + inputPath.filename().string());
 			
-			CrossASTGatherer CAGatherer(
+			ContextGatherer CAGatherer(
 				selectedFormat,
 				findings, 
 				&(astOracleUnit->getASTContext()), 
@@ -138,7 +139,7 @@ class CmdTasker{
 			CAGatherer.announceFindings();
 			
 			cout << "Starting eval" << "\n";
-			CrossASTEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
+			CrossContextEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
 			CAEvaluator.startEval();
 			
 			cout << "Committing results to json:" << outputPath.parent_path().string() << "\n"; // outputPath is dir?
@@ -169,6 +170,9 @@ class CmdTasker{
 		selectedFormat = markerFormats;
 	}
 	
+	/**
+	 *	Entry function, starts the rudimentary evaluation processes.
+	 */
 	void startProcesses(){
 		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
 		if(!filesystem::exists(inputPath)){

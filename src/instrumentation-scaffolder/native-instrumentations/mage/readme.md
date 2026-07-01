@@ -21,4 +21,4 @@ Example, copy a dir to some outputdir and perform instrumentation on the copy so
 	Mage some/input/dir/path --on-copy -o some/output/dir/path
 ```
 
-For further details, consult the MAGE binary with the --help flag.
+For further details, consult the Mage binary with the --help flag.

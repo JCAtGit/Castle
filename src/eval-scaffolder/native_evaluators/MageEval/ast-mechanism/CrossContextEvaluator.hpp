@@ -12,14 +12,15 @@ using namespace nlohmann;
 using namespace std;
 
 /**
+ *	
  *	Assumes oracle to be free of major errors and to be compilable.
  * 	TODO:
  *		Expand to measuring decls using "decl markers"? Consequently symantically refactor current "general markers" to "stmt markers"
  */
 
-class CrossASTEvaluator{
+class CrossContextEvaluator{
 	public:
-	CrossASTEvaluator(
+	CrossContextEvaluator(
 		json &findings,
 		json &findings_eval,
 		json &dev_report,
@@ -31,16 +32,16 @@ class CrossASTEvaluator{
 		dev_report["generic_eval"] = json::array();
 	}
 	
-	using EvalFnPtr = bool(CrossASTEvaluator::*)(const string &, json &, json &, json &);
+	using EvalFnPtr = bool(CrossContextEvaluator::*)(const string &, json &, json &, json &);
 	unordered_map<string, EvalFnPtr> fnSelector = {
-		{"CallExpr", 		&CrossASTEvaluator::processCallExpr},
-		{"DeclStmt", 		&CrossASTEvaluator::processDeclStmt},
-		{"IfStmt", 			&CrossASTEvaluator::processIfStmt},
-		{"ForStmt", 		&CrossASTEvaluator::processForStmt},
-		{"WhileStmt", 		&CrossASTEvaluator::processWhileStmt},
-		{"DoStmt", 			&CrossASTEvaluator::processDoStmt},
-		{"BinaryOperator", 	&CrossASTEvaluator::processBinaryOperator},
-		{"SwitchStmt", 		&CrossASTEvaluator::processSwitchStmt}
+		{"CallExpr", 		&CrossContextEvaluator::processCallExpr},
+		{"DeclStmt", 		&CrossContextEvaluator::processDeclStmt},
+		{"IfStmt", 			&CrossContextEvaluator::processIfStmt},
+		{"ForStmt", 		&CrossContextEvaluator::processForStmt},
+		{"WhileStmt", 		&CrossContextEvaluator::processWhileStmt},
+		{"DoStmt", 			&CrossContextEvaluator::processDoStmt},
+		{"BinaryOperator", 	&CrossContextEvaluator::processBinaryOperator},
+		{"SwitchStmt", 		&CrossContextEvaluator::processSwitchStmt}
 	};
 	
 	void startEval(){
@@ -93,10 +94,10 @@ class CrossASTEvaluator{
 	}
 	
 	private:
-	json &findings;
-	json &findings_eval;
-	json &dev_report;
-	filesystem::path &outputPath;
+	json 				&findings,
+						&findings_eval,
+						&dev_report;
+	filesystem::path 	&outputPath;
 	
 	bool processStmtGeneral(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];

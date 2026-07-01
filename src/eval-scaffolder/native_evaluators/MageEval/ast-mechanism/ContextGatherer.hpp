@@ -6,14 +6,16 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Basic/SourceManager.h"
-#include "llvm/Support/Casting.h"
 #include "../ast-mechanism/ast-helper.hpp"
 
 using namespace nlohmann;
 using namespace clang;
 using namespace std;
 
-class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
+/**
+ *	A Class that is responsible for gathering findings per context independently and storing these in a shared object.
+ */
+class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	private:
 	json 								&markerFormat, &findings;
 	bool								&nameEncodedMarkers;
@@ -31,23 +33,24 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 
 	unordered_map<int64_t, CallExpr*>	*selectedMarkerMap;
 	unordered_map<int64_t, Stmt*>		*selectedMarkerParentMap;
-
-	int 								proc_mode = 0; // 0 = oracle, 1 = decom
-	
-	void 								(CrossASTGatherer::*selectedProcessor)(Stmt *S);
 	
 	ASTContext							*selectedAST;
 	SourceManager						*selectedSM;
+	
+	int 								context_mode = 0; // 0 = oracle, 1 = decom
+
+	void 								(ContextGatherer::*selectedProcessor)(Stmt *S);
+	
 	string 								selectedContextString, 
 										magestring;
 	
 	public:	
-	CrossASTGatherer(
-		json& markerFormat, 
-		json& findings,
-		ASTContext *oracleAST, 
-		ASTContext *decomAST, 
-		bool& nameEncodedMarkers
+	ContextGatherer(
+		json		&markerFormat, 
+		json		&findings,
+		ASTContext 	*oracleAST, 
+		ASTContext 	*decomAST, 
+		bool 		&nameEncodedMarkers
 	): 
 	markerFormat(markerFormat),	
 	findings(findings),
@@ -61,10 +64,10 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		magestring = markerFormat["name"].get<string>();;
 	}
 	
-	CrossASTGatherer(
-		json& markerFormat, 
-		json& findings, 
-		bool& nameEncodedMarkers
+	ContextGatherer(
+		json &markerFormat, 
+		json &findings, 
+		bool &nameEncodedMarkers
 	): 
 	markerFormat(markerFormat), 
 	findings(findings), 
@@ -87,8 +90,12 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		findings = findings_ref;
 	}
 	
-	void selectMode(int proc_mode){
-		switch (proc_mode) {
+	/**
+	 *	Selects which context is being recorded depending on the mode (oracle or decom).
+	 *	@param context_mode 0 = decom, 1 =  oracle.
+	 */
+	void selectMode(int context_mode){
+		switch (context_mode) {
 			case 0:
 			selectedAST = decomAST;
 			selectedSM = decomSM;
@@ -110,14 +117,18 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		}
 	}
 	
-	int getMageIndex(CallExpr* markerCE){
-		auto DC = markerCE->getDirectCallee();
+	/**
+	 *	Heuristic function to determine the identity of a marker function from a CallExpr.
+	 *	When nameEncodedMarkers are enable, indexes will extracted from the name instead.
+	 */
+	int getMageIndex(CallExpr* potentialMarker){
+		auto DC = potentialMarker->getDirectCallee();
 		if (!DC) return -1;
 		string namestring = DC->getNameInfo().getName().getAsString();
 
 		if (namestring.compare(0, magestring.length(), magestring) != 0){return -1;} 		
-		if (markerCE->getNumArgs() > 0 && !nameEncodedMarkers){
-			auto IL = dyn_cast<IntegerLiteral>(markerCE->getArg(0)->IgnoreImpCasts());
+		if (potentialMarker->getNumArgs() > 0 && !nameEncodedMarkers){
+			auto IL = dyn_cast<IntegerLiteral>(potentialMarker->getArg(0)->IgnoreImpCasts());
 			if (IL) {
 				llvm::APInt Value = IL->getValue();
 				return Value.getSExtValue();
@@ -130,6 +141,11 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return -1;
 	}
 	
+	/**
+	 *	For a given CallExpr, checks if it is a marker call.
+	 *	If it is found to be a marker, then the potential markee will be fetched.
+	 *	Then based on the type of the markee, the appropriate recorder will be selected.
+	 */
 	void indexProcessor(CallExpr *CE){
 		if (selectedSM->isInMainFile(CE->getBeginLoc())){
 			int mageIndex = getMageIndex(CE);
@@ -154,27 +170,41 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 //				markerFinding["children"] = json::array(); // wordt nu niks mee gedaan
 				markerFinding["properties"] = json::object();
 				
-				evalSRDeciderP(const_cast<Stmt*>(CEMarkee->get<Stmt>()), &(markerFinding));
+				evalSRDeciderP(const_cast<Stmt*>(CEMarkee->get<Stmt>()), &markerFinding);
 				findings[mageIndexString][selectedContextString].push_back(markerFinding);
-
 			} else {
 				// TODO: report to dev if not already accounted for
 			}
 		}
 	}
 	
+	/**
+	 *	Announces the found mappings of Oracle and Decom contexts. 
+	 *	TODO: 
+	 *		- Record findings explicitly to dev files.
+	 *		  So far the findings have produced some interesting results, where large discrepancies have appeared.
+	 */
 	void announceFindings(){
 		cout << "OracleMap:" << oracleMarkerMap.size() << " - DecomMap:" << decomMarkerMap.size() << "\n"; 
 		cout << "OracleParentMap:" << oracleMarkerParentMap.size() << " - DecomParentMap:" << decomMarkerParentMap.size() << "\n"; 
 	}
 	
+	/**
+	 *	The ClangAST parent context mechanism, did not work flawlessly between multiple AST's.
+	 *	The lazy-build mechanism loses its mapping when switching AST's and does not rebuild correctly.
+	 *	Custom parent tracking, embedded in the traversal mechanism ensures alternative access to parent context.
+	 */
 	bool TraverseStmt(Stmt *S) {
         parentStack.push_back(S);
-        bool result = RecursiveASTVisitor<CrossASTGatherer>::TraverseStmt(S);
+        bool result = RecursiveASTVisitor<ContextGatherer>::TraverseStmt(S);
         parentStack.pop_back();
         return result;
 	}
 	
+	/**
+	 *	We expressly handle CallExpr visits, because only these can be potential markers.
+	 *	From there we can derive the markee, if any.
+	 */
 	bool VisitCallExpr(CallExpr *CE){
 		indexProcessor(CE); 
 		return true;
@@ -215,7 +245,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 //		}
 		return false;
 	}
-	
 	
 	bool declStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<DeclStmt>(node);
