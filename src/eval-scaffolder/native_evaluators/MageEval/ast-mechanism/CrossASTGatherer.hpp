@@ -1,16 +1,10 @@
 
-#include <cstddef>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/ASTStructuralEquivalence.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/Expr.h"
 #include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/AST/Stmt.h"
-#include "clang/AST/Type.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Casting.h"
 #include "../ast-mechanism/ast-helper.hpp"
@@ -21,35 +15,31 @@ using namespace std;
 
 class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	private:
-	json &markerFormat, &findings;
-	bool& nameEncodedMarkers;
+	json 								&markerFormat, &findings;
+	bool								&nameEncodedMarkers;
 	
-	ASTContext *oracleAST, *decomAST;
-	SourceManager *oracleSM, *decomSM;
+	ASTContext 							*oracleAST, *decomAST;
+	SourceManager 						*oracleSM, 	*decomSM;
 	
-	unordered_map<int64_t, CallExpr*> decomMarkerMap;
-	unordered_map<int64_t, CallExpr*> oracleMarkerMap;
+	unordered_map<int64_t, CallExpr*> 	decomMarkerMap,
+										oracleMarkerMap;
 	
-	vector<Stmt*> parentStack;
-	unordered_map<int64_t, Stmt*> decomMarkerParentMap;
-	unordered_map<int64_t, Stmt*> oracleMarkerParentMap;
+	vector<Stmt*> 						parentStack;
+	
+	unordered_map<int64_t, Stmt*> 		decomMarkerParentMap,
+										oracleMarkerParentMap;
 
-//	unordered_map<int64_t, Stmt*> decomMarkeeMap;
-//	unordered_map<int64_t, Stmt*> oracleMarkeeMap;
+	unordered_map<int64_t, CallExpr*>	*selectedMarkerMap;
+	unordered_map<int64_t, Stmt*>		*selectedMarkerParentMap;
 
-	unordered_map<int64_t, CallExpr*>* 	selectedMarkerMap;
-	unordered_map<int64_t, Stmt*>* 		selectedMarkerParentMap;
-//	unordered_map<int64_t, Stmt*>* 		selectedMarkeeMap;
-
-	int proc_mode = 0; // 0 = oracle, 1 = decom
-	void (CrossASTGatherer::*selectedProcessor)(Stmt *S);
-	ASTContext* selectedAST;
-	SourceManager* selectedSM;
-	string selectedContextString, magestring;
+	int 								proc_mode = 0; // 0 = oracle, 1 = decom
 	
-	// Structural equivalence functionality
-//	StructuralEquivalenceContext::NonEquivalentDeclSet neds;
-//	StructuralEquivalenceContext sec;
+	void 								(CrossASTGatherer::*selectedProcessor)(Stmt *S);
+	
+	ASTContext							*selectedAST;
+	SourceManager						*selectedSM;
+	string 								selectedContextString, 
+										magestring;
 	
 	public:	
 	CrossASTGatherer(
@@ -75,8 +65,13 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		json& markerFormat, 
 		json& findings, 
 		bool& nameEncodedMarkers
-	): markerFormat(markerFormat), findings(findings), nameEncodedMarkers(nameEncodedMarkers)
-	{magestring = markerFormat["name"].get<string>();}
+	): 
+	markerFormat(markerFormat), 
+	findings(findings), 
+	nameEncodedMarkers(nameEncodedMarkers)
+	{
+		magestring = markerFormat["name"].get<string>();
+	}
 	
 	void setDecomContext(ASTContext *otherAST){
 		decomAST = otherAST;
@@ -153,9 +148,9 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 				json markerFinding = json::object();
 				markerFinding["ASTNode"] = CEMarkee->getNodeKind().asStringRef();
 				markerFinding["Source"] = 
-					selectedSM->getFilename(CE->getBeginLoc()).str() 	+ " (" + 
-					to_string(selectedSM->getSpellingLineNumber(CE->getBeginLoc()))					+ ", "+
-				 	to_string(selectedSM->getSpellingColumnNumber(CE->getBeginLoc()))				+ ") " ;
+					selectedSM->getFilename(CE->getBeginLoc()).str() 					+ " (" + 
+					to_string(selectedSM->getSpellingLineNumber(CE->getBeginLoc()))		+ ", "+
+				 	to_string(selectedSM->getSpellingColumnNumber(CE->getBeginLoc()))		+ ") " ;
 //				markerFinding["children"] = json::array(); // wordt nu niks mee gedaan
 				markerFinding["properties"] = json::object();
 				
@@ -169,13 +164,11 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	}
 	
 	void announceFindings(){
-		// TODO: oracle decom aanwezigheid verifieren 
 		cout << "OracleMap:" << oracleMarkerMap.size() << " - DecomMap:" << decomMarkerMap.size() << "\n"; 
 		cout << "OracleParentMap:" << oracleMarkerParentMap.size() << " - DecomParentMap:" << decomMarkerParentMap.size() << "\n"; 
 	}
 	
 	bool TraverseStmt(Stmt *S) {
-//		if (!S) return true;
         parentStack.push_back(S);
         bool result = RecursiveASTVisitor<CrossASTGatherer>::TraverseStmt(S);
         parentStack.pop_back();
@@ -187,23 +180,29 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 		return true;
 	}
 
-	// experimental
+	/**
+	 *	Statement recorder decider function, which selects the appropriate recorder function for given AST-node.
+	 *	Currently each function returns a bool, which allows for further action if necessary.
+	 *	
+	 *	NOTICE: bool feedback from recorder functions is currently unused.
+	 *
+	 *	@param node		Statement node to record
+	 *	@param findings	Ledger where results get recorded
+	 */
 	void evalSRDeciderP(Stmt *node, json *findings){
-		bool ct;
 		switch(node->getStmtClass()){
-			default: 						ct = generalStmtRecorder(node, findings); break;
-			case Stmt::DeclStmtClass: 		ct = declStmtRecorder(node, findings); break;
-			case Stmt::RecoveryExprClass: 	ct = recoveryExprRecorder(node, findings); break;
-			case Stmt::CallExprClass:		ct = callExprRecorder(node, findings); break;
-			case Stmt::ForStmtClass:		ct = forStmtRecorder(node, findings); break;
-			case Stmt::WhileStmtClass:		ct = whileStmtRecorder(node,findings); break;
-			case Stmt::DoStmtClass:			ct = doStmtRecorder(node, findings); break;
-			case Stmt::IfStmtClass:			ct = ifStmtRecorder(node,findings); break;
-			case Stmt::BinaryOperatorClass:	ct = binaryOperatorRecorder(node,findings); break;
-			case Stmt::SwitchStmtClass:		ct = switchStmtRecorder(node,findings); break;
+			default: 						generalStmtRecorder(node, findings); 	break;
+			case Stmt::DeclStmtClass: 		declStmtRecorder(node, findings); 		break;
+			case Stmt::RecoveryExprClass: 	recoveryExprRecorder(node, findings); 	break;
+			case Stmt::CallExprClass:		callExprRecorder(node, findings); 		break;
+			case Stmt::ForStmtClass:		forStmtRecorder(node, findings); 		break;
+			case Stmt::WhileStmtClass:		whileStmtRecorder(node,findings); 		break;
+			case Stmt::DoStmtClass:			doStmtRecorder(node, findings); 		break;
+			case Stmt::IfStmtClass:			ifStmtRecorder(node,findings); 			break;
+			case Stmt::BinaryOperatorClass:	binaryOperatorRecorder(node,findings); 	break;
+			case Stmt::SwitchStmtClass:		switchStmtRecorder(node,findings); 		break;
 //			case Stmt::IntegerLiteralClass: break;
 		}
-		if(!ct){return;}
 	}
 	
 	/* 		Statement Recorders - Non-Expr		*/
@@ -274,7 +273,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	}
 
 	// Voor FunctionDecl aparte entries maken op basis van CallExpr.
-	// We kunnen altijd de generieke en callexpr metrieken opnemen, behalve als de markee afwezig is.
+	// We kunnen altijd de generieke en callexpr metrieken opnemen, behalve er geen markee is.
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
 		string calleeName; // callee is not always available
@@ -323,7 +322,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			return false;
 		} else if(ceDRECallee){
 //			cout << "Handled extra cases: "<< ceDRECallee->getStmtClassName() << "\n";
-
 			if (const auto *declRef = llvm::dyn_cast<clang::DeclRefExpr>(ceDRECallee)) {
 			   	calleeName = declRef->getNameInfo().getAsString();
 				
@@ -424,7 +422,6 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			return false;
 		}
 	}
-	
 
 	bool forStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<ForStmt>(node);
@@ -600,7 +597,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 			(*findings)["properties"]["has_else"] = false;
 		}
 		
-		// TODO: Continued branches check
+		// TODO: Continued branches check?
 		return false;
 	}
 	
@@ -729,7 +726,7 @@ class CrossASTGatherer: public RecursiveASTVisitor<CrossASTGatherer> {
 	
 	/* 			Declaration Recorders 			*/
 
-	// TODO: entries should give diagnostic effects, also all decls are still WIP.
+	// TODO: entries should give diagnostic effects, all decls are still WIP.
 	
 	bool generalDeclRecorder(Decl *node, json *findings){
 		(*findings)["properties"]["TODO"] = true;

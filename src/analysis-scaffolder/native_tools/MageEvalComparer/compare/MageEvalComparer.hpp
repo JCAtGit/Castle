@@ -8,8 +8,8 @@
 #include <unordered_map>
 #include <sstream>
 #include <iomanip>
+#include "../../../../../include/paths.hpp"
 
-#include "helper.hpp"
 #include "matrix.hpp"
 #include "json.hpp"
 #include "binaries.hpp"

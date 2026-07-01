@@ -4,10 +4,10 @@
 #include <iostream>
 #include <memory>
 
+#include "../../../../include/paths.hpp"
 #include "clang/AST/ASTContext.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
-#include "../../../../../include/helper.hpp"
 #include "../ast-mechanism/EvalVisitor.hpp"
 #include "../ast-mechanism/TestVisitor.hpp"
 

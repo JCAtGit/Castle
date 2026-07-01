@@ -4,7 +4,8 @@
 #include <iostream>
 #include <filesystem>
 #include <string>
-#include "helper.hpp"
+
+#include "../../../include/paths.hpp"
 namespace fs = std::filesystem;
 
 int main(int argc, char* argv[]) {

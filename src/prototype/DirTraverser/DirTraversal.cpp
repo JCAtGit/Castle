@@ -1,8 +1,9 @@
 #include <iostream>
 #include <filesystem>
+
+#include "../../../include/paths.hpp"
 #include "clang/Tooling/Tooling.h"
 
-#include "helper.hpp"
 
 namespace fs = std::filesystem;
 

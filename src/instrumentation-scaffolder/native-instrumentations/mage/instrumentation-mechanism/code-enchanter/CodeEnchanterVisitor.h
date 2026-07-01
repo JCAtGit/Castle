@@ -9,7 +9,7 @@
 
 #include <filesystem>
 #include <string>
-#include <helper.hpp>
+#include "../../../../../../include/paths.hpp"
 #include "../preprocessor/MacroExpansionRecorder.hpp"
 #include "predicates-stmt.hpp"
 

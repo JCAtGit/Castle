@@ -4,9 +4,9 @@
 #include <fstream>
 #include <clang/Frontend/FrontendAction.h>
 #include <string>
+#include "../../../../../include/paths.hpp"
 #include "clang/Tooling/Tooling.h"
 #include "../instrumentation-mechanism/code-enchanter/CodeEnchanterAction.h"
-#include "helper.hpp"
 #include "json.hpp"
 
 using namespace nlohmann;
@@ -54,25 +54,29 @@ class CmdTasker{
 	  	}
 	}
 	
-	void setupFileQueue(){
+	void setupTaskQueue(){
 		cout << "Setup File Queue Start. \n";
 		if(filesystem::is_regular_file(inputDirs)){
 			pathQueue.push_back(inputDirs);
 		} else if(filesystem::is_directory(inputDirs)){
-			for (const auto& entry : filesystem::recursive_directory_iterator(inputDirs)) {
-				if (entry.path().extension() == ".c") {
-					if(
-						excludeFilesSet.find(entry.path().filename().string()) != excludeFilesSet.end() ||
-						is_subpathOfDirs(excludeDirsSet, entry.path())
-					){
-						cout << "Excluded: " << entry.path().string() << "\n";
-					} else {
-						cout << "Enqueued: " << entry.path() << "\n";
-						pathQueue.push_back(entry.path());
-					}					
-				}
-		    }
+			enqueueTasks();
 		}
+	}
+	
+	void enqueueTasks(){
+		for (const auto& entry : filesystem::recursive_directory_iterator(inputDirs)) {
+			if (entry.path().extension() == ".c") {
+				if(
+					excludeFilesSet.find(entry.path().filename().string()) != excludeFilesSet.end() ||
+					is_subpathOfDirs(excludeDirsSet, entry.path())
+				){
+					cout << "Excluded: " << entry.path().string() << "\n";
+				} else {
+					cout << "Enqueued: " << entry.path() << "\n";
+					pathQueue.push_back(entry.path());
+				}					
+			}
+	    }
 	}
 	
 	/**
@@ -92,7 +96,6 @@ class CmdTasker{
 	void processSingle(){
 		cout 	<< "Process Single. \n";				
 		preprocessQueueItem(inputDirs);
-		// TODO: should take outputPath instead of inputPath after clang formatting to outputPath?
 		auto codeString = file2string(inputDirs); 
 		unique_ptr<ASTFrontendAction> action = std::make_unique<CodeEnchanterAction>(
 			inputDirs, inputDir, outputPath, outputDir, markerFormatCfg, 
@@ -214,20 +217,9 @@ class CmdTasker{
 	}
 	
 	/**
-	 *	Entry function, start the instrumentation process.
+	 *	Records the inserted amount of markers directly from the distributor.
 	 */
-	void insertInstrumentationEnhancement(){
-		if(!preparePaths()){return;	}
-		if(filesystem::is_regular_file(inputDirs)){
-			processSingle();
-		} else if(filesystem::is_directory(inputDirs)){
-			setupFileQueue();
-			processQueue();
-		} else {
-			cout << "Path doesnt exist" << "\n";
-			return;
-		}
-		createMarkerDefinitionHeaderFile();
+	void saveMarkerMetadata(){
 		cout << "Markers inserted: " << idCounter << "\n";
 		fs::create_directory(metadataResultsPath.string());
 		saveJsonToFile(
@@ -235,5 +227,24 @@ class CmdTasker{
 			json::object({{"MarkersInserted", idCounter} })
 		);
 	}
+	
+	/**
+	 *	Entry function, starts the instrumentation process.
+	 */
+	void insertInstrumentationEnhancement(){
+		if(!preparePaths()){return;	}
+		if(filesystem::is_regular_file(inputDirs)){
+			processSingle();
+		} else if(filesystem::is_directory(inputDirs)){
+			setupTaskQueue();
+			processQueue();
+		} else {
+			cout << "Path doesnt exist" << "\n";
+			return;
+		}
+		createMarkerDefinitionHeaderFile();
+		saveMarkerMetadata();
+	}
+	
 };
 

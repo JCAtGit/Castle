@@ -1,4 +1,5 @@
 
+#include "../../../include/paths.hpp"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/Stmt.h"
@@ -10,7 +11,6 @@
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Syntax/Tokens.h"
 
-#include "../../../include/helper.hpp"
 #include "CustomPPCallbacks.hpp"
 #include "MacroFNs.hpp"
 #include "VisitorProcessor.hpp"
