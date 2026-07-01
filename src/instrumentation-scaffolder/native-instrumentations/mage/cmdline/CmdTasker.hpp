@@ -47,7 +47,6 @@ class CmdTasker{
 	   		return;
 	   	}
 	   	try {
-//			cout << "JSON: " << markerFormats.dump(2) << endl;
 			markerFormatCfg = json::parse(markerFormatsFile);;
 	   	} catch (const json::parse_error& e) {
 	    	cerr << "Parse error: " << e.what() << "\n";
@@ -78,9 +77,8 @@ class CmdTasker{
 	
 	/**
 	 * 	Preprocesses files before instrumentation, which include:
-	 * 	Fixing dangling statements from constructs by adding the compound statement node brackets where necessary, does not work perfectly and thus can break.
-	 * 	FIXME: 
-	 *		Fix format to be performed on the on the copy-over instead when required. Retain path and dir whilst doing so.
+	 * 	Fixing dangling statements from constructs by adding the compound statement node brackets where necessary.
+	 *	WARNING: Clang-format does not work perfectly and can break builds.
 	 */
 	void preprocessQueueItem(filesystem::path path2process){
 		if(!clangFormatMode) {return;}
@@ -88,6 +86,9 @@ class CmdTasker{
 	    int status = system(command.c_str());
 	}
 	
+	/**
+	 *	Processes the single input entry of a given path.
+	 */
 	void processSingle(){
 		cout 	<< "Process Single. \n";				
 		preprocessQueueItem(inputDirs);
@@ -100,6 +101,9 @@ class CmdTasker{
 		clang::tooling::runToolOnCodeWithArgs(std::move(action), codeString, toolArgs, inputDirs.string());
 	}
 	
+	/**
+	 *	Processes the enqueued items of a given directory, when the input argument is a dir.
+	 */
 	void processQueue(){
 		cout 	<< "Process Queue. \n"				
 				<< "pathQueue items: " << pathQueue.size() << "\n";
@@ -120,8 +124,7 @@ class CmdTasker{
 	}
 	
 	/**
-	 *  The created file will be placed at the output root.
-	 * 	TODO: Change constant extraction mechanism
+	 *  The marker definition file will be placed at the output root.
 	 */
 	void createMarkerDefinitionHeaderFile(){
 		cout << "Start instrumentation header file creation." << "\n";
@@ -129,7 +132,6 @@ class CmdTasker{
 			markerFormatCfg["pragma_once"].get<string>() + 
 			markerFormatCfg["noOptPragma"].get<string>() + 
 			"\n";
-		
 		if(nameEncodedMarkers){
 			// ...
 		} else {
@@ -179,9 +181,12 @@ class CmdTasker{
 		}	
 	
 	/**
+	 * 	If oncopy is selected, then adjustments are made to perform instrumentation only on the copy.
+	 *	Then proceeds normally to enqueue items for procession.
+	 *
 	 * 	Should accept only the following:
 	 *		inputPath	| outputPath| 	valid:
-	 *		file		| file		|	true, 	convert to virtual dir (dir -> dir) with 1 file.
+	 *		file		| file		|	true, 	converts to virtual dir (dir -> dir) with 1 file.
 	 *		file		| dir		| 	false, 	throw exception
 	 *		dir			| file		|	false,	throw exception
 	 *		dir			| dir		|	true
@@ -208,6 +213,9 @@ class CmdTasker{
 		return true;
 	}
 	
+	/**
+	 *	Entry function, start the instrumentation process.
+	 */
 	void insertInstrumentationEnhancement(){
 		if(!preparePaths()){return;	}
 		if(filesystem::is_regular_file(inputDirs)){

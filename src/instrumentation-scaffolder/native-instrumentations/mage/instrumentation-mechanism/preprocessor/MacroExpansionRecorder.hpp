@@ -13,6 +13,7 @@ struct MacroInterval {
 /**
  *	Records the range of Macro's upon callback from the preprocessor.
  * 	The recorded ranges are then used to compare the overlap between a statement range and potential macro ranges in its vicinity.
+ *	Because of this callback pattern, we must ensure sort status during each visit.
  */
 class MacroExpansionRecorder : public clang::PPCallbacks {
     clang::SourceManager &SM;
@@ -43,6 +44,9 @@ class MacroExpansionRecorder : public clang::PPCallbacks {
         sorted = false;
     }
 
+	/**
+	 *	Sorts macro intervals on their starting values.
+	 */
     void sortIntervals() {
         if (!sorted) {
             std::sort(intervals.begin(), intervals.end(),
@@ -59,9 +63,7 @@ class MacroExpansionRecorder : public clang::PPCallbacks {
 	 *	@return				True if macro range has overlap with entity range, false otherwise
 	 */
     bool hasOverlap(clang::SourceRange stmtRange) const {
-        if (!sorted) {	// Ensure sorted status before using checks.
-            const_cast<MacroExpansionRecorder*>(this)->sortIntervals();
-        }
+        if (!sorted) {const_cast<MacroExpansionRecorder*>(this)->sortIntervals();} // see class snippet
 
         clang::SourceLocation stmtBegin = SM.getSpellingLoc(stmtRange.getBegin());
         clang::SourceLocation stmtEnd   = SM.getSpellingLoc(stmtRange.getEnd());
@@ -88,8 +90,13 @@ class MacroExpansionRecorder : public clang::PPCallbacks {
         return false;
     }
 
+	/**
+	 *	Checks if any intervals exists before some potential insertion point for macro overlap.
+	 *	@param	offset	source location index of some AST construct.
+	 *	@return			true, if there is overlap of a macro with the insertion point, false otherwise.
+	 */
 	bool isOffsetInsideMacro(unsigned offset) const {
-	    if (!sorted) const_cast<MacroExpansionRecorder*>(this)->sortIntervals();
+	    if (!sorted) const_cast<MacroExpansionRecorder*>(this)->sortIntervals(); // see class snippet
 
 	    // Find the first interval with start > offset
 	    auto it = std::upper_bound(intervals.begin(), intervals.end(), offset,
@@ -102,29 +109,6 @@ class MacroExpansionRecorder : public clang::PPCallbacks {
 	    --it;
 	    return offset <= it->end;   // true if offset is inside that macro
 	}
-	
-    bool isPointInsideMacro(unsigned offset) const {
-        if (!sorted) {
-            const_cast<MacroExpansionRecorder*>(this)->sortIntervals();
-        }
-
-        auto it = std::upper_bound(intervals.begin(), intervals.end(), offset,
-            [](unsigned val, const MacroInterval& interval) {
-                return val < interval.start;
-            });
-
-        // Check previous interval (if any) for containment
-        if (it != intervals.begin()) {
-            --it;
-            if (it->start <= offset && offset <= it->end)
-                return true;
-        }
-        // Also check the next interval if it starts exactly at offset
-        // (this covers injection right before a macro begins)
-        if (it != intervals.end() && it->start == offset)
-            return true;
-        return false;
-    }
 
 	/**
 	 *	Gives access to raw intervals (if needed)

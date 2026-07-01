@@ -24,7 +24,7 @@ using namespace nlohmann;
 class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 	private:
 		Rewriter& 				rewriter;
-		MacroExpansionRecorder* macroRecorder = nullptr;
+		MacroExpansionRecorder  *macroRecorder = nullptr;
   		CompilerInstance& 		CI;
 		SourceManager& 			SM;
 		ASTContext& 			context;
@@ -66,7 +66,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		CodeEnchanterVisitor(
 			CompilerInstance 		&ci, 
 			Rewriter 				&rewriter, 
-			MacroExpansionRecorder* macroRecorder,
+			MacroExpansionRecorder  *macroRecorder,
 			json 					&markerFormatCfg, 
 			int 					&idCounter,
 			bool 					&nameEncodedMarkers,

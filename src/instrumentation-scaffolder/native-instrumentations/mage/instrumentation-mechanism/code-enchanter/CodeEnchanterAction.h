@@ -15,22 +15,23 @@ using namespace std;
 
 class CodeEnchanterAction: public ASTFrontendAction {
 	private:
-		filesystem::path inputPath, 	inputDir;
-		filesystem::path outputPath, 	outputDir;
-		filesystem::path path2process;
-		json markerFormatCfg;	
-		int& idCounter;
-		bool& nameEncodedMarker;
-		bool& clangFormatMode;
+		filesystem::path 			inputPath, 	inputDir,
+									outputPath, outputDir,
+									path2process;
+									
+		json 						markerFormatCfg;	
+		int							&idCounter;
+		bool						&nameEncodedMarker, clangFormatMode;
 		
-		clang::Rewriter rewriter;	
-		MacroExpansionRecorder* macroRecorder = nullptr;
-		unique_ptr<syntax::TokenCollector> tokenCollector; 
+		clang::Rewriter 			rewriter;
+		
+		MacroExpansionRecorder* 	macroRecorder = nullptr;
 		
 	public:
 		CodeEnchanterAction(
 			filesystem::path path2process, 
-			filesystem::path inputDir, filesystem::path outputPath,
+			filesystem::path inputDir, 
+			filesystem::path outputPath,
 			filesystem::path outputDir, 
 			json& markerFormatCfg, 
 			int& idCounter,
@@ -47,11 +48,6 @@ class CodeEnchanterAction: public ASTFrontendAction {
 			clangFormatMode(formatMode)
 			{}
 		
-		/**
-		 * 	Setup van onderdelen:
-		 * 	Aanmaak van de ASTConsumer, elk bestand krijgt een eigen instantie van de compiler mee die voor de verwerking zorgt.
-		 * 	etc.
-		 */
 		unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI, StringRef InFile) override {		
 			CI.getDiagnostics().setClient(new clang::IgnoringDiagConsumer(), true);
 			
@@ -62,13 +58,11 @@ class CodeEnchanterAction: public ASTFrontendAction {
 			);
 						
 			rewriter.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
-			tokenCollector = make_unique<syntax::TokenCollector>(CI.getPreprocessor());						
 			return make_unique<ASTConsumer>();
 		}
 	
 		/**
-		 * 	EndSourceFileAction vindt plaats na CreateASTConsumer en de fasen die binnen de consumer plaatsvinden na creatie.
-		 * 	Verantwoordelijkheid van file schrijven en wijzigingen aanbrengen mbt markers hoort bij de inserter.
+		 * 	EndSourceFileAction takes place after CreateASTConsumer.
 		 */
 		void EndSourceFileAction() override {
 			CompilerInstance &CI = getCompilerInstance();
@@ -85,7 +79,7 @@ class CodeEnchanterAction: public ASTFrontendAction {
 			visitor->TraverseDecl(CI.getASTContext().getTranslationUnitDecl());
 			if(nameEncodedMarker){
 				// https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#Rs-include-order
-				// But we only use this in ".c" files, not headers. Maar C files kunnen in theory ook geinclude worden.
+				// But we only use this in ".c" files, not headers.
 				visitor->insertNameEncodedMarkerDefinitions();
 			}
 			visitor->insertPreprocessorDirectives(path2process, inputDir);
