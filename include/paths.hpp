@@ -38,6 +38,9 @@ bool substringOnlyAtEndOfBasename(const string &filename,
 }
 
 
+/**
+ *	Checks if
+ */
 bool is_subpath(const fs::path& base, const fs::path& sub) {
     // Make both absolute (uses current path for relative ones)
     auto base_abs = fs::absolute(base);
@@ -62,6 +65,12 @@ bool is_subpath(const fs::path& base, const fs::path& sub) {
     return base_it == base_norm.end();
 }
 
+/**
+ *	Checks if some entry is the subpath of any of the dirs in the excludeDirsSet.
+ *	@param	excludeDirsSet	Exclusion set that invalidates an entry if any of the directories is a parent of the entry.
+ *	@param	entry			Entry that is matched against the exclusion set.
+ *	@return					True if entry is a subpath of any of the directories, false otherwise.
+ */
 bool is_subpathOfDirs(set<string> &excludeDirsSet, const filesystem::path &entry){
 	for(auto exclDir: excludeDirsSet){
 		if(is_subpath(exclDir, entry)){

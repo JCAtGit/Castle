@@ -1,4 +1,4 @@
-# MAGE Evaluator Documentation
+# MAGE Evaluator Documentation.
 ### Usage
 
 ```

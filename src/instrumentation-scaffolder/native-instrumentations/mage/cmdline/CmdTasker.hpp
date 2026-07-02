@@ -4,7 +4,7 @@
 #include <fstream>
 #include <clang/Frontend/FrontendAction.h>
 #include <string>
-#include "../../../../../include/paths.hpp"
+#include "paths.hpp"
 #include "clang/Tooling/Tooling.h"
 #include "../instrumentation-mechanism/code-enchanter/CodeEnchanterAction.h"
 #include "json.hpp"

@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
 	string inputPath;
 	app.add_option("input", inputPath, "input path for instrumentation")
 		->required();
-	
+
 	string outputPath; // overwrites location if no output is given.
 	auto option_outputPath = app.add_option("-o,--output", outputPath, "output path for results, requires on-copy to preserve build processes");
 	

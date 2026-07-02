@@ -1,18 +1,18 @@
 #pragma once
-#include <cstdio>
 #include <iostream>
 #include <string>
-#include <array>
 
 using namespace std;
 
 /**
- *	Executes a shell command and captures its output in a string
+ *	Executes a shell command and captures its output in a string.
+ *	@param	cmd		String representing the command to be executed.
+ *	@param	output	String holding the result of the command after execution.
  */
 string execCommandAndCaptureOutput(const string& cmd, string& output) {
     FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe) {
-        throw std::runtime_error("popen() failed!");
+        throw runtime_error("popen() failed!");
     }
     char buffer[256];
     while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {

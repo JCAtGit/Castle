@@ -118,6 +118,37 @@ class MageEvalAnalyst{
 	void statisticizeDevReports(json& jsonData, json& summary){}
 	
 	/**
+	 *	Map for quick selection of stochastic stmt-processor based on the AST-string.
+	 */
+	using StochasticPassFnPtr = void(MageEvalAnalyst::*)(json &);
+	unordered_map<string, StochasticPassFnPtr> spFnSelector = {
+//		{"CallExpr", 		&MageEvalAnalyst::stochasticizeCallExpr},
+		{"DeclStmt", 		&MageEvalAnalyst::stochasticizeDeclStmt},
+//		{"IfStmt", 			&MageEvalAnalyst::stochasticizeIfStmt},
+//		{"ForStmt", 		&MageEvalAnalyst::stochasticizeForStmt},
+//		{"WhileStmt", 		&MageEvalAnalyst::stochasticizeWhileStmt},
+//		{"DoStmt", 			&MageEvalAnalyst::stochasticizeDoStmt},
+//		{"BinaryOperator", 	&MageEvalAnalyst::stochasticizeBinaryOperator},
+//		{"SwitchStmt", 		&MageEvalAnalyst::stochasticizeSwitchStmt}
+	};
+	
+	void stochasticizeFindingSpecifics(string ASTNode, json& finding, json& summary){
+		auto it = spFnSelector.find(ASTNode);
+		json markerFindingsResult = json::object();
+	   	if (it != spFnSelector.end()) {
+			(this->*(it->second))(summary);
+        } else {
+			// Use general eval, and report/record for devs
+		}
+	}
+
+	
+	void stochasticizeDeclStmt(json& summary){
+		// calculate alternative recovery using BinaryOperators of the form "="
+
+	};
+	
+	/**
 	 * 	Sample Data Comparison (Statistical Testing).
 	 *	Calculate P and Variance for each constructs separately and in collectively.
 	 *	@param summary	Object for recording/querying results
@@ -141,13 +172,15 @@ class MageEvalAnalyst{
 			summary["metadata"]["P(X)"] 	= summary["metadata"]["recoveredConstructsTotal"].get<double>() / summary["metadata"]["viableComparisons"].get<double>();
 			summary["metadata"]["VAR(X)"] 	= summary["metadata"]["P(X)"].get<double>() * (1 - summary["metadata"]["P(X)"].get<double>());
 		}
+		
+		
 	}
 	
 	/**
 	 *	Map for quick selection of required stmt-processor based on the AST-string.
 	 */
 	using FindingsAnalysisFnPtr = void(MageEvalAnalyst::*)(json &, json &);
-	unordered_map<string, FindingsAnalysisFnPtr> fnSelector = {
+	unordered_map<string, FindingsAnalysisFnPtr> faFnSelector = {
 //		{"CallExpr", 		&MageEvalAnalyst::statisticizeCallExpr},
 		{"DeclStmt", 		&MageEvalAnalyst::statisticizeDeclStmt},
 //		{"IfStmt", 			&MageEvalAnalyst::statisticizeIfStmt},
@@ -165,9 +198,9 @@ class MageEvalAnalyst{
 	 *	@param summary	Object for recording/querying results
 	 */
 	void statisticizeFindingSpecifics(string ASTNode, json& finding, json& summary){
-		auto it = fnSelector.find(ASTNode);
+		auto it = faFnSelector.find(ASTNode);
 		json markerFindingsResult = json::object();
-	   	if (it != fnSelector.end()) {
+	   	if (it != faFnSelector.end()) {
 			(this->*(it->second))(finding, summary);
         } else {
 			// Use general eval, and report/record for devs
@@ -188,7 +221,7 @@ class MageEvalAnalyst{
 		auto &typeStats = nodeOracleStats["oracleMarkedTypes"];
 		for(auto typeInfo : oracleData["properties"]["init_types"]){
 			incrementJSONEntry(typeStats[typeInfo["type"]]);
-		}		
+		}
 	}
 	
 	/**
