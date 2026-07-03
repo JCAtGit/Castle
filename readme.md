@@ -37,7 +37,7 @@ ln -sf compile_commands.json ../
 5. Build with ninja
 ninja
 
-6. (Optional) make includes indexable for EclipseIDE
+6. (optional) Make includes indexable for EclipseIDE
 Locate your compile_commands.json: It should be in your build directory (/home/user/Desktop/CastleDecompilerBenchmarker/build).
 Link it to your project root: This is the most common approach and should allows the indexer to find it. 
 Run this command in a terminal:

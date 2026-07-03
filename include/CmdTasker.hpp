@@ -95,7 +95,7 @@ class CmdTasker {
 					ps_config_data["outputDir"].get<string>() 		+ 									
 					pt_config_data["name"].get<string>() 			+ "/" ;
 					
-		if(ps_config_data["output_ext"].get<string>().empty()){
+		if(ps_config_data["output_ext"].is_null()){
 			command += filePath.filename().string();
 		} else {
 			command += filePath.stem().string() + ps_config_data["output_ext"].get<string>();

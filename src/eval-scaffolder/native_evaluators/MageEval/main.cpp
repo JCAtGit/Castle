@@ -25,10 +25,11 @@ int main(int argc, char **argv) {
 		->required();
 		
 	bool nameEncodedMarkers = false;
-	app.add_flag("-n, --name_encoded_marker",nameEncodedMarkers,  "TODO: Evaluate constructs using names instead of indices.");
+	app.add_flag("-n, --name_encoded_marker",nameEncodedMarkers,  "Evaluate constructs using names instead of indices.");
 
 	CLI11_PARSE(app, argc, argv);
 
 	CmdTasker cmdTskr(inputPath, oracleDir, outputPath, mrkrFormatsPath, nameEncodedMarkers);
+	
 	cmdTskr.startProcesses();
 }

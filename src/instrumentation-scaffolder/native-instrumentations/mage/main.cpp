@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 		excludeFilesSet,
 		excludeDirsSet
 	);
-	
+		
 	cmdTskr.insertInstrumentationEnhancement();
 }
 

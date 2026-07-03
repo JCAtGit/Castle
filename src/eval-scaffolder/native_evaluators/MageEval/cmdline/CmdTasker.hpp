@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
-#include "../../../../../include/paths.hpp"
+#include "paths.hpp"
 #include "../ast-mechanism/ContextGatherer.hpp"
 
 #include "nlohmann/json.hpp"
@@ -67,8 +67,8 @@ class CmdTasker{
 			string fileDecomData;
 			
 			CAGatherer.selectMode(1);
-			for(auto entry :filesystem::recursive_directory_iterator(oracleDir)){ // voor elke moeten we apart een save to findings, etc maken.
-				if(entry.path().extension() == ".c"){ // We nemen aan dat oracle dirs altijd gewoon C extensie gebruiken.
+			for(auto entry :filesystem::recursive_directory_iterator(oracleDir)){ // voor elke apart een save to findings, etc maken.
+				if(entry.path().extension() == ".c"){ // We nemen aan dat oracle sources altijd C extensie gebruikt.
 					fileOracleData = file2string(entry.path());
 					auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(
 						fileOracleData, 
@@ -83,7 +83,7 @@ class CmdTasker{
 			CAGatherer.selectMode(0);
 			for(auto entry :filesystem::recursive_directory_iterator(inputPath)){ // inputDirs is nu de dir waar de decompiled c zit
 				// Decompilers, outputten soms met verschillende extensies ook krijgen we ook regelmatig ongewenstheden van bijvoorbeeld retdec.
-				// Hier moeten we dus bij de selectie de nodige aanpassingen maken te zijner tijd.
+				// Hier moeten we dus bij de selectie de nodige aanpassingen maken te zijner tijd. (of iets anders bedenken)
 				if(entry.path().extension() == ".c" || entry.path().extension().empty()){ 
 					fileDecomData = file2string(entry.path());
 					mapKey = entry.path().filename().string();
