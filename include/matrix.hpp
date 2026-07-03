@@ -6,7 +6,7 @@ using namespace std;
 
 
 /**
- *	Row x column matrix datastructure.
+ *	Row * column matrix datastructure.
  */
 template <typename T>
 class Matrix{

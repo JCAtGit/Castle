@@ -113,7 +113,8 @@ class CmdTasker{
 		
 		for(const auto& path2process : pathQueue){
 			cout << "Processing: " << path2process << "\n";
-			filesystem::path outPath = outputDir/ rel_outputPath(inputDir, path2process);
+			filesystem::path outPath = outputDir/ filesystem::relative(path2process, inputDir);
+			
 			if(outPath.empty()){outPath = inputDir;}
 			preprocessQueueItem(path2process); //Doe dit voordat AST unit ptr is aangemaakt. Prepare file for marking, this includes fixing dangling statements
 			auto codeString = file2string(path2process);

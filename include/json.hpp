@@ -8,7 +8,9 @@ using namespace nlohmann;
 using namespace std;
 
 /**
- *	Generic method to load json filedata in json datastructure.
+ *	Generic method to load json filedata into json datastructure.
+ *	@param	jsonFilePath
+ *	@param	jsonRef
  */
 void loadJSON(filesystem::path jsonFilePath, json& jsonRef){
 	ifstream jsonFile(jsonFilePath);
@@ -26,6 +28,8 @@ void loadJSON(filesystem::path jsonFilePath, json& jsonRef){
 
 /**
  *	Generic method to save json data to file.
+ *	@param	path	location data will be stored
+ *	@param	data	data selected to be stored.
  */
 void saveJsonToFile(const string& path, const json& data) {
     ofstream file(path);

@@ -6,12 +6,18 @@ using namespace std;
 /**
  *	Castle formats each name within the pipeline with a predetermined format.
  *	Format: codebase_instrumentation_build_decom_eval_analysis.
- *		Example A: csmith_mage_clang_ghidra
- *		Example A shows an intermediate result stemming. It stems from the codebase csmith, which then has been altered with mage. 
+ *		Example A: 
+ *			csmith_mage_clang_ghidra, an intermediate format. It stems from the codebase csmith, which then has been altered with mage. 
+ *
+ *		Example B: 
+ *			If given some name with format; codebase_instrumentation_build_decom_eval_analysis
+ 			The function will return; 	 codebase_instrumentation_build
+ *			Else returns the same string.
  *		Then compilation takes place with clang and decompilation with ghidra.
  *		This intermediate product can form preceding link of "csmith_mage_clang_ghidra_mageEval_mageEvalAnalyzerIterated" for example.
  *	
- *	@param analysisNameFormatString	name representing some castle format string.
+ *	@param 	analysisNameFormatString	name representing some castle format string.
+ *	@return	The build-phase format of the string
  */
 string getCastleFormatBuildNameFromAnalysisName(string analysisNameFormatString){
 	if((analysisNameFormatString.at(0) == '_') || analysisNameFormatString.size() < 9) {

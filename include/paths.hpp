@@ -39,7 +39,10 @@ bool substringOnlyAtEndOfBasename(const string &filename,
 
 
 /**
- *	Checks if
+ *	Checks if some path is a childpath of basepath
+ *	@param	base 	parent path to match subpath against.
+ *	@param	sub		potential childpath of base
+ *	@return	true if sub is a childpath of base
  */
 bool is_subpath(const fs::path& base, const fs::path& sub) {
     // Make both absolute (uses current path for relative ones)
@@ -79,17 +82,6 @@ bool is_subpathOfDirs(set<string> &excludeDirsSet, const filesystem::path &entry
 	}
 	return false;
 }
-
-/**
- *	Voorbeeld:
- * 	
- *
- */
-string rel_outputPath(string dirIn, string pathIn) {
-	filesystem::path rel_path = filesystem::relative(pathIn, dirIn);
-	return rel_path;
-}
-
 
 string getDescend2BaseDirString(string countable){
 	string descends = "";
