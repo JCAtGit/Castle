@@ -85,7 +85,7 @@ class CodeEnchanterAction: public ASTFrontendAction {
 			visitor->insertPreprocessorDirectives(path2process, inputDir);
 
 			if(filesystem::is_regular_file(inputPath)){
-				visitor->commitToSingleFile(path2process, outputPath, outputDir);
+				visitor->commitToSingleFile(outputPath);
 			} else {
 				visitor->commitToQueueFile(inputDir, outputDir);
 			}

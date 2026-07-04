@@ -36,7 +36,6 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 								&clangFormatMode;
 		
 		string 					markerName,
-								markerKeyword,
 		 						markerType,
 		 						markerSignature,
 		 						markerEndString = "; \n",
@@ -54,7 +53,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		}
 		
 		string synthesizeInclusionDirective(filesystem::path inputPath, filesystem::path inputDir){
-			string relativeTrail = getDescend2BaseDirString(rel_outputPath(inputDir, inputPath));
+			string relativeTrail = getDescend2BaseDirString(filesystem::relative(inputPath, inputDir));
 			return headerInclusion + "\""+ relativeTrail + definitionFilename + ".h" + "\"\n";
 		}
 		
@@ -82,7 +81,6 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			
 			context(ci.getASTContext()), SM(ci.getASTContext().getSourceManager()){
 				markerName 			= 	markerFormatCfg["name"].get<string>();
-				markerKeyword 		= 	markerFormatCfg["keyword"].get<string>();
 				markerType 			= 	markerFormatCfg["functionType"].get<string>();
 				markerSignature 	= 	markerFormatCfg["paramSignature"].get<string>();
 				headerInclusion 	=   markerFormatCfg["headerInclusionDirective"].get<string>();
@@ -125,7 +123,11 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				rewriter.InsertTextBefore(startLoc, localDefinition);
 			}
 			
-			void commitToSingleFile(filesystem::path inputPath, filesystem::path outputPath, filesystem::path outputDir){
+			/**
+			 *	Commits staged changes made to source, i.e. added markers and attributes, to filepath.
+			 *	@param	outputPath	
+			 */
+			void commitToSingleFile(filesystem::path outputPath){
 				// returns empty if path is on same dir.
 				StringRef FilePath = SM.getFilename(SM.getLocForStartOfFile(SM.getMainFileID()));	
 				if(!filesystem::exists(outputPath)){filesystem::create_directories(outputPath.parent_path());}
@@ -136,9 +138,24 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				OutFile.close();	
 			}
 			
+			/**
+			 *	Commits file to its relative path counterpart in outputDir.
+			 *
+			 *	Example:
+			 *	For some file test.c (recorded in the rewriter), that was found in inputDir.
+			 *
+			 *	inputDir:	 baseA/path/to/dir/
+			 *	outputDir:	 baseB/
+			 *
+			 *	Result:
+			 *	File test.c get written to baseB/path/to/dir/test.c.
+			 *
+			 *	@param	inputDir	directory of queuefile
+			 *	@param	outputDir	directory of basedir relocation
+			 */
 			void commitToQueueFile(filesystem::path inputDir, filesystem::path outputDir){
 				StringRef FilePath = SM.getFilename(SM.getLocForStartOfFile(SM.getMainFileID()));
-				filesystem::path outPath = outputDir / rel_outputPath(inputDir, FilePath.str());
+				filesystem::path outPath = outputDir / filesystem::relative(FilePath.str(), inputDir);
 				if(!filesystem::exists(outPath)){filesystem::create_directories(outPath.parent_path());}
 				std::error_code EC;
 				llvm::raw_fd_ostream OutFile(outPath.string(),EC, llvm::sys::fs::OF_Text);

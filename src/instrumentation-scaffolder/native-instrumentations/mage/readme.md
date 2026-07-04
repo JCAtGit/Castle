@@ -2,6 +2,12 @@
 ### Marker Formats File:
 
 All the examples assume the preset path for the marker formats file and the output destination for metadata, consult "Mage --help" for further details.
+Most of the entries can be left as is, especially those involving preprocessor directives.
+The entries of interest for users are:
+- name
+- counter
+- k
+
 
 ```
 Example file content:
