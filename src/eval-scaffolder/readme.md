@@ -66,8 +66,8 @@ Example, start the evaluation process:
 EvalScaffolder --scaffolder-config /path/to/scaffolder/config --tool-config /path/to/tool/config
 
 - Result.
- will be copied over to its respective folder in the outputdir and instrumentation will take place over the files there.
- will have the files 500.c up to but not including 1000.c instrumented after copying.
+AvdanOS's decompiled and instrumented files will be crossexamined, producing the corresponding paths containing findings.json, eval.json and dev.json. 
+CSmith will have each of its seeded files crossexamined with its counterpart, producing corresponding result paths for each seed.
 ```
 
 Consult the binary with the --help flag for further details.
