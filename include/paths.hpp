@@ -10,16 +10,13 @@ namespace fs = std::filesystem;
 using namespace std;
 using namespace clang;
 
-// General miscellaneous implementations are gathered here for now.
-
 /**
  * 	Voorbeeld:
  *
  */
-bool substringOnlyAtEndOfBasename(const string &filename,
-								  const string &sub) {
+bool substringOnlyAtEndOfBasename(const string &filename, const string &sub) {
 	if (sub.empty())
-		return false; // or handle as you wish
+		return false;
 
 	// Find the last dot (extension separator)
 	size_t dotPos = filename.rfind('.');
@@ -83,9 +80,22 @@ bool is_subpathOfDirs(set<string> &excludeDirsSet, const filesystem::path &entry
 	return false;
 }
 
-string getDescend2BaseDirString(string countable){
+/**
+ *	Returns a string representing the relative traversal required to return to the base dir.
+ *	Example 1:
+ *		Input: 	"folder/subfolder/file.txt"
+ *		Output: "../../"
+ *	
+ *	Example 2:
+ *		Input: "a/b/c/d"
+ *		Output: "../../../"
+ *
+ *	@param	countable	A path string
+ *	@return	relative traversal to base dir string
+ */
+string getDescend2BaseDirString(string pathString){
 	string descends = "";
-	for(char ch:countable){
+	for(char ch:pathString){
 		if(ch == '/'){
 			descends = descends + "../";
 		}
@@ -94,12 +104,14 @@ string getDescend2BaseDirString(string countable){
 }
 
 
-// Can use absolute and relative filepath
+/**
+ *	Returns the contents of a file(path) as a string.
+ *	@param 	filepath	absolute or relative filepath
+ *	@return				contents of filepath as a string
+ */
 string file2string(string filepath) {
 	string filestringdata;
 	ifstream file(filepath);
-
-	// confirm file opening
 	if (!file.is_open()) {
 		cerr << "Failed to open file: " << filepath << endl;
 		return ("file2string error for: " + filepath + "\n");
@@ -115,6 +127,11 @@ string file2string(string filepath) {
 	return filestringdata;
 }
 
+/**
+ *	Stores a string to a file(path)
+ *	@param data string data to store
+ *	@param path path where data will be stored
+ */
 void string2file(string data,  string path){
 	// Open the file; if it exists, it will be overwritten.
     error_code EC;
@@ -135,32 +152,36 @@ void string2file(string data,  string path){
 	llvm::outs() << "Definition file written. \n";
 }
 
-std::string get_leaf_string(const std::string& path) {
+/**
+ *	Returns the leaf node of a path as a string, can be a dir or file.
+ *	@param 	path	to extract the leaf string/path from
+ *	@return			leaf string representing a dir or file
+ */
+string get_leaf_string(const string& path) {
+	string p = path;
     // Edge case: Path consists entirely of slashes (e.g., "///" or "\\")
-    if (path.find_first_not_of("/\\") == std::string::npos) {
+    if (path.find_first_not_of("/\\") == string::npos) {
         return "/"; // Return root
     }
 
-    std::string p = path;
-
-    // 1. Remove ALL trailing slashes (both / and \)
+    // Remove ALL trailing slashes (both / and \)
     while (!p.empty() && (p.back() == '/' || p.back() == '\\')) {
         p.pop_back();
     }
 
-    // 2. If the string is now empty (shouldn't happen due to the first check, but safe)
+    // If the string is now empty (shouldn't happen due to the first check, but safe)
     if (p.empty()) {
         return "";
     }
 
-    // 3. Find the last occurrence of either slash type
+    // Find the last occurrence of either slash type
     size_t pos = p.find_last_of("/\\");
 
-    // 4. If no slash found, the whole string is the leaf
-    if (pos == std::string::npos) {
+    // If no slash found, the whole string is the leaf
+    if (pos == string::npos) {
         return p;
     }
 
-    // 5. Return everything after the last slash
+    // Return everything after the last slash
     return p.substr(pos + 1);
 }

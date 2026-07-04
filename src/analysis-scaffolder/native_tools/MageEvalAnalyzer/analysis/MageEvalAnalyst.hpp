@@ -167,6 +167,8 @@ class MageEvalAnalyst{
 				constructData["P(X)"] = 0;
 				constructData["VAR(X)"] = 0;
 			}
+			
+//			stochasticizeFindingSpecifics
 		}
 		if(summary.contains("metadata")){
 			summary["metadata"]["P(X)"] 	= summary["metadata"]["recoveredConstructsTotal"].get<double>() / summary["metadata"]["viableComparisons"].get<double>();

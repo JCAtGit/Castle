@@ -1,6 +1,8 @@
 # Marker-Attribute Graft Enhancer (MAGE) Documentation.
 ### Marker Formats File:
 
+All the examples assume the preset path for the marker formats file and the output destination for metadata, consult "Mage --help" for further details.
+
 ```
 Example file content:
 {
