@@ -10,6 +10,8 @@ using namespace nlohmann;
 
 /**
  *	A class that selects and schedules tasks to process based on the input tool and scaffolder configurations.
+ *	It has multiple enqueuement procedures given some configuration:
+ *		
  */
 class CmdTasker {
 	private:

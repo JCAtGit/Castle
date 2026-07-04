@@ -19,10 +19,10 @@ sudo dnf install llvm-devel clang-devel mingw64-gcc-c++ mingw32-gcc-c++ automake
 #### 2. Build from source
 
 ```
-1. source dir.
+1. Source dir.
 cd /home/user/Desktop/CastleDecompilerBenchmarker
 
-2. clean potential residue
+2. (optional) Remove build
 rm -rf build/
 rm -f compile_commands.json
 
@@ -45,7 +45,8 @@ Run this command in a terminal:
 
 ```
 
-#### 3. (optional) Pipeline Packages and instructions
+#### 3. (optional, only for preincluded dataset) Pipeline Packages and instructions.
+Notice: setup of the python or repo specific requirements should be handled on a case by case base.
 
 ```
 sudo dnf install \
@@ -74,5 +75,7 @@ curl https://pyenv.run | bash
 pyenv install 3.12.11
 ```
 
-
-
+### Pipeline, tools and their configuration files.
+#### Configuration files
+#### Tools
+#### Pipeline

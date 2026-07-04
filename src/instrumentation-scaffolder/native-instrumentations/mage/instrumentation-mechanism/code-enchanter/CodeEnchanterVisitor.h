@@ -96,6 +96,16 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			 *	     	#pragma GCC push_options
 			 *	     	#pragma GCC optimize ("O0")
 			 *	 	#endif
+			 *	
+			 *	But also determine the relative trailing for the file;
+			 *	Examples:		
+			 *		include "../../MageAlpha.h"
+			 *		include "MageAlpha.h"
+			 *		etc.
+			 *
+			 *	Inserts the preprocessor-directives and its inclusion into current processed file.
+			 *	@param	inputPath	this path is used with inputDir to determine the relative path offset of the inclusion directive.
+			 *	@param	inputDir	this dir is used with inputPath to determine the relative path offset of the inclusion directive.
 			 */
 			void insertPreprocessorDirectives(filesystem::path inputPath, filesystem::path inputDir){
 				SourceLocation startLoc = SM.getLocForStartOfFile(SM.getMainFileID());
@@ -105,7 +115,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			
 			/**
 			 * 	Sometimes decompilers do not recover the index of a marker, however they can still succeed in preserving the name (given debug info).
-			 *	Name encoded markers are failsafe mechanism to ensure marker mappability.
+			 *	Name encoded markers are a failsafe mechanism to ensure marker mappability.
 			 */
 			void insertNameEncodedMarkerDefinitions(){
 				SourceLocation startLoc = SM.getLocForStartOfFile(SM.getMainFileID());
@@ -314,8 +324,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		}
 		
 		/**
-		 * 	TODO: 
-		 *		Mark cases? or simply retrieve case info from within the switch stmt.
+		 * 	Consideration: Mark cases as well or simply retrieve case info from within the switch stmt.
 		 */
 		void processSwitchStmt(SwitchStmt* SS){
 			rewriter.InsertText(

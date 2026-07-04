@@ -3,18 +3,19 @@
 
 All the examples assume the preset path for the marker formats file and the output destination for metadata, consult "Mage --help" for further details.
 Most of the entries can be left as is, especially those involving preprocessor directives.
-The entries of interest for users are:
+The entries of interest for users are, which influence the marker appearance and the starting index:
 - name
 - counter
-- k
-
+- functionType
+- definitionFileName
+- paramSignature
+- definition
 
 ```
 Example file content:
 {
 	"name": "mage_alpha",
 	"counter": 0,
-	"keyword": "static ",
 	"functionType": "void ",
 	"definitionFileName": "MageAlpha",
 	"paramSignature": "(int id)",
