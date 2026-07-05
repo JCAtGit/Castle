@@ -160,14 +160,6 @@ class CmdTasker{
 		void processChirally(){
 			cout << "processChirally" << "\n";
 			filesystem::path virtualOraclePath = oracleDir.string() + inputPath.filename().string() + "/";
-
-			cout << "inputPath: " << inputPath << "\n";
-			cout <<"virtualOraclePath: " << virtualOraclePath.string() << "\n";
-
-			cout << fs::is_directory(inputPath)<< "\n";
-			cout << fs::is_regular_file(inputPath)<< "\n";
-			cout << fs::is_directory(oracleDir)<< "\n";
-			cout << fs::is_regular_file(oracleDir)<< "\n";
 			string mapKey;
 			ContextGatherer CAGatherer(
 				selectedFormat,

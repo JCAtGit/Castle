@@ -6,13 +6,17 @@
 #include <string>
 #include "clang/Basic/SourceManager.h"
 
-namespace fs = std::filesystem;
 using namespace std;
 using namespace clang;
 
 /**
  * 	Voorbeeld:
+ *	filename			sub				Basename		Result	Reason
+ *	"hello_world.txt"	"world"			"hello_world"	true	Basename ends with "world", and it only appears once at the end.
  *
+ *	@param	filename 	name to be checked for substring
+ *	@param	sub			the substring to search for
+ * 	@return				True if a substring occurs only at the end of the filename
  */
 bool substringOnlyAtEndOfBasename(const string &filename, const string &sub) {
 	if (sub.empty())
@@ -41,14 +45,14 @@ bool substringOnlyAtEndOfBasename(const string &filename, const string &sub) {
  *	@param	sub		potential childpath of base
  *	@return	true if sub is a childpath of base
  */
-bool is_subpath(const fs::path& base, const fs::path& sub) {
+bool is_subpath(const filesystem::path& base, const filesystem::path& sub) {
     // Make both absolute (uses current path for relative ones)
-    auto base_abs = fs::absolute(base);
-    auto sub_abs  = fs::absolute(sub);
+    auto base_abs = filesystem::absolute(base);
+    auto sub_abs  = filesystem::absolute(sub);
 
     // Normalise (remove "." and "..", resolve symlinks if they exist)
-    auto base_norm = fs::weakly_canonical(base_abs);
-    auto sub_norm  = fs::weakly_canonical(sub_abs);
+    auto base_norm = filesystem::weakly_canonical(base_abs);
+    auto sub_norm  = filesystem::weakly_canonical(sub_abs);
 
     // Compare component‑by‑component to check if base is a prefix of sub
     auto base_it = base_norm.begin();
@@ -138,18 +142,11 @@ void string2file(string data,  string path){
     llvm::raw_fd_ostream out(
 		path, EC, llvm::sys::fs::OF_None
 	);
-
-    // Check for errors during file opening.
     if (EC) {
         llvm::errs() << "Error opening file: " << EC.message() << "\n";
     }
-
-    // Write the string to the file.
     out << data;
-
-    // Optionally flush (the destructor will close the file automatically).
     out.flush();
-	llvm::outs() << "Definition file written. \n";
 }
 
 /**

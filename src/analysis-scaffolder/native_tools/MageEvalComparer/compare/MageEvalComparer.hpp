@@ -14,6 +14,7 @@
 #include "json.hpp"
 #include "binaries.hpp"
 #include "stats.hpp"
+#include "export.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -92,9 +93,25 @@ class MageEvalComparer{
 			cout << "Start exports \n";
 			for(auto& [contextKey, contextData] : constructZMatrixMap){
 				cout << outputPath.string() + contextKey + ".csv" << "\n";
-				exportZConstructMatrixToCSV(outputPath.string() + contextKey + ".csv", contextData, constructPMatrixMap[contextKey], contextKey);
+				exportZConstructMatrixToCSV(
+					inputDirs, 
+					outputPath.string() + contextKey + ".csv", 
+					summaryData,
+					binaryMetadata,
+					contextKey,
+					contextData, 
+					constructPMatrixMap[contextKey]
+				);
 			}
-			exportZGeneralMatrixToCSV(outputPath.string() + "General.csv", generalZMatrix, generalPMatrix, "General");
+			exportZGeneralMatrixToCSV(
+				inputDirs, 
+				outputPath.string() + "General.csv",
+				summaryData,
+				binaryMetadata,
+				"General",
+				generalZMatrix, 
+				generalPMatrix
+			);
 			saveJsonToFile(outputPath.string() + summaryFilename, unifiedSummary);
 		}
 	
@@ -171,179 +188,6 @@ class MageEvalComparer{
 				unifiedSummaryMetadata["P(X)"] = 0;
 				unifiedSummaryMetadata["VAR(X)"] = 0;
 			}
-		}
-		
-		template <typename T>
-		void exportZConstructMatrixToCSV(const string& path, Matrix<T>& contextZData, Matrix<T>& contextPData, const string& contextKey){
-			ostringstream oss;
-			oss << scientific << setprecision(3);
-			
-			// Display general characteristics
-			string CSVData = "EntryMapping," + contextKey + ",viableComparisons";
-			
-			for(auto key : radare2Keys){
-				CSVData += "," + key;
-			}
-			CSVData += "\n";
-			
-			for(int i = 0; i<inputDirs.size();i++){
-				int vcCount = 0;
-				if(summaryData[i]["constructs"].contains(contextKey)){
-					vcCount = summaryData[i]["constructs"][contextKey]["viableComparisons"].get<int>();
-				}
-				CSVData += 
-					to_string(i) 																			+ "," + 
-					get_leaf_string(inputDirs[i].string()) 												+ "," +
-					to_string(vcCount);
-				
-				for(auto key : radare2Keys){
-					if(binaryMetadata[i][key].is_string()){
-						CSVData	+= "," + binaryMetadata[i][key].get<string>();	
-					} else if(binaryMetadata[i][key].is_number_integer()){
-						CSVData	+= "," + to_string(binaryMetadata[i][key].get<int>());
-					} else {
-						CSVData	+= ", ";
-					}
-				}	
-				CSVData += "\n";	
-			}
-			
-			
-			CSVData += "\n";
-			
-			// Z-Score
-			CSVData += "ZScore";
-			for(int i = 0; i<inputDirs.size();i++){
-				CSVData += "," + to_string(i) ;
-			}
-			CSVData += "\n";
-
-			for(int i=0 ; i<inputDirs.size() ; i++){
-				CSVData += to_string(i);
-				for(int j = 0 ; j<inputDirs.size() ; j++){
-					if(i!=j && contextZData.at(i, j) == 0){
-						CSVData += ",-";
-					} else {
-						oss << contextZData.at(i, j);
-						CSVData += "," + oss.str();
-						oss.clear();
-						oss.str("");
-					}
-				}
-				CSVData += "\n";
-			}
-			
-			// P-Value
-			CSVData += "\nPValue";
-			for(int i = 0; i<inputDirs.size();i++){
-				CSVData += "," + to_string(i) ;
-			}
-			CSVData += "\n";
-
-			for(int i=0 ; i<inputDirs.size() ; i++){
-				CSVData += to_string(i);
-				for(int j = 0 ; j<inputDirs.size() ; j++){
-					if(i!=j && contextPData.at(i, j) == 0){
-						CSVData += ",-";
-					} else {
-						oss << contextPData.at(i, j);
-						CSVData += "," + oss.str();
-						oss.clear();
-						oss.str("");
-					}
-				}
-				CSVData += "\n";
-			}
-			ofstream file(path);
-		    if (!file.is_open()) {
-		        std::cerr << "Error: Could not open file for writing: " << path << "\n";
-		        return;
-		    }
-		    file << CSVData;
-		}
-	
-		/**
-		 *	Exports the data for the general criteria to csv format.
-		 */
-		template <typename T>
-		void exportZGeneralMatrixToCSV(const string& path, Matrix<T>& contextZData, Matrix<T>& contextPData, const string& contextKey){
-			ostringstream oss;
-			oss << scientific << setprecision(3);
-			// export construct and general values to CSV
-			string CSVData = "EntryMapping," + contextKey + ",viableComparisons";
-			
-			for(auto key : radare2Keys){
-				CSVData += "," + key;
-			}
-			CSVData += "\n";
-			
-			for(int i = 0; i<inputDirs.size();i++){
-				int vcCount = summaryData[i]["metadata"]["viableComparisons"].get<int>();
-				CSVData += 
-					to_string(i) 								+ "," + 
-					get_leaf_string(inputDirs[i].string()) 	+ "," +
-					to_string(vcCount);
-					
-					for(auto key : radare2Keys){
-					if(binaryMetadata[i][key].is_string()){
-						CSVData	+= "," + binaryMetadata[i][key].get<string>();	
-					} else if(binaryMetadata[i][key].is_number_integer()){
-						CSVData	+= "," + to_string(binaryMetadata[i][key].get<int>());
-					} else {
-						CSVData	+= ", ";
-					}
-				}	
-				CSVData += "\n";	
-			}
-			CSVData += "\n";
-			
-			CSVData += "ZScore";
-			for(int i = 0; i<inputDirs.size();i++){
-				CSVData += "," + to_string(i) ;
-			}
-			CSVData += "\n";
-
-			for(int i=0 ; i<inputDirs.size() ; i++){
-				CSVData += to_string(i);
-				for(int j = 0 ; j<inputDirs.size() ; j++){
-					if(i!=j && contextZData.at(i, j) == 0){
-						CSVData += ",-";
-					} else {
-						oss << contextZData.at(i, j);
-						CSVData += "," + oss.str();
-						oss.clear();
-						oss.str("");
-					}
-				}
-				CSVData += "\n";
-			}
-			
-			CSVData += "\nPValue";
-			for(int i = 0; i<inputDirs.size();i++){
-				CSVData += "," + to_string(i) ;
-			}
-			CSVData += "\n";
-
-			for(int i=0 ; i<inputDirs.size() ; i++){
-				CSVData += to_string(i);
-				for(int j = 0 ; j<inputDirs.size() ; j++){
-					if(i!=j && contextPData.at(i, j) == 0){
-						CSVData += ",-";
-					} else {
-						oss << contextPData.at(i, j);
-						CSVData += "," + oss.str();
-						oss.clear();
-						oss.str("");
-					}
-				}
-				CSVData += "\n";
-			}
-			ofstream file(path);
-		    if (!file.is_open()) {
-		        std::cerr << "Error: Could not open file for writing: " << path << "\n";
-		        return;
-		    }
-		    file << CSVData;
 		}
 		
 		/**
