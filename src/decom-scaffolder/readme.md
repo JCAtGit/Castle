@@ -62,4 +62,3 @@ rufus_mage_build_retdec's decompiled result will be output to its corresponding 
 csmith_mage_clang_ghidra will have the files up to 1000.c (exclusive) decompiled by ghidra, using its specified script.
 ```
 
-Consult the binary with the --help flag for further details.

@@ -178,6 +178,7 @@ class CmdTasker {
 			filesystem::create_directories((ps_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			cout << toolcfg["name"] << "\n";
 
+			// run_per_file mode and with submodes
 			if(toolcfg["run_per_file"].get<bool>()){
 				if(toolcfg["run_as_it"].get<bool>()){
 					for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
@@ -207,8 +208,7 @@ class CmdTasker {
 						}
 					}
 				}
-			} else if(toolcfg["run_per_dir"].get<bool>()){ // add this key to all configs
-				// TODO: test with the last codegen
+			} else if(toolcfg["run_per_dir"].get<bool>()){
 				if(toolcfg["run_as_it"].get<bool>()){
 					for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
 						processDir(toolcfg["tgtDir"].get<string>() + to_string(toolcfg["it_begin"].get<int>()), toolcfg);
@@ -218,8 +218,7 @@ class CmdTasker {
 						processDir(entry, toolcfg);
 					}
 				}
-			} 
-			else {
+			} else {
 				processDir(toolcfg["tgtDir"], toolcfg);
 			}
 			toolcfg["timestamp"] = time(NULL);

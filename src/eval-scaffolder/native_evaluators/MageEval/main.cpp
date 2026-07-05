@@ -27,9 +27,12 @@ int main(int argc, char **argv) {
 	bool nameEncodedMarkers = false;
 	app.add_flag("-n, --name_encoded_marker",nameEncodedMarkers,  "Evaluate constructs using names instead of indices.");
 
+	bool chiralMatching = false;
+	app.add_flag("-c, --chiral_matching",chiralMatching,  "Matches different oracle-decom path type combinations.");
+
 	CLI11_PARSE(app, argc, argv);
 
-	CmdTasker cmdTskr(inputPath, oracleDir, outputPath, mrkrFormatsPath, nameEncodedMarkers);
+	CmdTasker cmdTskr(inputPath, oracleDir, outputPath, mrkrFormatsPath, nameEncodedMarkers, chiralMatching);
 	
 	cmdTskr.startProcesses();
 }

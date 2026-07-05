@@ -70,4 +70,3 @@ AvdanOS's decompiled and instrumented files will be crossexamined, producing the
 CSmith will have each of its seeded files crossexamined with its counterpart, producing corresponding result paths for each seed.
 ```
 
-Consult the binary with the --help flag for further details.

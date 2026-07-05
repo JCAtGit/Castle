@@ -20,21 +20,6 @@ Example, start the build process:
 		{
 			"targets":[
 				{
-					"name":"rufus_mage_build",
-					"tgtDir":"/home/user/Desktop/CCastle/CCastleData/InstrumentationScaffolder/rufus_mage/",
-					"binPath":"/home/user/Desktop/CCastle/CCastleData/BuildScaffolder/scripts/rufus_build.sh",
-					"run_bin_as_shell":true,
-					"static_pre_flags":[],
-					"static_options":[],
-					"redirectNull": false,
-					"outputFlag":"-o",
-					"active":false,
-					"continue_checkpoint":false,
-					"run_per_file":false,
-					"run_per_dir":false,
-					"run_as_it": false
-				},
-				{
 					"name":"AvdanOSImager_mage_build",
 					"tgtDir":"/home/user/Desktop/CCastle/CCastleData/InstrumentationScaffolder/AvdanOSImager_mage/",
 					"binPath":"/home/user/Desktop/CCastle/CCastleData/BuildScaffolder/scripts/AvdanOSImager_build.sh",
@@ -76,5 +61,6 @@ Example, start the build process:
 BuildScaffolder --scaffolder-config /path/to/scaffolder/config --tool-config /path/to/tool/config
 
 - Result.
-
+yarpgen-codegen_mage_clang builds the binaries for each folder-entity and passes the final binary to the base of the corresponding output directory.
+AvdanOSImager_mage_build	builds its target dir as a single entity with its script and outputs its binaries to its corresponding output directory.
 ```

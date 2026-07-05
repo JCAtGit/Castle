@@ -28,7 +28,8 @@ class CmdTasker{
 								dev,
 								selectedFormat;
 							
-		bool 					&nameEncodedMarkers;
+		bool 					&nameEncodedMarkers,
+								&chiralMatching;
 		
 		const vector<string> 	args = {
 							        "-xc++", 			// xc++ or xc makes a huge difference for node recovery and is worth considering for C files as well
@@ -52,7 +53,7 @@ class CmdTasker{
 		}
 		
 		/**
-		 *	Directory processing function.
+		 *	Directory processing function, assumes dir-dir correspondence between oracle and decom.
 		 *	If a directory is given as input target, then it will cross evaluate each source file inside the directory against the full oracle map.
 		 */
 		void processDir(){
@@ -88,7 +89,7 @@ class CmdTasker{
 					fileDecomData = file2string(entry.path());
 					mapKey = entry.path().filename().string();
 					
-					auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, entry.path().filename().string());
+					auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, mapKey);
 					CAGatherer.setDecomContext(&astDecomUnit->getASTContext());
 					CAGatherer.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());				
 
@@ -114,8 +115,8 @@ class CmdTasker{
 		}
 		
 		/**
-		 *	File processing function.
-		 *	If a file is given as input target, then it will evaluate this single file against the full oracle map.
+		 *	File processing function, assumes file-file correspondence between oracle and decom.
+		 *	If a file is given as input target, then it will evaluate this single file against the file oracle map.
 		 */
 		void processFile(){
 			cout<< "processFile" << "\n";
@@ -152,19 +153,80 @@ class CmdTasker{
 			saveJsonToFile(outputPath.parent_path().string() + "/dev/" 		+ inputPath.filename().string() + ".json", dev);
 		}
 	
+		/**
+		 *	Achiral processing function, assumes dir-file correspondence between oracle and decom.
+		 *	Evaluates the decom file against the oracle dir map.
+		 */
+		void processChirally(){
+			cout << "processChirally" << "\n";
+			filesystem::path virtualOraclePath = oracleDir.string() + inputPath.filename().string() + "/";
+
+			cout << "inputPath: " << inputPath << "\n";
+			cout <<"virtualOraclePath: " << virtualOraclePath.string() << "\n";
+
+			cout << fs::is_directory(inputPath)<< "\n";
+			cout << fs::is_regular_file(inputPath)<< "\n";
+			cout << fs::is_directory(oracleDir)<< "\n";
+			cout << fs::is_regular_file(oracleDir)<< "\n";
+			string mapKey;
+			ContextGatherer CAGatherer(
+				selectedFormat,
+				findings, 
+				nameEncodedMarkers
+			);
+			string fileOracleData;
+			string fileDecomData;
+			
+			CAGatherer.selectMode(1);
+			for(auto entry :filesystem::recursive_directory_iterator(virtualOraclePath)){ // voor elke apart een save to findings, etc maken.
+				if(entry.path().extension() == ".c"){ // We nemen aan dat oracle sources altijd C extensie gebruiken.
+					fileOracleData = file2string(entry.path());
+					auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(
+						fileOracleData, 
+						args, 
+						oracleDir.string() + entry.path().filename().string());
+					CAGatherer.setOracleContext(&astOracleUnit->getASTContext());
+					CAGatherer.TraverseDecl(astOracleUnit->getASTContext().getTranslationUnitDecl());
+				}
+ 			}
+			
+			CAGatherer.selectMode(0);
+			cout << inputPath.string() + ".c \n";
+			fileDecomData = file2string(inputPath.string() + ".c");
+			mapKey = inputPath.filename().string() + ".c";
+			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, mapKey);
+			CAGatherer.setDecomContext(&astDecomUnit->getASTContext());
+			CAGatherer.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
+			CAGatherer.announceFindings();
+			
+			cout << "Starting eval" << "\n";
+			CrossContextEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
+			CAEvaluator.startEval();
+			
+			cout << "Committing results to json:" << outputPath.parent_path().string() << "\n"; // outputPath is dir?
+			filesystem::create_directory(outputPath.parent_path().string() + "/findings/");
+			filesystem::create_directory(outputPath.parent_path().string() + "/eval/");
+			filesystem::create_directory(outputPath.parent_path().string() + "/dev/");
+
+			saveJsonToFile(outputPath.parent_path().string() + "/findings/" 	+ mapKey + ".json", findings);
+			saveJsonToFile(outputPath.parent_path().string() + "/eval/" 		+ mapKey + ".json", findings_eval);
+			saveJsonToFile(outputPath.parent_path().string() + "/dev/" 		+ mapKey + ".json", dev);
+		}
 	public:
 	CmdTasker(
 		filesystem::path inputPath, 
 		filesystem::path oracleDir, 
 		filesystem::path outputPath, 
 		filesystem::path mrkrFormatsPath,
-		bool& nameEncodedMarkers
+		bool& nameEncodedMarkers,
+		bool& chiralMatching
 	): 
 			inputPath(inputPath), 					// file or dir
 			oracleDir(oracleDir), 					// when iterating over files, looks for same name in oracle path
 			outputPath(outputPath),
 			mrkrFormatsPath(mrkrFormatsPath),
-			nameEncodedMarkers(nameEncodedMarkers)
+			nameEncodedMarkers(nameEncodedMarkers),
+			chiralMatching(chiralMatching)
 	{
 		loadMarkerFormats();
 		selectedFormat = markerFormats;
@@ -175,6 +237,10 @@ class CmdTasker{
 	 */
 	void startProcesses(){
 		cout << "Evaluation (inputPath, oraclePath): " << "(" << inputPath << ", " << oracleDir.string() + inputPath.filename().string() << ")" << "\n";
+		if(chiralMatching){
+			processChirally();
+			return;	
+		}
 		if(!filesystem::exists(inputPath)){
 			cout << "Path does not exist" << "\n";
 			return;
@@ -183,7 +249,7 @@ class CmdTasker{
 			processDir();
 		} else if (filesystem::is_regular_file(inputPath)){
 			processFile();
-		} 
+		}
 		cout << "startProcesses concluded \n";
 	}
 };

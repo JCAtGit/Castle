@@ -13,6 +13,7 @@
 #include "matrix.hpp"
 #include "json.hpp"
 #include "binaries.hpp"
+#include "stats.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -151,6 +152,7 @@ class MageEvalComparer{
 
 			}
 			
+			// recalc new probabilities
 			for(auto& [constructKey, constructData] :unifiedSummaryConstructs.items()){
 				if(constructData["viableComparisons"].get<double>() > 0 && !constructData["recoveryOfAttr"]["recovered_construct"].is_null()){
 					unifiedSummaryConstructs[constructKey]["P(X)"] = constructData["recoveryOfAttr"]["recovered_construct"].get<double>() / constructData["viableComparisons"].get<double>();
@@ -161,6 +163,7 @@ class MageEvalComparer{
 				}
 			}
 
+			// guard against some scenario's
 			if(unifiedSummaryMetadata["viableComparisons"].get<double>() > 0 && !unifiedSummaryMetadata["recoveredConstructsTotal"].is_null()){
 				unifiedSummaryMetadata["P(X)"] = unifiedSummaryMetadata["recoveredConstructsTotal"].get<double>() / unifiedSummaryMetadata["viableComparisons"].get<double>();
 				unifiedSummaryMetadata["VAR(X)"] = unifiedSummaryMetadata["P(X)"].get<double>() * (1 - unifiedSummaryMetadata["P(X)"].get<double>());
@@ -351,7 +354,6 @@ class MageEvalComparer{
 			
 			auto jConstructs = jData["constructs"];
 			for(auto [constructKey, iConstructData] : iData["constructs"].items()){
-
 				if(jConstructs.contains(constructKey)){
 					auto jConstructData = jConstructs[constructKey];
 
@@ -366,29 +368,14 @@ class MageEvalComparer{
 						// success/failure condition expectation test for 3 sds, allows normal approximation to a binomial distribution
 						// ensure both are eligible for proportion test
 
-						if(
-							(
-								niOracle * piOracle 		< 10 ||
-								niOracle * (1 - piOracle)	< 10
-							) ||
-							(
-								njOracle * pjOracle 		< 10 ||
-								njOracle * (1 - pjOracle) 	< 10
-							)
-						){
-							// TODO: use Fisher's Exact Test or other test?
-							continue;
+						if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
+							continue; // TODO: maybe use Fisher's Exact Test or other test?
 						}
 
 						// De sample proportions zijn in dit geval hetzelfde als P(X), dus alleen pooled proportions uitrekenen.
-
-						double pooledProportion = (
-							(
-								iConstructData["recoveryOfAttr"]["recovered_construct"].get<double>() + 
-								jConstructData["recoveryOfAttr"]["recovered_construct"].get<double>()
-							) / (
-								niOracle + njOracle
-							)
+						double pooledProportion = twoProportionsPooledProportion(
+							iConstructData["recoveryOfAttr"]["recovered_construct"].get<double>(), niOracle,
+							jConstructData["recoveryOfAttr"]["recovered_construct"].get<double>(), njOracle
 						);
 
 						// calc Z statistic, for large disproportions between case 1 and 2 use unpooled (Wald) standard error instead of pooled?
@@ -399,13 +386,8 @@ class MageEvalComparer{
 						// If we assume null is true, then we would be encouraged to use the pooled standard error (SE)
 						// If we group the results by the same decompiler, we assume H0, that is the decompiler is the main determinant for found distribution.
 
-						double pooledSE = sqrt(
-							pooledProportion * (1 - pooledProportion) *
-							(
-								(1 / niOracle) +
-								(1 / njOracle)
-							)
-						); 
+						double pooledSE = twoProportionsPooledSE(niOracle, njOracle, pooledProportion);
+					
 						double ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
 						double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
 						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
@@ -435,23 +417,16 @@ class MageEvalComparer{
 			auto njOracle = jData["metadata"]["viableComparisons"].get<double>();
 			auto pjOracle = jData["metadata"]["P(X)"].get<double>();
 			
-			auto pooledProportion = 		
-			(
-				(
-					iData["metadata"]["recoveredConstructsTotal"].get<double>() + 
-					jData["metadata"]["recoveredConstructsTotal"].get<double>()
-				) / (
-					niOracle + njOracle
-				)
+			if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
+				return;
+			}
+			
+			double pooledProportion = twoProportionsPooledProportion(
+				iData["metadata"]["recoveredConstructsTotal"].get<double>(), niOracle, 
+				jData["metadata"]["recoveredConstructsTotal"].get<double>(), njOracle
 			);
 
-			auto pooledSE = sqrt(
-				pooledProportion * (1-pooledProportion) *
-				(
-					(1 / niOracle) +
-					(1 / njOracle)
-				)
-			); 
+			double pooledSE = twoProportionsPooledSE(niOracle, njOracle, pooledProportion);
 
 			auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
 			double pValue =  erfc(abs(ZStat2Proportions) / sqrt(2.0));

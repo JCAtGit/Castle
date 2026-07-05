@@ -76,4 +76,3 @@ yarpgen-codegen produces directories containing code with its generated seeds
 csmith generates files using seeds from 0 to 1000 (exclusive).
 ```
 
-Consult the binary with the --help flag for further details.
