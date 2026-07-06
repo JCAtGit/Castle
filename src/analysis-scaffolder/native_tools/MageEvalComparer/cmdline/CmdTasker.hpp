@@ -27,11 +27,11 @@ class CmdTasker{
 		MageEvalComparer mec(inputDirs, outputPath);
 
 		if(recombine_only){
-			mec.startComparisons(recombine_only);
+			mec.startAggregationAndExport(recombine_only);
 		} else {
 			mec.gatherBinaryCharacteristics();
 			mec.buildZPooledSummaries();
-			mec.startComparisons(recombine_only);
+			mec.startAggregationAndExport(recombine_only);
 		}
 	}
 };

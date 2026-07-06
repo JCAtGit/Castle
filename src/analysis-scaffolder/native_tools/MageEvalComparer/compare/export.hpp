@@ -14,7 +14,14 @@ const vector<string> radare2Keys = {
 	"arch",  "bits", "bintype", "class", "compiler", "endian", "lang", "machine", "os"
 };
 
-void appendMappingOnly(
+/**
+ *	Appends single csv row containing a label.
+ */
+void appendLabelRow(string &CSVData, string label){
+	CSVData += label + "\n";
+}
+
+void appendConstructMappingOnly(
 	string &CSVData, 
 	vector<filesystem::path> &inputDirs,
 	const string& outputPath, 
@@ -30,7 +37,27 @@ void appendMappingOnly(
 			to_string(i) 																			+ "," + 
 			get_leaf_string(inputDirs[i].string()) 												+ "," +
 			to_string(vcCount);
+			CSVData += "\n";
 	}
+	CSVData += "\n";
+}
+
+void appendGeneralMappingOnly(
+	string &CSVData, 
+	vector<filesystem::path> &inputDirs,
+	const string& outputPath, 
+	vector<json> &summaryData,
+	const string& contextKey
+){
+	for(int i = 0; i<inputDirs.size();i++){
+		int vcCount = summaryData[i]["metadata"]["viableComparisons"].get<int>();
+		CSVData += 
+			to_string(i) 																			+ "," + 
+			get_leaf_string(inputDirs[i].string()) 												+ "," +
+			to_string(vcCount);
+			CSVData += "\n";
+	}
+	CSVData += "\n";
 }
 
 /**
@@ -227,10 +254,11 @@ void exportZConstructMatrixToCSV(
 	string CSVData;
 	
 	if(recombine_only){
-		appendMappingOnly(CSVData, inputDirs, outputPath, summaryData, contextKey);
+		appendConstructMappingOnly(CSVData, inputDirs, outputPath, summaryData, contextKey);
 	} else {
 		appendBinaryCharacteristicsGeneral(CSVData, inputDirs, outputPath, summaryData, binaryMetadata, contextKey);
-	}	appendZScores(CSVData, inputDirs, contextZData, oss);
+	}	
+	appendZScores(CSVData, inputDirs, contextZData, oss);
 	appendPValues(CSVData, inputDirs, contextPData, oss);
 	string2file(CSVData, outputPath);
 }
@@ -251,9 +279,10 @@ void exportZGeneralMatrixToCSV(
 ){
 	ostringstream oss;
 	oss << scientific << setprecision(3);
+	
 	string CSVData;
 	if(recombine_only){
-		appendMappingOnly(CSVData, inputDirs, outputPath, summaryData, contextKey);
+		appendConstructMappingOnly(CSVData, inputDirs, outputPath, summaryData, contextKey);
 	} else {
 		appendBinaryCharacteristicsGeneral(CSVData, inputDirs, outputPath, summaryData, binaryMetadata, contextKey);
 	}

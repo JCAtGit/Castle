@@ -90,40 +90,70 @@ class MageEvalComparer{
 			for(int i=0 ; i<inputDirs.size() ; i++){
 				for(int j = i + 1 ; j<inputDirs.size() ; j++){
 					// calc Z-test for proportions, as a whole and if applicable for each construct when enough samples are present	
-					calcConstructZTestProportions(summaryData[i], summaryData[j], i, j);
-					calcGeneralZTestProportions(summaryData[i], summaryData[j], i, j);
+					calcConstructZTestPooledProportions(summaryData[i], summaryData[j], i, j);
+					calcGeneralZTestPooledProportions(summaryData[i], summaryData[j], i, j);
 				}
 			}
 		}
 		
-		void startComparisons(bool &recombine_only){
+		void buildZUnpooledSummaries(){
+			for(int i=0 ; i<inputDirs.size() ; i++){
+				for(int j = i + 1 ; j<inputDirs.size() ; j++){
+					// calc Z-test for proportions, as a whole and if applicable for each construct when enough samples are present	
+					calcConstructZTestUnpooledProportions(summaryData[i], summaryData[j], i, j);
+					calcGeneralZTestUnpooledProportions(summaryData[i], summaryData[j], i, j);
+				}
+			}
+		}
+		
+		void startAggregationAndExport(bool &recombine_only){
 			createUnifiedSummary();
+			saveJsonToFile(outputPath.string() + summaryFilename, unifiedSummary);
+
+			ostringstream oss;
+			oss << scientific << setprecision(3);
+			unordered_map<string, string> CSVData;
 
 			cout << "Start exports \n";
-			for(auto& [contextKey, contextData] : constructZMatrixMap){
+			buildZPooledSummaries();
+			for(auto& [contextKey, contextZData] : constructZMatrixMap){
 				cout << outputPath.string() + contextKey + ".csv" << "\n";
-				exportZConstructMatrixToCSV(
-					inputDirs, 
-					outputPath.string() + contextKey + ".csv", 
-					summaryData,
-					binaryMetadata,
-					contextKey,
-					contextData, 
-					constructPMatrixMap[contextKey],
-					recombine_only
-				);
+									
+				if(recombine_only){
+					appendConstructMappingOnly(CSVData[contextKey], inputDirs, outputPath, summaryData, contextKey);
+				} else {
+					appendBinaryCharacteristicsGeneral(CSVData[contextKey], inputDirs, outputPath, summaryData, binaryMetadata, contextKey);
+				}	
+				appendLabelRow(CSVData[contextKey], "Pooled");
+				appendZScores(CSVData[contextKey], inputDirs, contextZData, oss);
+				appendPValues(CSVData[contextKey], inputDirs, constructPMatrixMap[contextKey], oss);
 			}
-			exportZGeneralMatrixToCSV(
-				inputDirs, 
-				outputPath.string() + "General.csv",
-				summaryData,
-				binaryMetadata,
-				"General",
-				generalZMatrix, 
-				generalPMatrix,
-				recombine_only
-			);
-			saveJsonToFile(outputPath.string() + summaryFilename, unifiedSummary);
+			
+			if(recombine_only){
+				appendGeneralMappingOnly(CSVData["General"], inputDirs, outputPath.string() + "General.csv", summaryData, "General");
+			} else {
+				appendBinaryCharacteristicsGeneral(CSVData["General"], inputDirs, outputPath.string() + "General.csv", summaryData, binaryMetadata, "General");
+			}
+			appendLabelRow(CSVData["General"], "Pooled");
+			appendZScores(CSVData["General"], inputDirs, generalZMatrix, oss);
+			appendPValues(CSVData["General"], inputDirs, generalPMatrix, oss);
+			oss.clear();
+			
+			// Append unpooled text information
+			buildZUnpooledSummaries();
+			for(auto& [contextKey, contextZData] : constructZMatrixMap){
+				cout << outputPath.string() + contextKey + ".csv" << "\n";
+				appendLabelRow(CSVData[contextKey], "Unpooled");
+				appendZScores(CSVData[contextKey], inputDirs, contextZData, oss);
+				appendPValues(CSVData[contextKey], inputDirs, constructPMatrixMap[contextKey], oss);
+			}
+			appendLabelRow(CSVData["General"], "Unpooled");
+			appendZScores(CSVData["General"], inputDirs, generalZMatrix, oss);
+			appendPValues(CSVData["General"], inputDirs, generalPMatrix, oss);
+			for(auto& [contextKey, contextZData] : constructZMatrixMap){
+				string2file(CSVData[contextKey], outputPath.string() + contextKey + ".csv");
+			}
+			string2file(CSVData["General"], outputPath.string() + "General.csv");
 		}
 	
 		/**
@@ -213,7 +243,7 @@ class MageEvalComparer{
 		 * 	@param	i		The associated row of calculated pair in the matrix
 		 * 	@param	j		The associated col of calculated pair in the matrix
 		 */
-		void calcConstructZTestProportions(json& iData, json& jData, int i, int j){
+		void calcConstructZTestPooledProportions(json& iData, json& jData, int i, int j){
 			cout << "calcConstructZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
 			
 			auto jConstructs = jData["constructs"];
@@ -255,6 +285,106 @@ class MageEvalComparer{
 						double ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
 						double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
 						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
+//							cout << ZStat2Proportions << " - creating Z construct matrix \n";
+							constructZMatrixMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
+						}
+						constructZMatrixMap[constructKey].at(i,j) = ZStat2Proportions;
+						constructZMatrixMap[constructKey].at(j,i) = ZStat2Proportions;
+						
+						if(constructPMatrixMap.find(constructKey) == constructPMatrixMap.end()){
+//							cout << PValue << " - creating P construct matrix \n";
+							constructPMatrixMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
+						}
+						constructPMatrixMap[constructKey].at(i,j) = pValue;
+						constructPMatrixMap[constructKey].at(j,i) = pValue;
+					}
+				}
+			}
+		}
+		
+		/**
+		* 	Calculates the Z values for each pair for the overall stats from the inputData and stores these in the ZDataMatrix
+		*	@param	iData	Data of input i from inputDirs.
+		* 	@param	jData	Data of input j from inputDirs.
+		* 	@param	i		The associated row of calculated pair in the matrix
+		* 	@param	j		The associated col of calculated pair in the matrix		 
+		*/
+		void calcGeneralZTestPooledProportions(json& iData, json& jData, int i, int j){
+			cout << "calcGeneralZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
+
+			auto niOracle = iData["metadata"]["viableComparisons"].get<double>();
+			auto piOracle = iData["metadata"]["P(X)"].get<double>();
+
+			auto njOracle = jData["metadata"]["viableComparisons"].get<double>();
+			auto pjOracle = jData["metadata"]["P(X)"].get<double>();
+			
+			if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
+				return;
+			}
+			
+			double pooledProportion = twoProportionsPPooledProportion(
+				iData["metadata"]["recoveredConstructsTotal"].get<double>(), niOracle, 
+				jData["metadata"]["recoveredConstructsTotal"].get<double>(), njOracle
+			);
+
+			double pooledSE = twoProportionsPooledSE(niOracle, njOracle, pooledProportion);
+
+			auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
+			double pValue =  erfc(abs(ZStat2Proportions) / sqrt(2.0));
+
+			generalZMatrix.at(i,j) = ZStat2Proportions;
+			generalZMatrix.at(j,i) = ZStat2Proportions;
+			generalPMatrix.at(i,j) = pValue;
+			generalPMatrix.at(j,i) = pValue;
+		}
+		
+		/**
+		 * 	Calculates the Z values for each pair per construct from the inputData and stores these in the ZDataMatrix
+		 *	@param	iData	Data of input i from inputDirs.
+		 * 	@param	jData	Data of input j from inputDirs.
+		 * 	@param	i		The associated row of calculated pair in the matrix
+		 * 	@param	j		The associated col of calculated pair in the matrix
+		 */
+		void calcConstructZTestUnpooledProportions(json& iData, json& jData, int i, int j){
+			cout << "calcConstructZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
+			
+			auto jConstructs = jData["constructs"];
+			for(auto [constructKey, iConstructData] : iData["constructs"].items()){
+				if(jConstructs.contains(constructKey)){
+					auto jConstructData = jConstructs[constructKey];
+
+					// calculate success/failure condition
+					if(iConstructData.contains("viableComparisons") && jConstructData.contains("viableComparisons")){
+						double niOracle = iConstructData["viableComparisons"].get<double>();
+						double piOracle = iConstructData["P(X)"].get<double>();
+
+						double njOracle = jConstructData["viableComparisons"].get<double>();
+						double pjOracle = jConstructData["P(X)"].get<double>();
+
+						// success/failure condition expectation test for 3 sds, allows normal approximation to a binomial distribution
+						// ensure both are eligible for proportion test
+
+						if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
+							continue; // TODO: maybe use Fisher's Exact Test or other test?
+						}
+
+						// calc Z statistic, for large disproportions between case 1 and 2 use unpooled (Wald) standard error instead of pooled?
+						// We have to make/choose certain assumptions, which validate the approach, i.e. pool vs unpooled. 
+						// Do we assume the null hypothesis is true? Or do we remain reserved without assuming H0?
+						// 		H0: p_i  = p_j
+						//		Ha: p_i != p_j, alternative hypothesis
+						// If we assume null is true, then we would be encouraged to use the pooled standard error (SE)
+						// If we group the results by the same decompiler, we assume H0, that is the decompiler is the main determinant for found distribution.
+
+						double unpooledSE = twoProportionsUnpooledSE(
+							iData["metadata"]["VAR(X)"].get<double>(), niOracle, 
+							jData["metadata"]["VAR(X)"].get<double>(), njOracle
+						);
+							
+						auto ZStat2Proportions = (piOracle - pjOracle) / unpooledSE;
+					
+						double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
+						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
 //							cout << ZStat2Proportions << " - creating construct matrix \n";
 							constructZMatrixMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
 						}
@@ -279,7 +409,7 @@ class MageEvalComparer{
 		* 	@param	i		The associated row of calculated pair in the matrix
 		* 	@param	j		The associated col of calculated pair in the matrix		 
 		*/
-		void calcGeneralZTestProportions(json& iData, json& jData, int i, int j){
+		void calcGeneralZTestUnpooledProportions(json& iData, json& jData, int i, int j){
 			cout << "calcGeneralZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
 
 			auto niOracle = iData["metadata"]["viableComparisons"].get<double>();
@@ -292,14 +422,13 @@ class MageEvalComparer{
 				return;
 			}
 			
-			double pooledProportion = twoProportionsPPooledProportion(
-				iData["metadata"]["recoveredConstructsTotal"].get<double>(), niOracle, 
-				jData["metadata"]["recoveredConstructsTotal"].get<double>(), njOracle
+			double unpooledSE = twoProportionsUnpooledSE(
+				iData["metadata"]["VAR(X)"].get<double>(), niOracle, 
+				jData["metadata"]["VAR(X)"].get<double>(), njOracle
 			);
-
-			double pooledSE = twoProportionsPooledSE(niOracle, njOracle, pooledProportion);
-
-			auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
+				
+			auto ZStat2Proportions = (piOracle - pjOracle) / unpooledSE;
+			
 			double pValue =  erfc(abs(ZStat2Proportions) / sqrt(2.0));
 
 			generalZMatrix.at(i,j) = ZStat2Proportions;
