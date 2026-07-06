@@ -1,15 +1,12 @@
 #include <cmath>
 #include <filesystem>
-#include "castle.hpp"
 #include "nlohmann/json.hpp"
-#include <fstream>
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include <sstream>
-#include <iomanip>
-#include "../../../../../include/paths.hpp"
 
+#include "castle.hpp"
+#include "paths.hpp"
 #include "matrix.hpp"
 #include "json.hpp"
 #include "binaries.hpp"
@@ -21,7 +18,7 @@ using namespace std;
 
 /**
  * 	MaveEvalComparer.
- * 	This classes takes the summary.json from each inputdir, then it proceeds to aggregate , recalculate and output the combined summary.
+ * 	This classes takes the summary.json from each inputdir; then it proceeds to aggregate, recalculate and output the combined summary.
  *		
  *	TODO: 
  *	Considerations:
@@ -36,19 +33,18 @@ class MageEvalComparer{
 		filesystem::path 						&outputPath;						// use outputPath as dir to retrieve previously existing aggregated data from.
 		const filesystem::path					buildScaffolderDir = "/home/user/Desktop/CCastle/CCastleData/BuildScaffolder/";
 		
-		unordered_map<string, Matrix<double>> 	constructZMatrixMap; 				// contains constructs - Z value evals related to the summaries.
-		unordered_map<string, Matrix<double>> 	constructPMatrixMap;				// contains constructs - P value evals related to the summaries.
-		Matrix<double>							generalZMatrix;						// contains general    - Z value evals related to the summaries.
-		Matrix<double>							generalPMatrix;						// contains general    - P value evals related to the summaries.
+		unordered_map<string, Matrix<double>> 	constructZMatrixMap, 				// contains constructs - Z value evals related to the summaries.
+											 	constructPMatrixMap;				// contains constructs - P value evals related to the summaries.
+		Matrix<double>							generalZMatrix,						// contains general    - Z value evals related to the summaries.
+												generalPMatrix;						// contains general    - P value evals related to the summaries.
 
-		const string 							summaryFilename = "summary.json";
-		const string 							binMetadataCmd 	= "rabin2 -j -I ";
+		const string 							summaryFilename = "summary.json",
+												binMetadataCmd 	= "rabin2 -j -I ";
 
 		vector<json> 							summaryData, binaryMetadata;
 		json									unifiedSummary 	= json::object();
 		
-		// Keys to determine which binary metadata to pull from radare2 output.
-		const vector<string>					radare2Keys = {
+		const vector<string>					radare2Keys = {						// Keys to determine which binary metadata to pull from radare2 output.
 			"arch",  "bits", "bintype", "class", "compiler", "endian", "lang", "machine", "os"
 		};
 		
@@ -59,28 +55,38 @@ class MageEvalComparer{
 	generalZMatrix(inputDirs.size(), inputDirs.size()),
 	generalPMatrix(inputDirs.size(), inputDirs.size())
 	{
-		string dataStringHolder;
-		string binaryDirsTarget;
-		string command;
 		sort(inputDirs.begin(),inputDirs.end());
-		for(int i=0 ; i<inputDirs.size() ; i++){
-			summaryData.push_back(json::object());
-			loadJSON(inputDirs[i].string() + summaryFilename, summaryData[i]);
-			binaryDirsTarget = getCastleFormatBuildNameFromAnalysisName(inputDirs[i].parent_path().filename().string()); 
-			for(const auto& entry : filesystem::recursive_directory_iterator(buildScaffolderDir / binaryDirsTarget)){
-				// perform extraction and then break, assuming all other related binaries have the same general settings.
-				command = binMetadataCmd + (buildScaffolderDir / binaryDirsTarget).string() + "/" + entry.path().filename().string();
-//				cout << command << "\n";
-				execCommandAndCaptureOutput(command, dataStringHolder);
-				break;
-			}
-			
-			binaryMetadata.push_back(json::parse(dataStringHolder)["info"]);
-			dataStringHolder.clear();
-		}		
+		loadSummaryData();
 	}	
 		
-		void startComparisons(){
+		void loadSummaryData(){
+			for(int i=0 ; i<inputDirs.size() ; i++){
+				summaryData.push_back(json::object());
+				loadJSON(inputDirs[i].string() + summaryFilename, summaryData[i]);
+			}
+		}
+	
+		void gatherBinaryCharacteristics(){
+			string dataStringHolder;
+			string binaryDirsTarget;
+			string command;
+			sort(inputDirs.begin(),inputDirs.end());
+			for(int i=0 ; i<inputDirs.size() ; i++){
+				binaryDirsTarget = getCastleFormatBuildNameFromAnalysisName(inputDirs[i].parent_path().filename().string()); 
+				for(const auto& entry : filesystem::recursive_directory_iterator(buildScaffolderDir / binaryDirsTarget)){
+					// perform extraction and then break, assuming all other related binaries have the same general settings.
+					command = binMetadataCmd + (buildScaffolderDir / binaryDirsTarget).string() + "/" + entry.path().filename().string();
+	//				cout << command << "\n";
+					execCommandAndCaptureOutput(command, dataStringHolder);
+					break;
+				}
+				
+				binaryMetadata.push_back(json::parse(dataStringHolder)["info"]);
+				dataStringHolder.clear();
+			}
+		}
+	
+		void buildZPooledSummaries(){
 			for(int i=0 ; i<inputDirs.size() ; i++){
 				for(int j = i + 1 ; j<inputDirs.size() ; j++){
 					// calc Z-test for proportions, as a whole and if applicable for each construct when enough samples are present	
@@ -88,8 +94,11 @@ class MageEvalComparer{
 					calcGeneralZTestProportions(summaryData[i], summaryData[j], i, j);
 				}
 			}
+		}
+		
+		void startComparisons(bool &recombine_only){
 			createUnifiedSummary();
-			
+
 			cout << "Start exports \n";
 			for(auto& [contextKey, contextData] : constructZMatrixMap){
 				cout << outputPath.string() + contextKey + ".csv" << "\n";
@@ -100,7 +109,8 @@ class MageEvalComparer{
 					binaryMetadata,
 					contextKey,
 					contextData, 
-					constructPMatrixMap[contextKey]
+					constructPMatrixMap[contextKey],
+					recombine_only
 				);
 			}
 			exportZGeneralMatrixToCSV(
@@ -110,7 +120,8 @@ class MageEvalComparer{
 				binaryMetadata,
 				"General",
 				generalZMatrix, 
-				generalPMatrix
+				generalPMatrix,
+				recombine_only
 			);
 			saveJsonToFile(outputPath.string() + summaryFilename, unifiedSummary);
 		}
@@ -134,8 +145,8 @@ class MageEvalComparer{
 						unifiedSummaryConstructs[constructKey] = json::object();
 					}
 					auto& n0USConstruct = unifiedSummaryConstructs[constructKey];
-
 					for(auto& [n0Key, n0Val]:constructData.items()){
+
 						if(n0Val.is_object()){ // currently assumes no further nesting
 
 							if(n0USConstruct[n0Key].is_null()){
@@ -144,21 +155,27 @@ class MageEvalComparer{
 							auto& n1USCOnstruct = n0USConstruct[n0Key];
 
 							for(auto& [n1Key, n1Val]: n0Val.items()){
+
 								if(n1USCOnstruct[n1Key].is_null()){
 									n1USCOnstruct[n1Key] = 0;
 								}
-								n1USCOnstruct[n1Key] = n1USCOnstruct[n1Key].get<int>() + n1Val.get<int>();
+								if(n1Val.is_null()){
+									n1USCOnstruct[n1Key] = n1USCOnstruct[n1Key].get<int>();
+								} else {
+									n1USCOnstruct[n1Key] = n1USCOnstruct[n1Key].get<int>() + n1Val.get<int>();
+								}
+								
 							}
-							
 						} else {
+
 							if(n0USConstruct[n0Key].is_null()){
 								n0USConstruct[n0Key] = 0;
 							}
 							n0USConstruct[n0Key] = n0USConstruct[n0Key].get<int>() + n0Val.get<int>();
 						}
 					}
-
-								}
+				}
+				
 				// Tally up metadata
 				for(auto& [mKey, mData]:summary["metadata"].items()){
 					if(unifiedSummaryMetadata[mKey].is_null()){
@@ -166,7 +183,6 @@ class MageEvalComparer{
 					}
 					unifiedSummaryMetadata[mKey] = unifiedSummaryMetadata[mKey].get<int>() + mData.get<int>();
 				}
-
 			}
 			
 			// recalc new probabilities
@@ -191,7 +207,11 @@ class MageEvalComparer{
 		}
 		
 		/**
-		 *	
+		 * 	Calculates the Z values for each pair per construct from the inputData and stores these in the ZDataMatrix
+		 *	@param	iData	Data of input i from inputDirs.
+		 * 	@param	jData	Data of input j from inputDirs.
+		 * 	@param	i		The associated row of calculated pair in the matrix
+		 * 	@param	j		The associated col of calculated pair in the matrix
 		 */
 		void calcConstructZTestProportions(json& iData, json& jData, int i, int j){
 			cout << "calcConstructZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
@@ -217,7 +237,7 @@ class MageEvalComparer{
 						}
 
 						// De sample proportions zijn in dit geval hetzelfde als P(X), dus alleen pooled proportions uitrekenen.
-						double pooledProportion = twoProportionsPooledProportion(
+						double pooledProportion = twoProportionsPPooledProportion(
 							iConstructData["recoveryOfAttr"]["recovered_construct"].get<double>(), niOracle,
 							jConstructData["recoveryOfAttr"]["recovered_construct"].get<double>(), njOracle
 						);
@@ -252,6 +272,13 @@ class MageEvalComparer{
 			}
 		}
 		
+		/**
+		* 	Calculates the Z values for each pair for the overall stats from the inputData and stores these in the ZDataMatrix
+		*	@param	iData	Data of input i from inputDirs.
+		* 	@param	jData	Data of input j from inputDirs.
+		* 	@param	i		The associated row of calculated pair in the matrix
+		* 	@param	j		The associated col of calculated pair in the matrix		 
+		*/
 		void calcGeneralZTestProportions(json& iData, json& jData, int i, int j){
 			cout << "calcGeneralZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
 
@@ -265,7 +292,7 @@ class MageEvalComparer{
 				return;
 			}
 			
-			double pooledProportion = twoProportionsPooledProportion(
+			double pooledProportion = twoProportionsPPooledProportion(
 				iData["metadata"]["recoveredConstructsTotal"].get<double>(), niOracle, 
 				jData["metadata"]["recoveredConstructsTotal"].get<double>(), njOracle
 			);

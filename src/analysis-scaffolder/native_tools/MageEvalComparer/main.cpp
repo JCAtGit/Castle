@@ -16,8 +16,11 @@ int main(int argc, char **argv) {
 	app.add_option("-o,--output", outputDir, "Output dir for aggregated results")
 		->required();
 	
+	bool recombine_only = false;
+	app.add_flag("--recombine-only", recombine_only, "Does not attempt to rebuild the summary using the build data.");
+	
 	CLI11_PARSE(app, argc, argv);
 
-	CmdTasker cmdTskr(inputDirs, outputDir);
+	CmdTasker cmdTskr(inputDirs, outputDir, recombine_only);
 	cmdTskr.startProcesses();
 }

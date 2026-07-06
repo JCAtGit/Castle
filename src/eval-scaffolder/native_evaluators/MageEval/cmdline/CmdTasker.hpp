@@ -154,7 +154,7 @@ class CmdTasker{
 		}
 	
 		/**
-		 *	Achiral processing function, assumes dir-file correspondence between oracle and decom.
+		 *	Chiral processing function, assumes dir-file correspondence between oracle and decom.
 		 *	Evaluates the decom file against the oracle dir map.
 		 */
 		void processChirally(){

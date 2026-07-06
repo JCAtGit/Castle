@@ -8,22 +8,31 @@ using namespace std;
 
 class CmdTasker{
 	private:		
-		vector<filesystem::path> &inputDirs;
-		filesystem::path &outputPath;
-				
+		vector<filesystem::path> 	&inputDirs;
+		filesystem::path 			&outputPath;
+		bool 						&recombine_only;
 	public:
 	CmdTasker(
 		vector<filesystem::path> &inputDirs, 
-		filesystem::path &outputPath
+		filesystem::path &outputPath,
+		bool &recombine_only
 	) : 
 	inputDirs(inputDirs), 
-	outputPath(outputPath)
+	outputPath(outputPath),
+	recombine_only(recombine_only)
 	{}
 
 	void startProcesses(){
 		cout << "Start processes \n";
 		MageEvalComparer mec(inputDirs, outputPath);
-		mec.startComparisons();
+
+		if(recombine_only){
+			mec.startComparisons(recombine_only);
+		} else {
+			mec.gatherBinaryCharacteristics();
+			mec.buildZPooledSummaries();
+			mec.startComparisons(recombine_only);
+		}
 	}
 };
 	
