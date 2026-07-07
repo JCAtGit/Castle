@@ -73,8 +73,7 @@ class CrossContextEvaluator{
 	}
 	
 	/**
-	 *	TODO: what if multiple occurences appear of some marker? Push to array instead?
-	 *		Also see the gatherer indexProcessor, if it has been fixed.
+	 *	Selects targeted methods for specific AST nodes or uses a general procession method instead.
 	 */
 	void findingsComparison(const string &markerID, json &findingsOracle, json &findingsDecom){
 		auto it = fnSelector.find(findingsOracle["ASTNode"].get<string>());
@@ -141,7 +140,6 @@ class CrossContextEvaluator{
 			markerFindingsResult["parity_has_callee"] = false;
 
 		}
-		// TODO: type check kan misschien nog fijndradiger,
 		
 		markerFindingsResult["parity_args_count"] = (findingsOracle["properties"]["num_args"] == findingsDecom["properties"]["num_args"]);
 		sort(findingsOracle["properties"]["arg_types"].begin(),findingsOracle["properties"]["arg_types"].end());
@@ -152,7 +150,6 @@ class CrossContextEvaluator{
 		return false;
 	}
 	
-	//TODO: add reinterpretation for binaryoperators, 
 	bool processDeclStmt(const string &markerID, json &findingsOracle,json &findingsDecom, json& markerFindingsResult){
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));

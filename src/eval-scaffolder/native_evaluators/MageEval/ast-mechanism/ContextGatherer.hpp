@@ -252,6 +252,8 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 		(*findings)["properties"]["single_decl"] = cast_node->isSingleDecl();
 		auto decls = cast_node->decls();
 		for(auto uncast_decl: decls){
+//			(*findings)["properties"]["decl_types"].push_back(uncast_decl->getKind());
+
 	        switch (uncast_decl->getKind()) {
 	        case clang::Decl::Var: {
 	            auto *VD = cast<clang::VarDecl>(uncast_decl);
@@ -270,6 +272,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	        }
 	        case clang::Decl::Record: {
 	            auto *RD = cast<clang::RecordDecl>(uncast_decl);
+				RD->isStruct();
 				recordQTypeInfo(selectedAST->getTypeDeclType(RD), (*findings)["properties"]["init_types"]);
 	            break;
 	        }
@@ -302,7 +305,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	}
 
 	// Voor FunctionDecl aparte entries maken op basis van CallExpr.
-	// We kunnen altijd de generieke en callexpr metrieken opnemen, behalve er geen markee is.
+	// We kunnen altijd de generieke en callexpr metrieken opnemen, behalve als er geen markee is.
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
 		string calleeName; // callee is not always available

@@ -17,14 +17,9 @@ using namespace nlohmann;
 using namespace std;
 
 /**
- * 	MaveEvalComparer.
+ * 	MageEvalComparer.
  * 	This classes takes the summary.json from each inputdir; then it proceeds to aggregate, recalculate and output the combined summary.
  *		
- *	TODO: 
- *	Considerations:
- *		- Inclusie oracleMarkedTypes?
- *		DeclStmt is een stmt waar decompilers moeite mee hebben, de lijst toont een glimps van waar mee geworsteld wordt.
- *		Echter is de lijst aanzienlijk en is deze voor de summary misschien overbodig.
  */
 
 class MageEvalComparer{
@@ -35,9 +30,12 @@ class MageEvalComparer{
 		
 		unordered_map<string, Matrix<double>> 	constructZMatrixMap, 				// contains constructs - Z value evals related to the summaries.
 											 	constructPMatrixMap;				// contains constructs - P value evals related to the summaries.
+												
+		unordered_map<string, Matrix<string>>	constructCIMatrixMap;				// contains constructs - confidence intervals related to the summaries.
+		
 		Matrix<double>							generalZMatrix,						// contains general    - Z value evals related to the summaries.
 												generalPMatrix;						// contains general    - P value evals related to the summaries.
-
+		Matrix<string>							generalCIMatrix;					// contains general	   - confidence intervals related to the summaries.
 		const string 							summaryFilename = "summary.json",
 												binMetadataCmd 	= "rabin2 -j -I ";
 
@@ -53,7 +51,8 @@ class MageEvalComparer{
 	inputDirs(inputDirs), outputPath(outputPath), 
 	
 	generalZMatrix(inputDirs.size(), inputDirs.size()),
-	generalPMatrix(inputDirs.size(), inputDirs.size())
+	generalPMatrix(inputDirs.size(), inputDirs.size()),
+	generalCIMatrix(inputDirs.size(), inputDirs.size())
 	{
 		sort(inputDirs.begin(),inputDirs.end());
 		loadSummaryData();
@@ -106,19 +105,36 @@ class MageEvalComparer{
 			}
 		}
 		
+		void buildHolmBonferroniScores(Matrix<double> &PMatrix, vector<pair<string, long double>> &hbPVector, vector<long double> &hbValueVector){
+			double alphaConfidence = 0.05;
+			for(int i=0;i<inputDirs.size();i++){
+				for(int j=i+1;j<inputDirs.size();j++){
+					if(PMatrix.at(i, j) != 0){
+						hbPVector.push_back({to_string(i) + "-" + to_string(j), PMatrix.at(i, j)});
+					}
+				}
+			}
+			sort(hbPVector.begin(), hbPVector.end(),[](const auto& a, const auto& b) {return a.second < b.second;});
+			for(int i=0;i<hbPVector.size();i++){
+				// calc holm threshold
+				hbValueVector.push_back((alphaConfidence / (hbPVector.size() - i)));
+			}
+		}
+		
 		void startAggregationAndExport(bool &recombine_only){
 			createUnifiedSummary();
 			saveJsonToFile(outputPath.string() + summaryFilename, unifiedSummary);
-
 			ostringstream oss;
 			oss << scientific << setprecision(3);
 			unordered_map<string, string> CSVData;
-
+			vector<pair<string, long double>> hbPVector;
+			vector<long double> hbValueVector;
+			
 			cout << "Start exports \n";
 			buildZPooledSummaries();
+			// Append pooled text information
 			for(auto& [contextKey, contextZData] : constructZMatrixMap){
-				cout << outputPath.string() + contextKey + ".csv" << "\n";
-									
+				cout << outputPath.string() + contextKey + ".csv" << "\n";	
 				if(recombine_only){
 					appendConstructMappingOnly(CSVData[contextKey], inputDirs, outputPath, summaryData, contextKey);
 				} else {
@@ -127,6 +143,10 @@ class MageEvalComparer{
 				appendLabelRow(CSVData[contextKey], "Pooled");
 				appendZScores(CSVData[contextKey], inputDirs, contextZData, oss);
 				appendPValues(CSVData[contextKey], inputDirs, constructPMatrixMap[contextKey], oss);
+				buildHolmBonferroniScores(constructPMatrixMap[contextKey], hbPVector, hbValueVector);
+				appendHolmBonferroniScores(CSVData[contextKey], inputDirs, hbPVector, hbValueVector, constructCIMatrixMap[contextKey], oss);
+				hbValueVector.clear();
+				hbPVector.clear();
 			}
 			
 			if(recombine_only){
@@ -137,19 +157,32 @@ class MageEvalComparer{
 			appendLabelRow(CSVData["General"], "Pooled");
 			appendZScores(CSVData["General"], inputDirs, generalZMatrix, oss);
 			appendPValues(CSVData["General"], inputDirs, generalPMatrix, oss);
+			buildHolmBonferroniScores(generalPMatrix, hbPVector, hbValueVector);
+			appendHolmBonferroniScores(CSVData["General"], inputDirs, hbPVector, hbValueVector,generalCIMatrix, oss);
+			hbValueVector.clear();
+			hbPVector.clear();
 			oss.clear();
 			
-			// Append unpooled text information
 			buildZUnpooledSummaries();
+			// Append unpooled text information
 			for(auto& [contextKey, contextZData] : constructZMatrixMap){
 				cout << outputPath.string() + contextKey + ".csv" << "\n";
 				appendLabelRow(CSVData[contextKey], "Unpooled");
 				appendZScores(CSVData[contextKey], inputDirs, contextZData, oss);
 				appendPValues(CSVData[contextKey], inputDirs, constructPMatrixMap[contextKey], oss);
+				buildHolmBonferroniScores(constructPMatrixMap[contextKey], hbPVector, hbValueVector);
+				appendHolmBonferroniScores(CSVData[contextKey], inputDirs, hbPVector, hbValueVector, constructCIMatrixMap[contextKey], oss);
+				hbValueVector.clear();
+				hbPVector.clear();
 			}
+			
 			appendLabelRow(CSVData["General"], "Unpooled");
 			appendZScores(CSVData["General"], inputDirs, generalZMatrix, oss);
 			appendPValues(CSVData["General"], inputDirs, generalPMatrix, oss);
+			buildHolmBonferroniScores(generalPMatrix, hbPVector, hbValueVector);
+			appendHolmBonferroniScores(CSVData["General"], inputDirs, hbPVector, hbValueVector,generalCIMatrix, oss);
+			
+			// Save info to files
 			for(auto& [contextKey, contextZData] : constructZMatrixMap){
 				string2file(CSVData[contextKey], outputPath.string() + contextKey + ".csv");
 			}
@@ -158,6 +191,7 @@ class MageEvalComparer{
 	
 		/**
 		 *	Aggregates and recomputes the necessary data related to all the inputdirs.
+		 * 	Do not summarize over the 
 		 */
 		void createUnifiedSummary(){
 			cout << "createUnifiedSummary \n";
@@ -176,9 +210,7 @@ class MageEvalComparer{
 					}
 					auto& n0USConstruct = unifiedSummaryConstructs[constructKey];
 					for(auto& [n0Key, n0Val]:constructData.items()){
-
 						if(n0Val.is_object()){ // currently assumes no further nesting
-
 							if(n0USConstruct[n0Key].is_null()){
 								n0USConstruct[n0Key] = json::object();
 							}
@@ -194,10 +226,8 @@ class MageEvalComparer{
 								} else {
 									n1USCOnstruct[n1Key] = n1USCOnstruct[n1Key].get<int>() + n1Val.get<int>();
 								}
-								
 							}
 						} else {
-
 							if(n0USConstruct[n0Key].is_null()){
 								n0USConstruct[n0Key] = 0;
 							}
@@ -259,11 +289,8 @@ class MageEvalComparer{
 						double njOracle = jConstructData["viableComparisons"].get<double>();
 						double pjOracle = jConstructData["P(X)"].get<double>();
 
-						// success/failure condition expectation test for 3 sds, allows normal approximation to a binomial distribution
-						// ensure both are eligible for proportion test
-
 						if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
-							continue; // TODO: maybe use Fisher's Exact Test or other test?
+							continue; // TODO: maybe use Fisher's Exact Test or other test? Samples invalid so we skip. P will be set to 0.
 						}
 
 						// De sample proportions zijn in dit geval hetzelfde als P(X), dus alleen pooled proportions uitrekenen.
@@ -297,6 +324,11 @@ class MageEvalComparer{
 						}
 						constructPMatrixMap[constructKey].at(i,j) = pValue;
 						constructPMatrixMap[constructKey].at(j,i) = pValue;
+						
+						if(constructCIMatrixMap.find(constructKey) == constructCIMatrixMap.end()){
+							constructCIMatrixMap[constructKey] = Matrix<string>(inputDirs.size(),inputDirs.size());
+						}
+						calcConfidenceInterval(piOracle, pjOracle, i, j, pooledSE, constructCIMatrixMap[constructKey]);
 					}
 				}
 			}
@@ -336,6 +368,8 @@ class MageEvalComparer{
 			generalZMatrix.at(j,i) = ZStat2Proportions;
 			generalPMatrix.at(i,j) = pValue;
 			generalPMatrix.at(j,i) = pValue;
+			calcConfidenceInterval(piOracle, pjOracle, i, j, pooledSE, generalCIMatrix);
+
 		}
 		
 		/**
@@ -352,8 +386,6 @@ class MageEvalComparer{
 			for(auto [constructKey, iConstructData] : iData["constructs"].items()){
 				if(jConstructs.contains(constructKey)){
 					auto jConstructData = jConstructs[constructKey];
-
-					// calculate success/failure condition
 					if(iConstructData.contains("viableComparisons") && jConstructData.contains("viableComparisons")){
 						double niOracle = iConstructData["viableComparisons"].get<double>();
 						double piOracle = iConstructData["P(X)"].get<double>();
@@ -397,6 +429,11 @@ class MageEvalComparer{
 						}
 						constructPMatrixMap[constructKey].at(i,j) = pValue;
 						constructPMatrixMap[constructKey].at(j,i) = pValue;
+						
+						if(constructCIMatrixMap.find(constructKey) == constructCIMatrixMap.end()){
+							constructCIMatrixMap[constructKey] = Matrix<string>(inputDirs.size(),inputDirs.size());
+						}
+						calcConfidenceInterval(piOracle, pjOracle, i, j, unpooledSE, constructCIMatrixMap[constructKey]);
 					}
 				}
 			}
@@ -435,5 +472,7 @@ class MageEvalComparer{
 			generalZMatrix.at(j,i) = ZStat2Proportions;
 			generalPMatrix.at(i,j) = pValue;
 			generalPMatrix.at(j,i) = pValue;
+			
+			calcConfidenceInterval(piOracle, pjOracle, i, j, unpooledSE, generalCIMatrix);
 		}
 };

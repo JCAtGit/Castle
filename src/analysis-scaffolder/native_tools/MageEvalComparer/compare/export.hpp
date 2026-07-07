@@ -14,6 +14,28 @@ const vector<string> radare2Keys = {
 	"arch",  "bits", "bintype", "class", "compiler", "endian", "lang", "machine", "os"
 };
 
+
+#include <charconv>
+#include <string_view>
+
+bool parseDashCouplingString(std::string_view sv, int &a, int &b) {
+    const char* start = sv.data();
+    const char* end = start + sv.size();
+
+    // Parse a
+    auto [ptr_a, ec_a] = std::from_chars(start, end, a);
+    if (ec_a != std::errc() || ptr_a == end) return false;
+
+    // Skip the hyphen
+    if (*ptr_a != '-') return false;
+    ++ptr_a;
+
+    // Parse b
+    auto [ptr_b, ec_b] = std::from_chars(ptr_a, end, b);
+    return ec_b == std::errc();
+}
+
+
 /**
  *	Appends single csv row containing a label.
  */
@@ -228,65 +250,36 @@ void appendPValues(
 	}
 }
 
-/**
- *	
- *	@param
- *	@param
- *	@param
- *	@param
- *	@param
- *	@param
- *	@param
- */
-template <typename T>
-void exportZConstructMatrixToCSV(
+void appendHolmBonferroniScores(
+	string &CSVData, 
 	vector<filesystem::path> &inputDirs,
-	const string& outputPath, 
-	vector<json> &summaryData,
-	vector<json> &binaryMetadata,
-	const string& contextKey,
-	Matrix<T>& contextZData, 
-	Matrix<T>& contextPData,
-	bool &recombine_only
+	vector<pair<string, long double>> &hbPVector,
+	vector<long double> &hbValueVector,
+	Matrix<string> &CIMatrix,
+	ostringstream &oss
 ){
-	ostringstream oss;
-	oss << scientific << setprecision(3);
-	string CSVData;
-	
-	if(recombine_only){
-		appendConstructMappingOnly(CSVData, inputDirs, outputPath, summaryData, contextKey);
-	} else {
-		appendBinaryCharacteristicsGeneral(CSVData, inputDirs, outputPath, summaryData, binaryMetadata, contextKey);
-	}	
-	appendZScores(CSVData, inputDirs, contextZData, oss);
-	appendPValues(CSVData, inputDirs, contextPData, oss);
-	string2file(CSVData, outputPath);
+	int r, c;
+	CSVData += "\nHolmBonferroniScores\n";
+	CSVData += "H,P,HolmThreshold,Decision,Confidence Interval\n";
+	for(int entry=0;entry<hbPVector.size();entry++){
+		oss << hbPVector[entry].second;
+		CSVData += hbPVector[entry].first + "," + oss.str() + ",";
+		oss.clear();
+		oss.str("");
+		oss << hbValueVector[entry];
+		CSVData += oss.str();
+		oss.clear();
+		oss.str("");
+		if(hbPVector[entry].second <= hbValueVector[entry]){
+			CSVData += ",reject";
+		} else {
+			CSVData += ",stop";
+		}
+		// unpooled Wald interval
+		parseDashCouplingString(hbPVector[entry].first, r, c);
+		CSVData += "," + CIMatrix.at(r, c);
+		CSVData += "\n";
+	}
+	CSVData += "\n";
 }
 
-/**
- *	Exports the data for the general criteria to csv format.
- */
-template <typename T>
-void exportZGeneralMatrixToCSV(
-	vector<filesystem::path> &inputDirs,
-	const string& outputPath, 
-	vector<json> &summaryData,
-	vector<json> &binaryMetadata,
-	const string& contextKey,
-	Matrix<T>& contextZData, 
-	Matrix<T>& contextPData,
-	bool &recombine_only
-){
-	ostringstream oss;
-	oss << scientific << setprecision(3);
-	
-	string CSVData;
-	if(recombine_only){
-		appendConstructMappingOnly(CSVData, inputDirs, outputPath, summaryData, contextKey);
-	} else {
-		appendBinaryCharacteristicsGeneral(CSVData, inputDirs, outputPath, summaryData, binaryMetadata, contextKey);
-	}
-	appendZScores(CSVData, inputDirs, contextZData, oss);
-	appendPValues(CSVData, inputDirs, contextPData, oss);
-	string2file(CSVData, outputPath);
-}
