@@ -38,12 +38,12 @@ double twoProportionsUnpooledSE(double variance1, double n1, double variance2, d
 	);
 }
 
-void calcConfidenceInterval(double pi, double pj,int i, int j, double SE, Matrix<string> CIMatrix){
+void calcConfidenceInterval(double pi, double pj,int i, int j, double SE, Matrix<string> &CIMatrix){
 	ostringstream oss0, oss1;
 	oss0 << (pi - pj);
 	oss1 << 1.96 * SE;
-	CIMatrix.at(i, j) = oss0.str() + "±" + oss1.str();
-	CIMatrix.at(j, i) = "-" + oss0.str() + "±" + oss1.str();
+	CIMatrix.at(i, j) = oss0.str() + " +/- " + oss1.str();
+	CIMatrix.at(j, i) = "-" + oss0.str() + " +/- " + oss1.str();
 }
 
 
