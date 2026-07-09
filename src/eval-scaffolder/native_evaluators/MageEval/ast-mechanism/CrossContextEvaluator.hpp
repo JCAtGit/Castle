@@ -187,7 +187,7 @@ class CrossContextEvaluator{
 			markerFindingsResult["parity_cond_stmt_class"] = false;
 			markerFindingsResult["parity_cond_expr_types"] = false;
 			
-			markerFindingsResult["parity_dangling_stmt"] = false;
+//			markerFindingsResult["parity_dangling_stmt"] = false;
 			markerFindingsResult["parity_has_else"] = false;
 			return false;
 		}
@@ -228,7 +228,7 @@ class CrossContextEvaluator{
 			markerFindingsResult["parity_cond_expr_types"] = false;
 		}
 		
-		markerFindingsResult["parity_dangling_stmt"] = findingsOracle["properties"]["dangling_stmt"] == findingsDecom["properties"]["dangling_stmt"];
+//		markerFindingsResult["parity_dangling_stmt"] = findingsOracle["properties"]["dangling_stmt"] == findingsDecom["properties"]["dangling_stmt"];
 		markerFindingsResult["parity_has_else"] = findingsOracle["properties"]["has_else"] = findingsDecom["properties"]["has_else"];
 		
 		return false;

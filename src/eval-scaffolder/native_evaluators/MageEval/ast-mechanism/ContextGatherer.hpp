@@ -612,14 +612,14 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 		}
 		
 		// check for compound or dangling stmt status
-		(*findings)["properties"]["dangling_stmt"] = true;
-		auto thenStmt = cast_node->getThen();
-		if(thenStmt){
-			if(thenStmt->getStmtClass() == Stmt::CompoundStmtClass){
-				(*findings)["properties"]["dangling_stmt"] = false;
-				// maybe do more
-			}
-		}
+//		(*findings)["properties"]["dangling_stmt"] = true;
+//		auto thenStmt = cast_node->getThen();
+//		if(thenStmt){
+//			if(thenStmt->getStmtClass() == Stmt::CompoundStmtClass){
+//				(*findings)["properties"]["dangling_stmt"] = false;
+//				// maybe do more
+//			}
+//		}
 		
 		auto elseStmt = cast_node->getElse();
 		if(elseStmt){

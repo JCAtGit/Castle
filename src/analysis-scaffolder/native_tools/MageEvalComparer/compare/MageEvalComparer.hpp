@@ -28,12 +28,12 @@ class MageEvalComparer{
 		filesystem::path 						&outputPath;						// use outputPath as dir to retrieve previously existing aggregated data from.
 		const filesystem::path					buildScaffolderDir = "/home/user/Desktop/CCastle/CCastleData/BuildScaffolder/";
 		
-		unordered_map<string, Matrix<double>> 	constructZMatrixMap, 				// contains constructs - Z value evals related to the summaries.
+		unordered_map<string, Matrix<long double>> 	constructZMatrixMap, 				// contains constructs - Z value evals related to the summaries.
 											 	constructPMatrixMap;				// contains constructs - P value evals related to the summaries.
 												
 		unordered_map<string, Matrix<string>>	constructCIMatrixMap;				// contains constructs - confidence intervals related to the summaries.
 		
-		Matrix<double>							generalZMatrix,						// contains general    - Z value evals related to the summaries.
+		Matrix<long double>							generalZMatrix,						// contains general    - Z value evals related to the summaries.
 												generalPMatrix;						// contains general    - P value evals related to the summaries.
 		Matrix<string>							generalCIMatrix;					// contains general	   - confidence intervals related to the summaries.
 		const string 							summaryFilename = "summary.json",
@@ -105,8 +105,8 @@ class MageEvalComparer{
 			}
 		}
 		
-		void buildHolmBonferroniScores(Matrix<double> &PMatrix, vector<pair<string, long double>> &hbPVector, vector<long double> &hbValueVector){
-			double alphaConfidence = 0.05;
+		void buildHolmBonferroniScores(Matrix<long double> &PMatrix, vector<pair<string, long double>> &hbPVector, vector<long double> &hbValueVector){
+			long double alphaConfidence = 0.05;
 			for(int i=0;i<inputDirs.size();i++){
 				for(int j=i+1;j<inputDirs.size();j++){
 					if(PMatrix.at(i, j) != 0){
@@ -247,9 +247,9 @@ class MageEvalComparer{
 			
 			// recalc new probabilities
 			for(auto& [constructKey, constructData] :unifiedSummaryConstructs.items()){
-				if(constructData["viableComparisons"].get<double>() > 0 && !constructData["recoveryOfAttr"]["recovered_construct"].is_null()){
-					unifiedSummaryConstructs[constructKey]["P(X)"] = constructData["recoveryOfAttr"]["recovered_construct"].get<double>() / constructData["viableComparisons"].get<double>();
-					unifiedSummaryConstructs[constructKey]["VAR(X)"] = unifiedSummaryConstructs[constructKey]["P(X)"].get<double>() * ( 1 - unifiedSummaryConstructs[constructKey]["P(X)"].get<double>());
+				if(constructData["viableComparisons"].get<long double>() > 0 && !constructData["recoveryOfAttr"]["recovered_construct"].is_null()){
+					unifiedSummaryConstructs[constructKey]["P(X)"] = constructData["recoveryOfAttr"]["recovered_construct"].get<long double>() / constructData["viableComparisons"].get<long double>();
+					unifiedSummaryConstructs[constructKey]["VAR(X)"] = unifiedSummaryConstructs[constructKey]["P(X)"].get<long double>() * ( 1 - unifiedSummaryConstructs[constructKey]["P(X)"].get<long double>());
 				} else {
 					unifiedSummaryConstructs[constructKey]["P(X)"] = 0;
 					unifiedSummaryConstructs[constructKey]["VAR(X)"] = 0;
@@ -257,9 +257,9 @@ class MageEvalComparer{
 			}
 
 			// guard against some scenario's
-			if(unifiedSummaryMetadata["viableComparisons"].get<double>() > 0 && !unifiedSummaryMetadata["recoveredConstructsTotal"].is_null()){
-				unifiedSummaryMetadata["P(X)"] = unifiedSummaryMetadata["recoveredConstructsTotal"].get<double>() / unifiedSummaryMetadata["viableComparisons"].get<double>();
-				unifiedSummaryMetadata["VAR(X)"] = unifiedSummaryMetadata["P(X)"].get<double>() * (1 - unifiedSummaryMetadata["P(X)"].get<double>());
+			if(unifiedSummaryMetadata["viableComparisons"].get<long double>() > 0 && !unifiedSummaryMetadata["recoveredConstructsTotal"].is_null()){
+				unifiedSummaryMetadata["P(X)"] = unifiedSummaryMetadata["recoveredConstructsTotal"].get<long double>() / unifiedSummaryMetadata["viableComparisons"].get<long double>();
+				unifiedSummaryMetadata["VAR(X)"] = unifiedSummaryMetadata["P(X)"].get<long double>() * (1 - unifiedSummaryMetadata["P(X)"].get<long double>());
 			} else {
 				unifiedSummaryMetadata["P(X)"] = 0;
 				unifiedSummaryMetadata["VAR(X)"] = 0;
@@ -283,20 +283,20 @@ class MageEvalComparer{
 
 					// calculate success/failure condition
 					if(iConstructData.contains("viableComparisons") && jConstructData.contains("viableComparisons")){
-						double niOracle = iConstructData["viableComparisons"].get<double>();
-						double piOracle = iConstructData["P(X)"].get<double>();
+						auto niOracle = iConstructData["viableComparisons"].get<long double>();
+						auto piOracle = iConstructData["P(X)"].get<long double>();
 
-						double njOracle = jConstructData["viableComparisons"].get<double>();
-						double pjOracle = jConstructData["P(X)"].get<double>();
+						auto njOracle = jConstructData["viableComparisons"].get<long double>();
+						auto pjOracle = jConstructData["P(X)"].get<long double>();
 
 						if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
 							continue; // TODO: maybe use Fisher's Exact Test or other test? Samples invalid so we skip. P will be set to 0.
 						}
 
 						// De sample proportions zijn in dit geval hetzelfde als P(X), dus alleen pooled proportions uitrekenen.
-						double pooledProportion = twoProportionsPPooledProportion(
-							iConstructData["recoveryOfAttr"]["recovered_construct"].get<double>(), niOracle,
-							jConstructData["recoveryOfAttr"]["recovered_construct"].get<double>(), njOracle
+						auto pooledProportion = twoProportionsPPooledProportion(
+							iConstructData["recoveryOfAttr"]["recovered_construct"].get<long double>(), niOracle,
+							jConstructData["recoveryOfAttr"]["recovered_construct"].get<long double>(), njOracle
 						);
 
 						// calc Z statistic, for large disproportions between case 1 and 2 use unpooled (Wald) standard error instead of pooled?
@@ -307,20 +307,20 @@ class MageEvalComparer{
 						// If we assume null is true, then we would be encouraged to use the pooled standard error (SE)
 						// If we group the results by the same decompiler, we assume H0, that is the decompiler is the main determinant for found distribution.
 
-						double pooledSE = twoProportionsPooledSE(niOracle, njOracle, pooledProportion);
+						auto pooledSE = twoProportionsPooledSE(niOracle, njOracle, pooledProportion);
 					
-						double ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
-						double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
+						auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
+						auto pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
 						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
 //							cout << ZStat2Proportions << " - creating Z construct matrix \n";
-							constructZMatrixMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
+							constructZMatrixMap[constructKey] = Matrix<long double>(inputDirs.size(),inputDirs.size());
 						}
 						constructZMatrixMap[constructKey].at(i,j) = ZStat2Proportions;
 						constructZMatrixMap[constructKey].at(j,i) = ZStat2Proportions;
 						
 						if(constructPMatrixMap.find(constructKey) == constructPMatrixMap.end()){
 //							cout << PValue << " - creating P construct matrix \n";
-							constructPMatrixMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
+							constructPMatrixMap[constructKey] = Matrix<long double>(inputDirs.size(),inputDirs.size());
 						}
 						constructPMatrixMap[constructKey].at(i,j) = pValue;
 						constructPMatrixMap[constructKey].at(j,i) = pValue;
@@ -344,25 +344,25 @@ class MageEvalComparer{
 		void calcGeneralZTestPooledProportions(json& iData, json& jData, int i, int j){
 			cout << "calcGeneralZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
 
-			auto niOracle = iData["metadata"]["viableComparisons"].get<double>();
-			auto piOracle = iData["metadata"]["P(X)"].get<double>();
+			auto niOracle = iData["metadata"]["viableComparisons"].get<long double>();
+			auto piOracle = iData["metadata"]["P(X)"].get<long double>();
 
-			auto njOracle = jData["metadata"]["viableComparisons"].get<double>();
-			auto pjOracle = jData["metadata"]["P(X)"].get<double>();
+			auto njOracle = jData["metadata"]["viableComparisons"].get<long double>();
+			auto pjOracle = jData["metadata"]["P(X)"].get<long double>();
 			
 			if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
 				return;
 			}
 			
-			double pooledProportion = twoProportionsPPooledProportion(
-				iData["metadata"]["recoveredConstructsTotal"].get<double>(), niOracle, 
-				jData["metadata"]["recoveredConstructsTotal"].get<double>(), njOracle
+			auto pooledProportion = twoProportionsPPooledProportion(
+				iData["metadata"]["recoveredConstructsTotal"].get<long double>(), niOracle, 
+				jData["metadata"]["recoveredConstructsTotal"].get<long double>(), njOracle
 			);
 
-			double pooledSE = twoProportionsPooledSE(niOracle, njOracle, pooledProportion);
+			auto pooledSE = twoProportionsPooledSE(niOracle, njOracle, pooledProportion);
 
 			auto ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
-			double pValue =  erfc(abs(ZStat2Proportions) / sqrt(2.0));
+			auto pValue =  erfc(abs(ZStat2Proportions) / sqrt(2.0));
 
 			generalZMatrix.at(i,j) = ZStat2Proportions;
 			generalZMatrix.at(j,i) = ZStat2Proportions;
@@ -387,11 +387,11 @@ class MageEvalComparer{
 				if(jConstructs.contains(constructKey)){
 					auto jConstructData = jConstructs[constructKey];
 					if(iConstructData.contains("viableComparisons") && jConstructData.contains("viableComparisons")){
-						double niOracle = iConstructData["viableComparisons"].get<double>();
-						double piOracle = iConstructData["P(X)"].get<double>();
+						auto niOracle = iConstructData["viableComparisons"].get<long double>();
+						auto piOracle = iConstructData["P(X)"].get<long double>();
 
-						double njOracle = jConstructData["viableComparisons"].get<double>();
-						double pjOracle = jConstructData["P(X)"].get<double>();
+						auto njOracle = jConstructData["viableComparisons"].get<long double>();
+						auto pjOracle = jConstructData["P(X)"].get<long double>();
 
 						// success/failure condition expectation test for 3 sds, allows normal approximation to a binomial distribution
 						// ensure both are eligible for proportion test
@@ -408,24 +408,24 @@ class MageEvalComparer{
 						// If we assume null is true, then we would be encouraged to use the pooled standard error (SE)
 						// If we group the results by the same decompiler, we assume H0, that is the decompiler is the main determinant for found distribution.
 
-						double unpooledSE = twoProportionsUnpooledSE(
-							iData["metadata"]["VAR(X)"].get<double>(), niOracle, 
-							jData["metadata"]["VAR(X)"].get<double>(), njOracle
+						long double unpooledSE = twoProportionsUnpooledSE(
+							iData["metadata"]["VAR(X)"].get<long double>(), niOracle, 
+							jData["metadata"]["VAR(X)"].get<long double>(), njOracle
 						);
 							
 						auto ZStat2Proportions = (piOracle - pjOracle) / unpooledSE;
 					
-						double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
+						long double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
 						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
 //							cout << ZStat2Proportions << " - creating construct matrix \n";
-							constructZMatrixMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
+							constructZMatrixMap[constructKey] = Matrix<long double>(inputDirs.size(),inputDirs.size());
 						}
 						constructZMatrixMap[constructKey].at(i,j) = ZStat2Proportions;
 						constructZMatrixMap[constructKey].at(j,i) = ZStat2Proportions;
 						
 						if(constructPMatrixMap.find(constructKey) == constructPMatrixMap.end()){
 //							cout << PValue << " - creating construct matrix \n";
-							constructPMatrixMap[constructKey] = Matrix<double>(inputDirs.size(),inputDirs.size());
+							constructPMatrixMap[constructKey] = Matrix<long double>(inputDirs.size(),inputDirs.size());
 						}
 						constructPMatrixMap[constructKey].at(i,j) = pValue;
 						constructPMatrixMap[constructKey].at(j,i) = pValue;
@@ -449,24 +449,24 @@ class MageEvalComparer{
 		void calcGeneralZTestUnpooledProportions(json& iData, json& jData, int i, int j){
 			cout << "calcGeneralZTestProportions " << to_string(i) << "-" << to_string(j) << "\n";
 
-			auto niOracle = iData["metadata"]["viableComparisons"].get<double>();
-			auto piOracle = iData["metadata"]["P(X)"].get<double>();
+			auto niOracle = iData["metadata"]["viableComparisons"].get<long double>();
+			auto piOracle = iData["metadata"]["P(X)"].get<long double>();
 
-			auto njOracle = jData["metadata"]["viableComparisons"].get<double>();
-			auto pjOracle = jData["metadata"]["P(X)"].get<double>();
+			auto njOracle = jData["metadata"]["viableComparisons"].get<long double>();
+			auto pjOracle = jData["metadata"]["P(X)"].get<long double>();
 			
 			if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
 				return;
 			}
 			
-			double unpooledSE = twoProportionsUnpooledSE(
-				iData["metadata"]["VAR(X)"].get<double>(), niOracle, 
-				jData["metadata"]["VAR(X)"].get<double>(), njOracle
+			auto unpooledSE = twoProportionsUnpooledSE(
+				iData["metadata"]["VAR(X)"].get<long double>(), niOracle, 
+				jData["metadata"]["VAR(X)"].get<long double>(), njOracle
 			);
 				
 			auto ZStat2Proportions = (piOracle - pjOracle) / unpooledSE;
 			
-			double pValue =  erfc(abs(ZStat2Proportions) / sqrt(2.0));
+			auto pValue =  erfc(abs(ZStat2Proportions) / sqrt(2.0));
 
 			generalZMatrix.at(i,j) = ZStat2Proportions;
 			generalZMatrix.at(j,i) = ZStat2Proportions;

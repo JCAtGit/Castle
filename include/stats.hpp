@@ -17,7 +17,7 @@ using namespace std;
  *	success/failure condition expectation test for 3 sds, allows normal approximation to a binomial distribution
  * 	ensures both are eligible for proportion test
  */
-bool twoProportionsSampleRequirements(double n1, double p1, double n2, double p2){
+bool twoProportionsSampleRequirements(long double n1, long double p1, long double n2, long double p2){
 	return 	(n1 * p1 		< 10 || n1 * (1 - p1)	< 10) ||
 			(n2 * p2 		< 10 || n2 * (1 - p2) 	< 10);
 }
@@ -25,20 +25,20 @@ bool twoProportionsSampleRequirements(double n1, double p1, double n2, double p2
 /**
  *
  */
-double twoProportionsPPooledProportion(double recovered1, double n1, double recovered2, double n2){
+long double twoProportionsPPooledProportion(long double recovered1, long double n1, long double recovered2, long double n2){
 	return (recovered1 + recovered2) / (n1 + n2);
 }
 
 /**
  *
  */
-double twoProportionsUnpooledSE(double variance1, double n1, double variance2, double n2){
+long double twoProportionsUnpooledSE(long double variance1, long double n1, long double variance2, long double n2){
 	return sqrt(
 		(variance1/n1) + (variance2/n2)
 	);
 }
 
-void calcConfidenceInterval(double pi, double pj,int i, int j, double SE, Matrix<string> &CIMatrix){
+void calcConfidenceInterval(long double pi, long double pj, int i, int j, long double SE, Matrix<string> &CIMatrix){
 	ostringstream oss0, oss1;
 	oss0 << (pi - pj);
 	oss1 << 1.96 * SE;
@@ -56,7 +56,7 @@ void calcConfidenceInterval(double pi, double pj,int i, int j, double SE, Matrix
  *	@param	n2
  *	@param	pooledProportion
  */
-double twoProportionsPooledSE(double n1, double n2, double pooledProportion){
+long double twoProportionsPooledSE(long double n1, long double n2, long double pooledProportion){
 	return 	sqrt(
 		pooledProportion * 
 		(1 - pooledProportion) * 
