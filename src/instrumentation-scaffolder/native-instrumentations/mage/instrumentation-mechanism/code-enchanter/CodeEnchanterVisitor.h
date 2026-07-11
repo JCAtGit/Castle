@@ -3,6 +3,7 @@
 #include "nlohmann/json.hpp"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/AST/Stmt.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Lex/Lexer.h"
@@ -204,14 +205,15 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				if(S->getBeginLoc().isMacroID() || S->getBeginLoc().isInvalid()){return true;}
 				//-- End safety checks;
 				switch (S->getStmtClass()) {
-					case Stmt::IfStmtClass: 	processIfStmt(cast<IfStmt>(S)); 		break;
-					case Stmt::WhileStmtClass: 	processWhileStmt(cast<WhileStmt>(S)); 	break;
-					case Stmt::DeclStmtClass: 	processDeclStmt(cast<DeclStmt>(S)); 	break;
-					case Stmt::ForStmtClass: 	processForStmt(cast<ForStmt>(S)); 		break;
 					case Stmt::CallExprClass: 	processCallExpr(cast<CallExpr>(S)); 	break;
-					case Stmt::SwitchStmtClass: processSwitchStmt(cast<SwitchStmt>(S));break;
 					case Stmt::CaseStmtClass: 	processCaseStmt(cast<CaseStmt>(S)); 	break;
+					case Stmt::DeclStmtClass: 	processDeclStmt(cast<DeclStmt>(S)); 	break;
+//					case Stmt::DoStmtClass:		processDoStmt(cast<DoStmt>(S));			break;
+					case Stmt::ForStmtClass: 	processForStmt(cast<ForStmt>(S)); 		break;
 					case Stmt::GotoStmtClass: 	processGotoStmt(cast<GotoStmt>(S)); 	break;
+					case Stmt::IfStmtClass: 	processIfStmt(cast<IfStmt>(S)); 		break;
+					case Stmt::SwitchStmtClass: processSwitchStmt(cast<SwitchStmt>(S));break;
+					case Stmt::WhileStmtClass: 	processWhileStmt(cast<WhileStmt>(S)); 	break;
 					default: break;
 				}
 			}

@@ -89,7 +89,10 @@ class MageEvalAnalyst{
 		for(auto [markerID, evalData] : jsonData.items()){
 			for(const auto& evalElement: evalData){
 				auto &crrntItem = summary["constructs"][evalElement["markee_construct"]]["recoveryOfAttr"];
-				if (crrntItem.is_null()) {crrntItem = json::object();}
+				if (crrntItem.is_null()) {
+					crrntItem = json::object();
+					crrntItem["recoveryOfAttr"]["recovered_construct"] = 0;
+				}
 				if(evalElement["recovered_construct"].get<bool>()){
 					for(auto [key, val]: evalElement.items()){
 						if(key == "markee_construct"){continue;} 

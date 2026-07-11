@@ -153,7 +153,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 			if (parentStack.size() < 2) {return;}
 
 			(*selectedMarkerMap)[mageIndex] = CE;			
-		    Stmt *parent = parentStack[parentStack.size() - 2];  // immediate parent
+		    Stmt *parent = parentStack[parentStack.size() - 2];  // immediate parent, size-1 is the statement itself.
 		    (*selectedMarkerParentMap)[mageIndex] = parent;
 			auto siblings = getChildrenNodes(parent);
 			auto CESibIndex = findNodeSiblingIndex(siblings, DynTypedNode::create(*CE));

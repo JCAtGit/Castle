@@ -26,14 +26,17 @@ llvm::SmallVector<DynTypedNode, 16> getChildrenNodes(const Stmt *parent) {
 }
 
 optional<DynTypedNode> getNextSiblingFromList(
-    const llvm::SmallVectorImpl<DynTypedNode> &siblings, size_t idx) {
+    const llvm::SmallVectorImpl<DynTypedNode> &siblings, 
+	size_t idx
+) {
     if (idx + 1 < siblings.size())
         return siblings[idx + 1];
     return std::nullopt;
 }
 
 optional<DynTypedNode> getPrevSiblingFromList(
-    const llvm::SmallVectorImpl<DynTypedNode> &siblings, size_t idx) {
+    const llvm::SmallVectorImpl<DynTypedNode> &siblings, 
+	size_t idx) {
     if (idx > 0)
         return siblings[idx - 1];
     return std::nullopt;
