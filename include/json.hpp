@@ -15,13 +15,13 @@ using namespace std;
 void loadJSON(filesystem::path jsonFilePath, json& jsonRef){
 	ifstream jsonFile(jsonFilePath);
 	if (!jsonFile.is_open()) {
-	    	cerr << "Error: Could not open required marker formats file, see the source json folder for details." << endl;
+	    	cerr << "Error: Could not open json for " << jsonFilePath  << "\n";
 	   		return;
 	}
    	try {
 		jsonRef = json::parse(jsonFile);
    	} catch (const json::parse_error& e) {
-    	cerr << "loadJSON parse error: " << e.what() << endl;
+    	cerr << "loadJSON parse error: " << e.what() << "\n";
     	return;
   	}
 }
