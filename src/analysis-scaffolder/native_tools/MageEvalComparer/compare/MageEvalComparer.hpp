@@ -30,13 +30,15 @@ class MageEvalComparer{
 		const filesystem::path					buildScaffolderDir = "/home/user/Desktop/CCastle/CCastleData/BuildScaffolder/";
 		
 		unordered_map<string, Matrix<long double>> 	constructZMatrixMap, 			// contains constructs - Z value evals related to the summaries.
-											 	constructPMatrixMap;				// contains constructs - P value evals related to the summaries.
+											 		constructPMatrixMap;			// contains constructs - P value evals related to the summaries.
+		unordered_map<string, Matrix<bool>>     constructInclusionMatrixMap;										
 												
 		unordered_map<string, Matrix<string>>	constructCIMatrixMap;				// contains constructs - confidence intervals related to the summaries.
 		
 		Matrix<long double>						generalZMatrix,						// contains general    - Z value evals related to the summaries.
 												generalPMatrix;						// contains general    - P value evals related to the summaries.
 		Matrix<string>							generalCIMatrix;					// contains general	   - confidence intervals related to the summaries.
+		Matrix<bool>							generalInclusionMatrix;
 		const string 							summaryFilename = "summary.json",
 												binMetadataCmd 	= "rabin2 -j -I ";
 
@@ -53,7 +55,8 @@ class MageEvalComparer{
 	
 	generalZMatrix(inputDirs.size(), inputDirs.size()),
 	generalPMatrix(inputDirs.size(), inputDirs.size()),
-	generalCIMatrix(inputDirs.size(), inputDirs.size())
+	generalCIMatrix(inputDirs.size(), inputDirs.size()),
+	generalInclusionMatrix(inputDirs.size(), inputDirs.size())
 	{
 		sort(inputDirs.begin(),inputDirs.end());
 		loadSummaryData();
@@ -106,11 +109,18 @@ class MageEvalComparer{
 			}
 		}
 		
-		void buildHolmBonferroniScores(Matrix<long double> &PMatrix, vector<pair<string, long double>> &hbPVector, vector<long double> &hbValueVector){
+		void buildHolmBonferroniScores(
+			Matrix<long double> &PMatrix, 
+			vector<pair<string, long double>> &hbPVector, 
+			vector<long double> &hbValueVector, 
+			Matrix<bool> &inclMatrix
+		){
 			long double alphaConfidence = 0.05;
 			for(int i=0;i<inputDirs.size();i++){
 				for(int j=i+1;j<inputDirs.size();j++){
-					hbPVector.push_back({to_string(i) + "-" + to_string(j), PMatrix.at(i, j)});
+					if(inclMatrix.get(i, j)){
+						hbPVector.push_back({to_string(i) + "-" + to_string(j), PMatrix.at(i, j)});
+					}
 				}
 			}
 			sort(hbPVector.begin(), hbPVector.end(),[](const auto& a, const auto& b) {return a.second < b.second;});
@@ -142,7 +152,7 @@ class MageEvalComparer{
 				appendLabelRow(CSVData[contextKey], "Pooled");
 				appendZScores(CSVData[contextKey], inputDirs, contextZData, oss);
 				appendPValues(CSVData[contextKey], inputDirs, constructPMatrixMap[contextKey], oss);
-				buildHolmBonferroniScores(constructPMatrixMap[contextKey], hbPVector, hbValueVector);
+				buildHolmBonferroniScores(constructPMatrixMap[contextKey], hbPVector, hbValueVector, constructInclusionMatrixMap[contextKey]);
 				appendHolmBonferroniScores(CSVData[contextKey], inputDirs, hbPVector, hbValueVector, constructCIMatrixMap[contextKey], oss);
 				hbValueVector.clear();
 				hbPVector.clear();
@@ -156,7 +166,7 @@ class MageEvalComparer{
 			appendLabelRow(CSVData["General"], "Pooled");
 			appendZScores(CSVData["General"], inputDirs, generalZMatrix, oss);
 			appendPValues(CSVData["General"], inputDirs, generalPMatrix, oss);
-			buildHolmBonferroniScores(generalPMatrix, hbPVector, hbValueVector);
+			buildHolmBonferroniScores(generalPMatrix, hbPVector, hbValueVector, generalInclusionMatrix);
 			appendHolmBonferroniScores(CSVData["General"], inputDirs, hbPVector, hbValueVector,generalCIMatrix, oss);
 			hbValueVector.clear();
 			hbPVector.clear();
@@ -169,7 +179,7 @@ class MageEvalComparer{
 				appendLabelRow(CSVData[contextKey], "Unpooled");
 				appendZScores(CSVData[contextKey], inputDirs, contextZData, oss);
 				appendPValues(CSVData[contextKey], inputDirs, constructPMatrixMap[contextKey], oss);
-				buildHolmBonferroniScores(constructPMatrixMap[contextKey], hbPVector, hbValueVector);
+				buildHolmBonferroniScores(constructPMatrixMap[contextKey], hbPVector, hbValueVector, constructInclusionMatrixMap[contextKey]);
 				appendHolmBonferroniScores(CSVData[contextKey], inputDirs, hbPVector, hbValueVector, constructCIMatrixMap[contextKey], oss);
 				hbValueVector.clear();
 				hbPVector.clear();
@@ -178,7 +188,7 @@ class MageEvalComparer{
 			appendLabelRow(CSVData["General"], "Unpooled");
 			appendZScores(CSVData["General"], inputDirs, generalZMatrix, oss);
 			appendPValues(CSVData["General"], inputDirs, generalPMatrix, oss);
-			buildHolmBonferroniScores(generalPMatrix, hbPVector, hbValueVector);
+			buildHolmBonferroniScores(generalPMatrix, hbPVector, hbValueVector, generalInclusionMatrix);
 			appendHolmBonferroniScores(CSVData["General"], inputDirs, hbPVector, hbValueVector,generalCIMatrix, oss);
 			
 			// Save info to files
@@ -290,8 +300,14 @@ class MageEvalComparer{
 						long double njOracle = jConstructData["viableComparisons"].get<long double>();
 						long double pjOracle = jConstructData["P(X)"].get<long double>();
 
+						if(constructInclusionMatrixMap.find(constructKey) == constructInclusionMatrixMap.end()){
+							constructInclusionMatrixMap[constructKey] = Matrix<bool>(inputDirs.size(),inputDirs.size());
+						}
 						if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
+							constructInclusionMatrixMap[constructKey].set(i,j, false);
 							continue; // TODO: maybe use Fisher's Exact Test or other test? Samples invalid so we skip. P will be set to 0.
+						} else {
+							constructInclusionMatrixMap[constructKey].set(i,j, true);
 						}
 
 						// De sample proportions zijn in dit geval hetzelfde als P(X), dus alleen pooled proportions uitrekenen.
@@ -352,7 +368,10 @@ class MageEvalComparer{
 			long double pjOracle = jData["metadata"]["P(X)"].get<long double>();
 			
 			if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
+				generalInclusionMatrix.set(i,j, false);
 				return;
+			} else {
+				generalInclusionMatrix.set(i,j, true);
 			}
 			
 			long double pooledProportion = twoProportionsPPooledProportion(
@@ -397,8 +416,14 @@ class MageEvalComparer{
 						// success/failure condition expectation test for 3 sds, allows normal approximation to a binomial distribution
 						// ensure both are eligible for proportion test
 
+						if(constructInclusionMatrixMap.find(constructKey) == constructInclusionMatrixMap.end()){
+							constructInclusionMatrixMap[constructKey] = Matrix<bool>(inputDirs.size(),inputDirs.size());
+						}
 						if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
+							constructInclusionMatrixMap[constructKey].set(i,j, false);
 							continue; // TODO: maybe use Fisher's Exact Test or other test?
+						} else {
+							constructInclusionMatrixMap[constructKey].set(i,j, true);
 						}
 
 						// calc Z statistic, for large disproportions between case 1 and 2 use unpooled (Wald) standard error instead of pooled?
@@ -457,7 +482,10 @@ class MageEvalComparer{
 			long double pjOracle = jData["metadata"]["P(X)"].get<long double>();
 			
 			if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
+				generalInclusionMatrix.set(i,j, false);
 				return;
+			} else {
+				generalInclusionMatrix.set(i,j, true);
 			}
 			
 			long double unpooledSE = twoProportionsUnpooledSE(

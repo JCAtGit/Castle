@@ -6,7 +6,7 @@ using namespace std;
 
 
 /**
- *	Row * column matrix datastructure.
+ *	Row x column matrix datastructure.
  */
 template <typename T>
 class Matrix{
@@ -19,6 +19,16 @@ class Matrix{
 	Matrix(){}
 	Matrix(int rowSize, int colSize):rowSize(rowSize), colSize(colSize), matrixData(rowSize * colSize, T{}){}
 	
+	// for bools
+   	void set(size_t row, size_t col, const T& value) {
+       	matrixData[row * colSize + col] = value;
+   	}
+
+   	// for bools
+   	T get(size_t row, size_t col) const {
+    	return matrixData[row * colSize + col];
+   	}
+   
 	T& at(int row, int col) {
 		if (row < 0 || row >= rowSize || col < 0 || col >= colSize) throw std::out_of_range("Index out of bounds");
         return matrixData[row * colSize + col];
@@ -26,6 +36,7 @@ class Matrix{
 	
 	// Const access (read-only)
     const T& at(int row, int col) const {
+		if (row < 0 || row >= rowSize || col < 0 || col >= colSize) throw std::out_of_range("Index out of bounds");
         return matrixData[row * colSize + col];
     }
 
