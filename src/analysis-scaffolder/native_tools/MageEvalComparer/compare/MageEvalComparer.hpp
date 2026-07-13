@@ -110,9 +110,7 @@ class MageEvalComparer{
 			long double alphaConfidence = 0.05;
 			for(int i=0;i<inputDirs.size();i++){
 				for(int j=i+1;j<inputDirs.size();j++){
-					if(PMatrix.at(i, j) != 0){
-						hbPVector.push_back({to_string(i) + "-" + to_string(j), PMatrix.at(i, j)});
-					}
+					hbPVector.push_back({to_string(i) + "-" + to_string(j), PMatrix.at(i, j)});
 				}
 			}
 			sort(hbPVector.begin(), hbPVector.end(),[](const auto& a, const auto& b) {return a.second < b.second;});
