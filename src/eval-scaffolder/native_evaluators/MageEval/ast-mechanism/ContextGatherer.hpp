@@ -308,151 +308,62 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	// We kunnen altijd de generieke en callexpr metrieken opnemen, behalve als er geen markee is.
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
-		string calleeName; // callee is not always available
+		string name = getCalleeNameSafely(cast_node, *selectedAST); // callee is not always available
+
+		(*findings)["properties"]["name"] = name;
+		(*findings)["properties"]["has_callee"] = false;
+
+		if(name.find(markerFormat["name"].get<string>()) != string::npos){ // name contains marker substring, so markee is lost.
+   			(*findings)["properties"]["has_markee"] = false;
+			return false;
+   		} else {
+			(*findings)["properties"]["has_markee"] = true;
+		}
+
 		// als een marker wordt bekeken, pseudo of niet, dan is dit altijd een functiondecl in clang-ast
 		// afwezigheid van de functiondecl is dus een indicator voor de aanwezigheid van een legitieme markee, naast de naamcheck
 		auto ceDCCallee = cast_node->getDirectCallee();			
 		auto ceDRECallee= cast_node->getCallee()->IgnoreImpCasts();		// if direct callee is not available we try the DeclRefExpr for unknown templated code.
 
-		if(ceDCCallee){
-			calleeName = ceDCCallee->getNameInfo().getName().getAsString(); // callee is not always available
-
-			if(calleeName.find(markerFormat["name"].get<string>()) == string::npos){ // name contains marker substring, so markee is lost.
-				// generic metrics only, no markee
-				(*findings)["properties"]["has_markee"] = false;
-				(*findings)["properties"]["has_callee"] = false;
-
-				for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
-					recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
-				}
-				return false;
-			}
-			
+		if(ceDCCallee){			
 			// generic metrics
-			(*findings)["properties"]["has_markee"] = true;
 			(*findings)["properties"]["has_callee"] = true;
 			
 			// callee metrics
-			(*findings)["properties"]["callee_name"] = calleeName;
 			(*findings)["properties"]["is_variadic"] = ceDCCallee->isVariadic();
 			(*findings)["properties"]["num_params"] = ceDCCallee->getNumParams();
 			(*findings)["properties"]["params"] = json::array();
 			for (unsigned i = 0; i < ceDCCallee->getNumParams(); ++i) {
 				recordQTypeInfo(ceDCCallee->getParamDecl(i)->getType(), (*findings)["properties"]["param_types"]);
 	        }
-			
-			// callexpr metrics
-			(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
-			(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
-			
-			(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
-			(*findings)["properties"]["args"] = json::array();
 
-			for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
-				recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
-			}
-			return false;
 		} else if(ceDRECallee){
 //			cout << "Handled extra cases: "<< ceDRECallee->getStmtClassName() << "\n";
 			if (const auto *declRef = llvm::dyn_cast<clang::DeclRefExpr>(ceDRECallee)) {
-			   	calleeName = declRef->getNameInfo().getAsString();
-				
-			   	if(calleeName.find(markerFormat["name"].get<string>()) == string::npos){ // name contains marker substring, so markee is lost.
-					// generic metrics only
-		   			(*findings)["properties"]["has_markee"] = false;
-		   			(*findings)["properties"]["has_callee"] = false;
-					
-					return false;
-		   		} 	
-				
 				if(const auto *funcDecl = llvm::dyn_cast_or_null<clang::FunctionDecl>(declRef->getDecl())){
-//					cout << "FunctionDecl \n";
-					
 					// generic metrics
-					(*findings)["properties"]["has_markee"] = true;
 					(*findings)["properties"]["has_callee"] = true;
 					
 					// callee metrics
-					(*findings)["properties"]["callee_name"] = calleeName;
 					(*findings)["properties"]["is_variadic"] = funcDecl->isVariadic();
 					(*findings)["properties"]["num_params"] = funcDecl->getNumParams();
 					(*findings)["properties"]["params"] = json::array();
 					for (unsigned i = 0; i < funcDecl->getNumParams(); ++i) {
 						recordQTypeInfo(funcDecl->getParamDecl(i)->getType(), (*findings)["properties"]["param_types"]);
 					}
-
-					// callexpr metrics
-					(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
-					(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
-
-					(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
-					(*findings)["properties"]["args"] = json::array();
-
-					for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
-						recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
-					}
-					return false;
-				} else {
-					// Er kan dus geen naam verificatie van marker aanwezigheid plaatsvinden, maar er is geen functiondecl.
-					// Dus leiden we af dat er een markee is, we mogen dus minimaal de callexpr details naast de generieke opnemen
-					
-//					cout << "Some unknown decl: " << declRef->getDecl()->getDeclKindName() << "\n";
-					// generic metrics, for unknown cases we set callee to false for now.
-					(*findings)["properties"]["has_markee"] = true;
-					(*findings)["properties"]["has_callee"] = false;
-					
-					// callexpr metrics
-					(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
-					(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
-
-					(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
-					(*findings)["properties"]["args"] = json::array();
-
-					for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
-						recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
-					}
-					return false;
-				}
+				} 
 			} 
-			else {
-				// Er kan dus geen naam verificatie van marker aanwezigheid plaatsvinden, maar er is geen functiondecl 
-				// (!= Expr (STMT), decls and stmt worden als aparte hierarchieen gezien).
-				// Dus leiden we af dat er een markee is, we mogen dus minimaal de callexpr details naast de generieke opnemen
-				
-				// TODO: MemberExpr, ParenExpr and maybe others?
-				// unknown/unhandled callee stmt, handle as missing callee for now. We cannot verify presence of markee using this case.
-				// No direct callee or DeclRefExpr, report to dev?
-//				cout << "No DC or DRE \n";
-				
-				// generic metrics only
-				(*findings)["properties"]["has_markee"] = false;
-				(*findings)["properties"]["has_callee"] = false;
-				
-				// callexpr metrics
-				(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
-				(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
+		} 
+		
+		// callexpr metrics
+		(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
+		(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
 
-				(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
-				(*findings)["properties"]["args"] = json::array();
-				return false;
-
-			}
-		} else { 
-			// Er kan dus geen naam verificatie van marker aanwezigheid plaatsvinden, maar er is geen functiondecl 
-			// Dus leiden we af dat er een markee is, we mogen dus minimaal de callexpr details naast de generieke opnemen
-			
-			// generic metrics only
-			(*findings)["properties"]["has_markee"] = false;
-			(*findings)["properties"]["has_callee"] = false;
-			
-			// callexpr metrics
-			(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
-			(*findings)["properties"]["has_side_effects"] = cast_node->HasSideEffects(*selectedAST);
-
-			(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
-			(*findings)["properties"]["args"] = json::array();
-			return false;
+		(*findings)["properties"]["num_args"] = cast_node->getNumArgs();
+		for (unsigned i = 0; i < cast_node->getNumArgs(); ++i) {
+			recordQTypeInfo(cast_node->getArg(i)->getType(), (*findings)["properties"]["arg_types"]);
 		}
+		return false;
 	}
 
 	bool forStmtRecorder(Stmt *node, json *findings){
@@ -611,16 +522,8 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 			// report to diagnostics, shouldnt happen for C code.
 		}
 		
-		// check for compound or dangling stmt status
-//		(*findings)["properties"]["dangling_stmt"] = true;
-//		auto thenStmt = cast_node->getThen();
-//		if(thenStmt){
-//			if(thenStmt->getStmtClass() == Stmt::CompoundStmtClass){
-//				(*findings)["properties"]["dangling_stmt"] = false;
-//				// maybe do more
-//			}
-//		}
-		
+		// TODO: check for compound or dangling stmt status
+
 		auto elseStmt = cast_node->getElse();
 		if(elseStmt){
 			(*findings)["properties"]["has_else"] = true;

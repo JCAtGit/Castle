@@ -131,6 +131,7 @@ class MageEvalComparer{
 		}
 		
 		void startAggregationAndExport(bool &recombine_only){
+			cout << "startAggregationAndExport \n";
 			createUnifiedSummary();
 			saveJsonToFile(outputPath.string() + summaryFilename, unifiedSummary);
 			ostringstream oss;
@@ -139,7 +140,6 @@ class MageEvalComparer{
 			vector<pair<string, long double>> hbPVector;
 			vector<long double> hbValueVector;
 			
-			cout << "Start exports \n";
 			buildZPooledSummaries();
 			// Append pooled text information
 			for(auto& [contextKey, contextZData] : constructZMatrixMap){
@@ -305,7 +305,7 @@ class MageEvalComparer{
 						}
 						if(twoProportionsSampleRequirements(niOracle, piOracle, njOracle, pjOracle)){
 							constructInclusionMatrixMap[constructKey].set(i,j, false);
-							continue; // TODO: maybe use Fisher's Exact Test or other test? Samples invalid so we skip. P will be set to 0.
+							continue; // TODO: maybe use Fisher's Exact Test or other test? Samples invalid so we skip. P keep initial 0's.
 						} else {
 							constructInclusionMatrixMap[constructKey].set(i,j, true);
 						}

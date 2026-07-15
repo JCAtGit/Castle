@@ -4,6 +4,14 @@
 #include "clang/AST/ParentMapContext.h"
 #include "nlohmann/json.hpp"
 
+#include "clang/AST/ExprCXX.h"
+#include "clang/AST/DeclTemplate.h"
+#include "llvm/Support/raw_ostream.h"
+#include <iostream>
+#include "clang/AST/Expr.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Lex/Lexer.h"
+
 using namespace clang;
 using namespace std;
 using namespace nlohmann;
@@ -65,3 +73,55 @@ void recordQTypeInfo(const QualType& T, json& storage){
 	);	
 }
 
+string getCalleeNameSafely(const CallExpr *CE, const ASTContext &Ctx) {
+    if (!CE) return "";
+
+    // Direct resolved callee
+    if (const FunctionDecl *FD = CE->getDirectCallee()) {
+        return FD->getDeclName().getAsString();
+    }
+
+    const Expr *Callee = CE->getCallee()->IgnoreParenImpCasts();
+
+    // Dependent member access
+    if (const CXXDependentScopeMemberExpr *DSME =
+            dyn_cast<CXXDependentScopeMemberExpr>(Callee)) {
+        return DSME->getMemberNameInfo().getAsString();
+    }
+
+    // Unresolved member access
+    if (const UnresolvedMemberExpr *UME = dyn_cast<UnresolvedMemberExpr>(Callee)) {
+        return UME->getMemberNameInfo().getAsString();
+    }
+
+    // Unqualified dependent call
+    if (const UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(Callee)) {
+        return ULE->getName().getAsString();
+    }
+
+    // Qualified dependent call
+    if (const DependentScopeDeclRefExpr *DSDRE =
+            dyn_cast<DependentScopeDeclRefExpr>(Callee)) {
+        return DSDRE->getDeclName().getAsString();
+    }
+
+    // Resolved DeclRefExpr (function pointer, etc.)
+    if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Callee)) {
+        return DRE->getDecl()->getDeclName().getAsString();
+    }
+
+    // Resolved MemberExpr
+    if (const MemberExpr *ME = dyn_cast<MemberExpr>(Callee)) {
+        return ME->getMemberDecl()->getDeclName().getAsString();
+    }
+
+    // Overloaded operator
+    if (const CXXOperatorCallExpr *OCE = dyn_cast<CXXOperatorCallExpr>(CE)) {
+        return getOperatorSpelling(OCE->getOperator());
+    }
+
+    // Fallback
+//	SourceRange Range = CE->getSourceRange();
+//	StringRef Text = Lexer::getSourceText(CharSourceRange::getTokenRange(Range), Ctx.getSourceManager(), Ctx.getLangOpts());
+    return "unknown name";
+}

@@ -117,30 +117,27 @@ class CrossContextEvaluator{
 			markerFindingsResult["parity_param_types"] = false;
 			markerFindingsResult["parity_args_count"] = false;
 			markerFindingsResult["parity_arg_types"] = false;
-			markerFindingsResult["parity_variadicity"] = false;
+			markerFindingsResult["parity_variadic"] = false;
 			markerFindingsResult["parity_side_effects"] = false;
 			markerFindingsResult["parity_has_callee"] = false;
 			return false;
 		}
 		
-		if(findingsDecom["properties"]["has_callee"]){
-			markerFindingsResult["name_preserved"] = (findingsOracle["properties"]["callee_name"] == findingsDecom["properties"]["callee_name"]);
-			markerFindingsResult["parity_variadicity"] = (findingsOracle["properties"]["is_variadic"] == findingsDecom["properties"]["is_variadic"]);
+		if(findingsDecom["properties"]["has_callee"] && findingsOracle["properties"]["has_callee"]){
+			markerFindingsResult["parity_variadic"] = (findingsOracle["properties"]["is_variadic"] == findingsDecom["properties"]["is_variadic"]);
 			markerFindingsResult["parity_params_count"] = (findingsOracle["properties"]["num_params"] == findingsDecom["properties"]["num_params"]);
 			sort(findingsOracle["properties"]["param_types"].begin(),findingsOracle["properties"]["param_types"].end());
 			sort(findingsDecom["properties"]["param_types"].begin(),findingsDecom["properties"]["param_types"].end());
 			markerFindingsResult["parity_param_types"] = findingsOracle["properties"]["param_types"] == findingsDecom["properties"]["param_types"];
 			markerFindingsResult["parity_has_callee"] = findingsOracle["properties"]["has_callee"] == findingsDecom["properties"]["has_callee"];
-
 		} else {
-			markerFindingsResult["name_preserved"] = false;
-			markerFindingsResult["parity_variadicity"] = false;
+			markerFindingsResult["parity_variadic"] = false;
 			markerFindingsResult["parity_params_count"] = false;
 			markerFindingsResult["parity_param_types"] = false;
 			markerFindingsResult["parity_has_callee"] = false;
-
 		}
 		
+		markerFindingsResult["name_preserved"] = (findingsOracle["properties"]["name"] == findingsDecom["properties"]["name"]);
 		markerFindingsResult["parity_args_count"] = (findingsOracle["properties"]["num_args"] == findingsDecom["properties"]["num_args"]);
 		sort(findingsOracle["properties"]["arg_types"].begin(),findingsOracle["properties"]["arg_types"].end());
 		sort(findingsDecom["properties"]["arg_types"].begin(),findingsDecom["properties"]["arg_types"].end());
