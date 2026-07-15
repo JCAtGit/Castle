@@ -118,3 +118,15 @@ string getCallExprName(const CallExpr *CE, const ASTContext &Ctx) {
 //	StringRef Text = Lexer::getSourceText(CharSourceRange::getTokenRange(Range), Ctx.getSourceManager(), Ctx.getLangOpts());
     return "unknown name";
 }
+
+bool usesEqualsInitializer(const DeclStmt *DS) {
+    for (const Decl *D : DS->decls()) {
+        if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+            // Check if it has an initializer and that initializer uses '='.
+            if (VD->hasInit() && VD->getInitStyle() == VarDecl::CInit) {
+                return true;
+            }
+        }
+    }
+    return false;
+}

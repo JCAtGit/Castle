@@ -250,6 +250,8 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 		auto cast_node = llvm::cast<DeclStmt>(node);
 		(*findings)["properties"]["has_markee"] = true;
 		(*findings)["properties"]["single_decl"] = cast_node->isSingleDecl();
+		(*findings)["properties"]["has_=_init"] = usesEqualsInitializer(cast_node);
+		
 		auto decls = cast_node->decls();
 		for(auto uncast_decl: decls){
 //			(*findings)["properties"]["decl_types"].push_back(uncast_decl->getKind());

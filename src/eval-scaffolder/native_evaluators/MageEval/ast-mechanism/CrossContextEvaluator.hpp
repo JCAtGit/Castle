@@ -13,9 +13,7 @@ using namespace std;
 
 /**
  *	
- *	Assumes oracle to be free of major errors and to be compilable.
- * 	TODO:
- *		Expand to measuring decls using "decl markers"? Consequently symantically refactor current "general markers" to "stmt markers"
+ *	Assumes oracle to be free of major errors and to be compilable (but will work with pseudocode oracles)
  */
 
 class CrossContextEvaluator{
@@ -162,7 +160,7 @@ class CrossContextEvaluator{
 			markerFindingsResult["parity_init_types"] = findingsOracle["properties"]["init_types"] == findingsDecom["properties"]["init_types"];
 		}
 		
-		if(findingsDecom["ASTNode"].get<string>() == "BinaryOperator"){
+		if(findingsDecom["ASTNode"].get<string>() == "BinaryOperator" && findingsDecom["properties"]["operator"] == "=" && findingsOracle["properties"]["has_=_init"]){
 			markerFindingsResult["recovered_alt_construct"] = true;
 		} else {
 			markerFindingsResult["recovered_alt_construct"] = false;
