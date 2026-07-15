@@ -308,7 +308,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	// We kunnen altijd de generieke en callexpr metrieken opnemen, behalve als er geen markee is.
 	bool callExprRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<CallExpr>(node);
-		string name = getCalleeNameSafely(cast_node, *selectedAST); // callee is not always available
+		string name = getCallExprName(cast_node, *selectedAST); // callee is not always available
 
 		(*findings)["properties"]["name"] = name;
 		(*findings)["properties"]["has_callee"] = false;

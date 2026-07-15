@@ -3,14 +3,7 @@
 
 #include "clang/AST/ParentMapContext.h"
 #include "nlohmann/json.hpp"
-
 #include "clang/AST/ExprCXX.h"
-#include "clang/AST/DeclTemplate.h"
-#include "llvm/Support/raw_ostream.h"
-#include <iostream>
-#include "clang/AST/Expr.h"
-#include "clang/Basic/SourceManager.h"
-#include "clang/Lex/Lexer.h"
 
 using namespace clang;
 using namespace std;
@@ -73,7 +66,7 @@ void recordQTypeInfo(const QualType& T, json& storage){
 	);	
 }
 
-string getCalleeNameSafely(const CallExpr *CE, const ASTContext &Ctx) {
+string getCallExprName(const CallExpr *CE, const ASTContext &Ctx) {
     if (!CE) return "";
 
     // Direct resolved callee
