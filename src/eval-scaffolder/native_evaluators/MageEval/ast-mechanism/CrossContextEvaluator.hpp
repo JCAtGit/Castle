@@ -149,6 +149,12 @@ class CrossContextEvaluator{
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 		
+		if(findingsDecom["ASTNode"].get<string>() == "BinaryOperator" && findingsDecom["properties"]["operator"] == "=" && findingsOracle["properties"]["has_=_init"]){
+			markerFindingsResult["recovered_alt_construct"] = true;
+		} else {
+			markerFindingsResult["recovered_alt_construct"] = false;
+		}
+		
 		if(!markerFindingsResult["recovered_construct"]){
 			markerFindingsResult["parity_single_decl"] = false;
 			markerFindingsResult["parity_init_types"] = false;
@@ -158,12 +164,6 @@ class CrossContextEvaluator{
 			sort(findingsOracle["properties"]["init_types"].begin(), findingsOracle["properties"]["init_types"].end());
 			sort(findingsDecom["properties"]["init_types"].begin(), findingsDecom["properties"]["init_types"].end());
 			markerFindingsResult["parity_init_types"] = findingsOracle["properties"]["init_types"] == findingsDecom["properties"]["init_types"];
-		}
-		
-		if(findingsDecom["ASTNode"].get<string>() == "BinaryOperator" && findingsDecom["properties"]["operator"] == "=" && findingsOracle["properties"]["has_=_init"]){
-			markerFindingsResult["recovered_alt_construct"] = true;
-		} else {
-			markerFindingsResult["recovered_alt_construct"] = false;
 		}
 		
 		return false;

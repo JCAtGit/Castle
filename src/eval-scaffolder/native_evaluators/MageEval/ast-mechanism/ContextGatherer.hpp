@@ -1,8 +1,6 @@
 
-#include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
-#include <unordered_map>
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Basic/SourceManager.h"
@@ -14,6 +12,8 @@ using namespace std;
 
 /**
  *	A Class that is responsible for gathering findings per context independently and storing these in a shared object.
+ *	TODO: 
+ *		- Record findings explicitly to dev files.
  */
 class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	private:
@@ -23,16 +23,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	ASTContext 							*oracleAST, *decomAST;
 	SourceManager 						*oracleSM, 	*decomSM;
 	
-	unordered_map<int64_t, CallExpr*> 	decomMarkerMap,
-										oracleMarkerMap;
-	
 	vector<Stmt*> 						parentStack;
-	
-	unordered_map<int64_t, Stmt*> 		decomMarkerParentMap,
-										oracleMarkerParentMap;
-
-	unordered_map<int64_t, CallExpr*>	*selectedMarkerMap;
-	unordered_map<int64_t, Stmt*>		*selectedMarkerParentMap;
 	
 	ASTContext							*selectedAST;
 	SourceManager						*selectedSM;
@@ -99,15 +90,11 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 			case 0:
 			selectedAST = decomAST;
 			selectedSM = decomSM;
-			selectedMarkerMap = &decomMarkerMap;
-			selectedMarkerParentMap = &decomMarkerParentMap;
 			selectedContextString = "decom";
 			break;
 			case 1:
 			selectedAST = oracleAST;
 			selectedSM = oracleSM;
-			selectedMarkerMap = &oracleMarkerMap;
-			selectedMarkerParentMap = &oracleMarkerParentMap;
 			selectedContextString = "oracle";
 			break;			
 			default:
@@ -152,9 +139,9 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 			if(mageIndex == -1){return;}
 			if (parentStack.size() < 2) {return;}
 
-			(*selectedMarkerMap)[mageIndex] = CE;			
+//			(*selectedMarkerMap)[mageIndex] = CE;			
 		    Stmt *parent = parentStack[parentStack.size() - 2];  // immediate parent, size-1 is the statement itself.
-		    (*selectedMarkerParentMap)[mageIndex] = parent;
+//		    (*selectedMarkerParentMap)[mageIndex] = parent;
 			auto siblings = getChildrenNodes(parent);
 			auto CESibIndex = findNodeSiblingIndex(siblings, DynTypedNode::create(*CE));
 			auto CEMarkee = getNextSiblingFromList(siblings, CESibIndex);
@@ -176,17 +163,6 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 				// TODO: report to dev if not already accounted for
 			}
 		}
-	}
-	
-	/**
-	 *	Announces the found mappings of Oracle and Decom contexts. 
-	 *	TODO: 
-	 *		- Record findings explicitly to dev files.
-	 *		  So far the findings have produced some interesting results, where large discrepancies have appeared.
-	 */
-	void announceFindings(){
-		cout << "OracleMap:" << oracleMarkerMap.size() << " - DecomMap:" << decomMarkerMap.size() << "\n"; 
-		cout << "OracleParentMap:" << oracleMarkerParentMap.size() << " - DecomParentMap:" << decomMarkerParentMap.size() << "\n"; 
 	}
 	
 	/**

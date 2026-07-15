@@ -1,7 +1,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <unordered_map>
 #include "paths.hpp"
 #include "../ast-mechanism/ContextGatherer.hpp"
 
@@ -59,14 +58,13 @@ class CmdTasker{
 		void processDir(){
 			cout<< "processDir" << "\n";
 			string mapKey;
+			string fileOracleData;
+			string fileDecomData;
 			ContextGatherer CAGatherer(
 				selectedFormat,
 				findings, 
 				nameEncodedMarkers
 			);
-			string fileOracleData;
-			string fileDecomData;
-			
 			CAGatherer.selectMode(1);
 			for(auto entry :filesystem::recursive_directory_iterator(oracleDir)){ // voor elke apart een save to findings, etc maken.
 				if(entry.path().extension() == ".c"){ // We nemen aan dat oracle sources altijd C extensie gebruikt.
@@ -93,7 +91,6 @@ class CmdTasker{
 					CAGatherer.setDecomContext(&astDecomUnit->getASTContext());
 					CAGatherer.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());				
 
-					CAGatherer.announceFindings();
 					cout << "Starting eval: " << entry.path().string() <<"\n";
 					CrossContextEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
 					
@@ -137,7 +134,6 @@ class CmdTasker{
 			CAGatherer.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
 			CAGatherer.selectMode(1);
 			CAGatherer.TraverseDecl(astOracleUnit->getASTContext().getTranslationUnitDecl());
-			CAGatherer.announceFindings();
 			
 			cout << "Starting eval" << "\n";
 			CrossContextEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
@@ -189,7 +185,6 @@ class CmdTasker{
 			auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, mapKey);
 			CAGatherer.setDecomContext(&astDecomUnit->getASTContext());
 			CAGatherer.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());
-			CAGatherer.announceFindings();
 			
 			cout << "Starting eval" << "\n";
 			CrossContextEvaluator CAEvaluator(findings, findings_eval, dev, outputPath);
