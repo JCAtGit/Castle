@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include "../../../../../include/paths.hpp"
+#include "paths.hpp"
 
 #include "json.hpp"
 #include "../analysis/MageEvalAnalyst.hpp"

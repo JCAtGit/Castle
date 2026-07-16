@@ -1,22 +1,15 @@
 #pragma once
 #include "nlohmann/json.hpp"
 #include <string>
-
 #include "paths.hpp"
 #include "matrix.hpp"
 #include "stats.hpp"
+#include <charconv>
+#include <string_view>
+#include "binaryFingerPrinter.hpp"
 
 using namespace nlohmann;
 using namespace std;
-
-// Keys to determine which binary metadata to pull from radare2 output.
-const vector<string> radare2Keys = {
-	"arch",  "bits", "bintype", "class", "compiler", "endian", "lang", "machine", "os"
-};
-
-
-#include <charconv>
-#include <string_view>
 
 bool parseDashCouplingString(std::string_view sv, int &a, int &b) {
     const char* start = sv.data();
@@ -99,36 +92,14 @@ void appendBinaryCharacteristicsConstructs(
 	vector<json> &binaryMetadata,
 	const string& contextKey
 ){
-	// Display general characteristics
-	CSVData = "EntryMapping," + contextKey + ",viableComparisons";
-
-	for(auto key : radare2Keys){
-		CSVData += "," + key;
-	}
-	CSVData += "\n";
-
-	for(int i = 0; i<inputDirs.size();i++){
-		int vcCount = 0;
-		if(summaryData[i]["constructs"].contains(contextKey)){
-			vcCount = summaryData[i]["constructs"][contextKey]["viableComparisons"].get<int>();
-		}
-		CSVData += 
-			to_string(i) 																			+ "," + 
-			get_leaf_string(inputDirs[i].string()) 												+ "," +
-			to_string(vcCount);
-		
-		for(auto key : radare2Keys){
-			if(binaryMetadata[i][key].is_string()){
-				CSVData	+= "," + binaryMetadata[i][key].get<string>();	
-			} else if(binaryMetadata[i][key].is_number_integer()){
-				CSVData	+= "," + to_string(binaryMetadata[i][key].get<int>());
-			} else {
-				CSVData	+= ", ";
-			}
-		}	
-		CSVData += "\n";	
-	}
-	CSVData += "\n";
+	appendRadareBinaryCharacteristicsConstructs(
+	CSVData, 
+	inputDirs,
+	outputPath, 
+	summaryData,
+	binaryMetadata,
+	contextKey
+	);
 }
 
 /**
@@ -148,31 +119,14 @@ void appendBinaryCharacteristicsGeneral(
 	vector<json> &binaryMetadata,
 	const string &contextKey
 ){
-	CSVData = "EntryMapping," + contextKey + ",viableComparisons";
-	for(auto key : radare2Keys){
-		CSVData += "," + key;
-	}
-	CSVData += "\n";
-	
-	for(int i = 0; i<inputDirs.size();i++){
-		int vcCount = summaryData[i]["metadata"]["viableComparisons"].get<int>();
-		CSVData += 
-			to_string(i) 								+ "," + 
-			get_leaf_string(inputDirs[i].string()) 	+ "," +
-			to_string(vcCount);
-			
-			for(auto key : radare2Keys){
-			if(binaryMetadata[i][key].is_string()){
-				CSVData	+= "," + binaryMetadata[i][key].get<string>();	
-			} else if(binaryMetadata[i][key].is_number_integer()){
-				CSVData	+= "," + to_string(binaryMetadata[i][key].get<int>());
-			} else {
-				CSVData	+= ", ";
-			}
-		}	
-		CSVData += "\n";	
-	}
-	CSVData += "\n";
+	appendRadareBinaryCharacteristicsGeneral(
+		CSVData, 
+		inputDirs,
+		outputPath, 
+		summaryData,
+		binaryMetadata,
+		contextKey
+	);
 }
 
 /**

@@ -2,6 +2,9 @@
 #include <CLI/CLI.hpp>
 #include "CmdTasker.hpp"
 
+
+// TODO: imprint specific build data into binaries
+
 int main(int argc, char **argv) {
 	CLI::App app{"BuildScaffolder"};
 	

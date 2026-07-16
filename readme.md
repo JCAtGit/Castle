@@ -14,7 +14,11 @@ The setup consists for the following requirements:
 ```
 Fedora WS 43:
 sudo dnf install llvm-devel clang-devel mingw64-gcc-c++ mingw32-gcc-c++ automake ninja cmake make boost-devel radare2
+
+Detect It Easy - DIE with make install.
+https://github.com/horsicq/Detect-It-Easy/blob/master/docs/BUILD.md
 ```
+
 
 #### 2. Build from source
 

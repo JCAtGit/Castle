@@ -50,3 +50,18 @@ void incrementJSONEntry(json& entry){
 		entry = entry.get<int>() + 1;
 	}
 }
+
+/**
+ *	Method used to extract diec output and ignore warning/errors.
+ */
+string extractDiecJsonOnly(const std::string& input) {
+    size_t first = input.find('{');
+    size_t last = input.rfind('}');
+    
+    if (first == std::string::npos || last == std::string::npos || last < first) {
+        return "";  // No valid { ... } range
+    }
+    
+    // Extract from first '{' to last '}' inclusive
+    return input.substr(first, last - first + 1);
+}

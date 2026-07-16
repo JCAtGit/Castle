@@ -1,8 +1,9 @@
-#include <boost/math/distributions/binomial.hpp>
 #include <iostream>
-#include <unordered_map>
+#include <string>
 #include "nlohmann/json.hpp"
 #include "json.hpp"
+#include "findings.hpp"
+#include "eval.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -91,7 +92,7 @@ class MageEvalAnalyst{
 				auto &crrntItem = summary["constructs"][evalElement["markee_construct"]]["recoveryOfAttr"];
 				if (crrntItem.is_null()) {
 					crrntItem = json::object();
-					crrntItem["recoveryOfAttr"]["recovered_construct"] = 0;
+					crrntItem["recovered_construct"] = 0;
 				}
 				if(evalElement["recovered_construct"].get<bool>()){
 					for(auto [key, val]: evalElement.items()){
@@ -100,15 +101,16 @@ class MageEvalAnalyst{
 						if(val.get<bool>()){incrementJSONEntry(crrntItem[key]);}
 					}
 					incrementJSONEntry(summary["metadata"]["recoveredConstructsTotal"]);
-
 				} else {
 					// Unsuccessful recovery is labeled as deterioration, i.e. recovered_construct == false.
+					// Recording deterioration stats, skipping the name.
 					for(auto [key, val]: evalElement.items()){
 						if(key == "markee_construct"){continue;} 
 						if (crrntItem[key].is_null()){crrntItem[key] = 0;}
 					}
 					incrementJSONEntry(summary["metadata"]["deterioratedConstructsTotal"]);
 				}
+				statisticizeEvalSpecifics(evalElement["markee_construct"].get<string>(), evalElement, summary);
 			}
 		}
 	}
@@ -119,37 +121,6 @@ class MageEvalAnalyst{
 	 *	@param	summary		Object for recording/querying results
 	 */
 	void statisticizeDevReports(json& jsonData, json& summary){}
-	
-	/**
-	 *	Map for quick selection of stochastic stmt-processor based on the AST-string.
-	 */
-	using StochasticPassFnPtr = void(MageEvalAnalyst::*)(json &);
-	unordered_map<string, StochasticPassFnPtr> spFnSelector = {
-//		{"CallExpr", 		&MageEvalAnalyst::stochasticizeCallExpr},
-		{"DeclStmt", 		&MageEvalAnalyst::stochasticizeDeclStmt},
-//		{"IfStmt", 			&MageEvalAnalyst::stochasticizeIfStmt},
-//		{"ForStmt", 		&MageEvalAnalyst::stochasticizeForStmt},
-//		{"WhileStmt", 		&MageEvalAnalyst::stochasticizeWhileStmt},
-//		{"DoStmt", 			&MageEvalAnalyst::stochasticizeDoStmt},
-//		{"BinaryOperator", 	&MageEvalAnalyst::stochasticizeBinaryOperator},
-//		{"SwitchStmt", 		&MageEvalAnalyst::stochasticizeSwitchStmt}
-	};
-	
-	void stochasticizeFindingSpecifics(string ASTNode, json& finding, json& summary){
-		auto it = spFnSelector.find(ASTNode);
-		json markerFindingsResult = json::object();
-	   	if (it != spFnSelector.end()) {
-			(this->*(it->second))(summary);
-        } else {
-			// Use general eval, and report/record for devs
-		}
-	}
-
-	
-	void stochasticizeDeclStmt(json& summary){
-		// calculate alternative recovery using BinaryOperators of the form "="
-
-	};
 	
 	/**
 	 * 	Sample Data Comparison (Statistical Testing).
@@ -178,63 +149,6 @@ class MageEvalAnalyst{
 			summary["metadata"]["VAR(X)"] 	= summary["metadata"]["P(X)"].get<double>() * (1 - summary["metadata"]["P(X)"].get<double>());
 		}
 		
-		
 	}
-	
-	/**
-	 *	Map for quick selection of required stmt-processor based on the AST-string.
-	 */
-	using FindingsAnalysisFnPtr = void(MageEvalAnalyst::*)(json &, json &);
-	unordered_map<string, FindingsAnalysisFnPtr> faFnSelector = {
-//		{"CallExpr", 		&MageEvalAnalyst::statisticizeCallExpr},
-		{"DeclStmt", 		&MageEvalAnalyst::statisticizeDeclStmt},
-//		{"IfStmt", 			&MageEvalAnalyst::statisticizeIfStmt},
-//		{"ForStmt", 		&MageEvalAnalyst::statisticizeForStmt},
-//		{"WhileStmt", 		&MageEvalAnalyst::statisticizeWhileStmt},
-//		{"DoStmt", 			&MageEvalAnalyst::statisticizeDoStmt},
-//		{"BinaryOperator", 	&MageEvalAnalyst::statisticizeBinaryOperator},
-//		{"SwitchStmt", 		&MageEvalAnalyst::statisticizeSwitchStmt}
-	};
-	
-	/**
-	 *	Applies a specific statistication method or a general one.
-	 *	@param ASTNode	String designation of selected ASTNode
-	 *	@param finding	A specific finding related to some markerID
-	 *	@param summary	Object for recording/querying results
-	 */
-	void statisticizeFindingSpecifics(string ASTNode, json& finding, json& summary){
-		auto it = faFnSelector.find(ASTNode);
-		json markerFindingsResult = json::object();
-	   	if (it != faFnSelector.end()) {
-			(this->*(it->second))(finding, summary);
-        } else {
-			// Use general eval, and report/record for devs
-			statisticizeStmtGeneral(finding, summary);
-		}
-	}
-	
-	/**
-	 * 	A specific statistication method for DeclStmt.
-	 *	@param	finding	A specific finding related to some markerID (Required: oracle node) 
-	 *	@param 	summary	Object for recording/querying results
-	 */
-	void statisticizeDeclStmt(json& finding, json& summary){
-		// record declstmt types frequency
-		auto &oracleData = finding["oracle"][0];
-		auto &nodeOracleStats = summary["constructs"][oracleData["ASTNode"].get<string>()];
-		
-		auto &typeStats = nodeOracleStats["oracleMarkedTypes"];
-		for(auto typeInfo : oracleData["properties"]["init_types"]){
-			incrementJSONEntry(typeStats[typeInfo["type"]]);
-		}
-	}
-	
-	/**
-	 *	General method for unspecified procession.
-	 *	TODO:
-	 *		Dev reports or otherwise other useful methods can be implemented here
-	 *	@param	finding	A specific finding related to some markerID
-	 *	@param	summary	Object for recording/querying results
-	 */
-	void statisticizeStmtGeneral(json& finding, json& summary){}
 };
+

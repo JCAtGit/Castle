@@ -27,6 +27,7 @@ class MageEvalComparer{
 	private:
 		vector<filesystem::path> 				&inputDirs;
 		filesystem::path 						&outputPath;						// use outputPath as dir to retrieve previously existing aggregated data from.
+																					// TODO: hardcoded -> config input		
 		const filesystem::path					buildScaffolderDir = "/home/user/Desktop/CCastle/CCastleData/BuildScaffolder/";
 		
 		unordered_map<string, Matrix<long double>> 	constructZMatrixMap, 			// contains constructs - Z value evals related to the summaries.
@@ -40,14 +41,10 @@ class MageEvalComparer{
 		Matrix<string>							generalCIMatrix;					// contains general	   - confidence intervals related to the summaries.
 		Matrix<bool>							generalInclusionMatrix;
 		const string 							summaryFilename = "summary.json",
-												binMetadataCmd 	= "rabin2 -j -I ";
-
+												radareCmd 	= "rabin2 -j -I ",
+												dieCmd 		= "diec -a --json ";
 		vector<json> 							summaryData, binaryMetadata;
 		json									unifiedSummary = json::object();
-		
-		const vector<string>					radare2Keys = {						// Keys to determine which binary metadata to pull from radare2 output.
-			"arch",  "bits", "bintype", "class", "compiler", "endian", "lang", "machine", "os"
-		};
 		
 	public:
 	MageEvalComparer(vector<filesystem::path> &inputDirs, filesystem::path &outputPath) :
@@ -69,26 +66,51 @@ class MageEvalComparer{
 			}
 		}
 	
+		/**
+		 *	
+		 */
 		void gatherBinaryCharacteristics(){
-			string dataStringHolder;
+			string radareDataStringHolder, diecDataStringHolder;
 			string binaryDirsTarget;
 			string command;
-			sort(inputDirs.begin(),inputDirs.end());
 			for(int i=0 ; i<inputDirs.size() ; i++){
 				binaryDirsTarget = getCastleFormatBuildNameFromAnalysisName(inputDirs[i].parent_path().filename().string()); 
 				for(const auto& entry : filesystem::recursive_directory_iterator(buildScaffolderDir / binaryDirsTarget)){
 					// perform extraction and then break, assuming all other related binaries have the same general settings.
-					command = binMetadataCmd + (buildScaffolderDir / binaryDirsTarget).string() + "/" + entry.path().filename().string();
-	//				cout << command << "\n";
-					execCommandAndCaptureOutput(command, dataStringHolder);
+					auto fileBuildPath = (buildScaffolderDir / binaryDirsTarget).string() + "/" + entry.path().filename().string();
+					cout << "Path: " << fileBuildPath << "\n";
+					command = radareCmd + fileBuildPath;
+					execCommandAndCaptureOutput(command, radareDataStringHolder);
+					command = dieCmd + fileBuildPath;
+					execCommandAndCaptureOutput(command, diecDataStringHolder);
 					break;
 				}
+				json radareJSON = json::parse(radareDataStringHolder)["info"];
+				diecDataStringHolder = extractDiecJsonOnly(diecDataStringHolder);
+				json dieJSON = json::parse(diecDataStringHolder);
+
+				radareJSON["compiler"] = "";
+				for(auto [bIndex, bFinding]:dieJSON["detects"].items()){
+					cout << bFinding.dump(2) << "\n";
+					for(auto [vIndex, vFinding]:bFinding["values"].items()){
+						if(vFinding["type"].get<string>() == "compiler"){
+							radareJSON["compiler"] = 
+								radareJSON["compiler"].get<string>() 	+ 
+								vFinding["name"].get<string>() 			+ 
+								vFinding["version"].get<string>() 		+ 
+								" ";
+						}
+					}
+				}
 				
-				binaryMetadata.push_back(json::parse(dataStringHolder)["info"]);
-				dataStringHolder.clear();
+				cout << radareJSON.dump(2) + "\n";
+				binaryMetadata.push_back(radareJSON);
+				
+				radareDataStringHolder.clear();
+				diecDataStringHolder.clear();
 			}
 		}
-	
+		
 		void buildZPooledSummaries(){
 			for(int i=0 ; i<inputDirs.size() ; i++){
 				for(int j = i + 1 ; j<inputDirs.size() ; j++){
@@ -200,7 +222,6 @@ class MageEvalComparer{
 	
 		/**
 		 *	Aggregates and recomputes the necessary data related to all the inputdirs.
-		 * 	Do not summarize over the 
 		 */
 		void createUnifiedSummary(){
 			cout << "createUnifiedSummary \n";			
@@ -220,7 +241,6 @@ class MageEvalComparer{
 					}
 					auto& USConstruct = unifiedSummaryConstructs[constructKey];
 					for(auto& [summaryKey, summaryAttr]:constructData.items()){
-
 						if(summaryAttr.is_object()){ // currently assumes no further nesting
 							if(USConstruct[summaryKey].is_null()){
 								USConstruct[summaryKey] = json::object();
@@ -325,15 +345,14 @@ class MageEvalComparer{
 						// If we group the results by the same decompiler, we assume H0, that is the decompiler is the main determinant for found distribution.
 
 						long double pooledSE = twoProportionsPooledSE(niOracle, njOracle, pooledProportion);
-					
-						long double ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
-						long double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
+						long double zStat = (piOracle - pjOracle) / pooledSE;
+						long double pValue = erfc(abs(zStat) / sqrt(2.0));
 						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
 //							cout << ZStat2Proportions << " - creating Z construct matrix \n";
 							constructZMatrixMap[constructKey] = Matrix<long double>(inputDirs.size(),inputDirs.size());
 						}
-						constructZMatrixMap[constructKey].at(i,j) = ZStat2Proportions;
-						constructZMatrixMap[constructKey].at(j,i) = ZStat2Proportions;
+						constructZMatrixMap[constructKey].at(i,j) = zStat;
+						constructZMatrixMap[constructKey].at(j,i) = zStat;
 						
 						if(constructPMatrixMap.find(constructKey) == constructPMatrixMap.end()){
 //							cout << PValue << " - creating P construct matrix \n";
@@ -380,12 +399,11 @@ class MageEvalComparer{
 			);
 
 			long double pooledSE = twoProportionsPooledSE(niOracle, njOracle, pooledProportion);
+			long double zStat = (piOracle - pjOracle) / pooledSE;
+			long double pValue =  erfc(abs(zStat) / sqrt(2.0));
 
-			long double ZStat2Proportions = (piOracle - pjOracle) / pooledSE;
-			long double pValue =  erfc(abs(ZStat2Proportions) / sqrt(2.0));
-
-			generalZMatrix.at(i,j) = ZStat2Proportions;
-			generalZMatrix.at(j,i) = ZStat2Proportions;
+			generalZMatrix.at(i,j) = zStat;
+			generalZMatrix.at(j,i) = zStat;
 			generalPMatrix.at(i,j) = pValue;
 			generalPMatrix.at(j,i) = pValue;
 			calcConfidenceInterval(piOracle, pjOracle, i, j, pooledSE, generalCIMatrix);
@@ -439,15 +457,15 @@ class MageEvalComparer{
 							jData["metadata"]["VAR(X)"].get<long double>(), njOracle
 						);
 							
-						long double ZStat2Proportions = (piOracle - pjOracle) / unpooledSE;
+						long double zStat = (piOracle - pjOracle) / unpooledSE;
 					
-						long double pValue = erfc(abs(ZStat2Proportions) / sqrt(2.0));
+						long double pValue = erfc(abs(zStat) / sqrt(2.0));
 						if(constructZMatrixMap.find(constructKey) == constructZMatrixMap.end()){
 //							cout << ZStat2Proportions << " - creating construct matrix \n";
 							constructZMatrixMap[constructKey] = Matrix<long double>(inputDirs.size(),inputDirs.size());
 						}
-						constructZMatrixMap[constructKey].at(i,j) = ZStat2Proportions;
-						constructZMatrixMap[constructKey].at(j,i) = ZStat2Proportions;
+						constructZMatrixMap[constructKey].at(i,j) = zStat;
+						constructZMatrixMap[constructKey].at(j,i) = zStat;
 						
 						if(constructPMatrixMap.find(constructKey) == constructPMatrixMap.end()){
 //							cout << PValue << " - creating construct matrix \n";
@@ -493,12 +511,11 @@ class MageEvalComparer{
 				jData["metadata"]["VAR(X)"].get<long double>(), njOracle
 			);
 				
-			long double ZStat2Proportions = (piOracle - pjOracle) / unpooledSE;
-			
-			long double pValue =  erfc(abs(ZStat2Proportions) / sqrt(2.0));
+			long double zStat = (piOracle - pjOracle) / unpooledSE;
+			long double pValue =  erfc(abs(zStat) / sqrt(2.0));
 
-			generalZMatrix.at(i,j) = ZStat2Proportions;
-			generalZMatrix.at(j,i) = ZStat2Proportions;
+			generalZMatrix.at(i,j) = zStat;
+			generalZMatrix.at(j,i) = zStat;
 			generalPMatrix.at(i,j) = pValue;
 			generalPMatrix.at(j,i) = pValue;
 			
