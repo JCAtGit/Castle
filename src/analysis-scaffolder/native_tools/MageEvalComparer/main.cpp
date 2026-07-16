@@ -19,8 +19,12 @@ int main(int argc, char **argv) {
 	bool recombine_only = false;
 	app.add_flag("--recombine-only", recombine_only, "Does not attempt to rebuild the summary using the build data.");
 	
+	filesystem::path buildScaffolderDir = "/home/user/Desktop/CCastle/CCastleData/BuildScaffolder/";
+	app.add_option("-b,--buildScaffolderDir", buildScaffolderDir, "Required input buildScaffolderDir for binary data extraction.");
+
+	
 	CLI11_PARSE(app, argc, argv);
 
-	CmdTasker cmdTskr(inputDirs, outputDir, recombine_only);
+	CmdTasker cmdTskr(inputDirs, outputDir, buildScaffolderDir, recombine_only);
 	cmdTskr.startProcesses();
 }

@@ -27,8 +27,7 @@ class MageEvalComparer{
 	private:
 		vector<filesystem::path> 				&inputDirs;
 		filesystem::path 						&outputPath;						// use outputPath as dir to retrieve previously existing aggregated data from.
-																					// TODO: hardcoded -> config input		
-		const filesystem::path					buildScaffolderDir = "/home/user/Desktop/CCastle/CCastleData/BuildScaffolder/";
+		filesystem::path						&buildScaffolderDir;
 		
 		unordered_map<string, Matrix<long double>> 	constructZMatrixMap, 			// contains constructs - Z value evals related to the summaries.
 											 		constructPMatrixMap;			// contains constructs - P value evals related to the summaries.
@@ -47,8 +46,8 @@ class MageEvalComparer{
 		json									unifiedSummary = json::object();
 		
 	public:
-	MageEvalComparer(vector<filesystem::path> &inputDirs, filesystem::path &outputPath) :
-	inputDirs(inputDirs), outputPath(outputPath), 
+	MageEvalComparer(vector<filesystem::path> &inputDirs, filesystem::path &outputPath, filesystem::path &buildScaffolderDir) :
+	inputDirs(inputDirs), outputPath(outputPath), buildScaffolderDir(buildScaffolderDir),
 	
 	generalZMatrix(inputDirs.size(), inputDirs.size()),
 	generalPMatrix(inputDirs.size(), inputDirs.size()),
@@ -78,7 +77,6 @@ class MageEvalComparer{
 				for(const auto& entry : filesystem::recursive_directory_iterator(buildScaffolderDir / binaryDirsTarget)){
 					// perform extraction and then break, assuming all other related binaries have the same general settings.
 					auto fileBuildPath = (buildScaffolderDir / binaryDirsTarget).string() + "/" + entry.path().filename().string();
-					cout << "Path: " << fileBuildPath << "\n";
 					command = radareCmd + fileBuildPath;
 					execCommandAndCaptureOutput(command, radareDataStringHolder);
 					command = dieCmd + fileBuildPath;
@@ -103,9 +101,7 @@ class MageEvalComparer{
 					}
 				}
 				
-				cout << radareJSON.dump(2) + "\n";
-				binaryMetadata.push_back(radareJSON);
-				
+				binaryMetadata.push_back(radareJSON);				
 				radareDataStringHolder.clear();
 				diecDataStringHolder.clear();
 			}

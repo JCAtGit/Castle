@@ -9,22 +9,26 @@ using namespace std;
 class CmdTasker{
 	private:		
 		vector<filesystem::path> 	&inputDirs;
-		filesystem::path 			&outputPath;
+		filesystem::path 			&outputPath,
+									&buildScaffolderDir;
+									
 		bool 						&recombine_only;
 	public:
 	CmdTasker(
 		vector<filesystem::path> &inputDirs, 
 		filesystem::path &outputPath,
+		filesystem::path &buildScaffolderDir,
 		bool &recombine_only
 	) : 
 	inputDirs(inputDirs), 
 	outputPath(outputPath),
-	recombine_only(recombine_only)
+	recombine_only(recombine_only),
+	buildScaffolderDir(buildScaffolderDir)
 	{}
 
 	void startProcesses(){
 		cout << "Start processes \n";
-		MageEvalComparer mec(inputDirs, outputPath);
+		MageEvalComparer mec(inputDirs, outputPath, buildScaffolderDir);
 
 		if(recombine_only){
 			mec.startAggregationAndExport(recombine_only);
