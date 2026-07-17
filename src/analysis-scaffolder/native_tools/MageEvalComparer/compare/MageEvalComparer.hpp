@@ -89,7 +89,7 @@ class MageEvalComparer{
 
 				radareJSON["compiler"] = "";
 				for(auto [bIndex, bFinding]:dieJSON["detects"].items()){
-					cout << bFinding.dump(2) << "\n";
+//					cout << bFinding.dump(2) << "\n";
 					for(auto [vIndex, vFinding]:bFinding["values"].items()){
 						if(vFinding["type"].get<string>() == "compiler"){
 							radareJSON["compiler"] = 

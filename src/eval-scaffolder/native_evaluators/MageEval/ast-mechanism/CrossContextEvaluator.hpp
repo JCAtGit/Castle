@@ -224,7 +224,7 @@ class CrossContextEvaluator{
 		}
 		
 //		markerFindingsResult["parity_dangling_stmt"] = findingsOracle["properties"]["dangling_stmt"] == findingsDecom["properties"]["dangling_stmt"];
-		markerFindingsResult["parity_has_else"] = findingsOracle["properties"]["has_else"] = findingsDecom["properties"]["has_else"];
+		markerFindingsResult["parity_has_else"] = findingsOracle["properties"]["has_else"] == findingsDecom["properties"]["has_else"];
 		
 		return false;
 	}

@@ -22,7 +22,6 @@ int main(int argc, char **argv) {
 	filesystem::path buildScaffolderDir = "/home/user/Desktop/CCastle/CCastleData/BuildScaffolder/";
 	app.add_option("-b,--buildScaffolderDir", buildScaffolderDir, "Required input buildScaffolderDir for binary data extraction.");
 
-	
 	CLI11_PARSE(app, argc, argv);
 
 	CmdTasker cmdTskr(inputDirs, outputDir, buildScaffolderDir, recombine_only);
