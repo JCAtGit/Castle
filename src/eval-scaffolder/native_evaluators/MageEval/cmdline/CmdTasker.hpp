@@ -7,6 +7,7 @@
 #include "nlohmann/json.hpp"
 #include "clang/AST/ASTContext.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "clang/Frontend/FrontendAction.h"
 #include "clang/Tooling/Tooling.h"
 #include "json.hpp"
 #include "../ast-mechanism/CrossContextEvaluator.hpp"
@@ -31,12 +32,12 @@ class CmdTasker{
 								&chiralMatching;
 		
 		const vector<string> 	args = {
-							        "-xc++", 			// xc++ or xc makes a huge difference for node recovery and is worth considering for C files as well
+							        "-xc++", 			// xc++ recovers nodes that C-mode sometimes discards for C files, but has slight differences in some ast representations.
 									"-w",
 						//			"-std=c17", 			// voor c alleen en dus voor -xc flag
-									"-ferror-limit=1",
-							    };
-		
+									"-ferror-limit=1"
+							    };							
+								
 		void loadMarkerFormats(){
 			ifstream mrkrFormatsFile(mrkrFormatsPath);
 			if (!mrkrFormatsFile.is_open()) {
@@ -72,7 +73,8 @@ class CmdTasker{
 					auto astOracleUnit = clang::tooling::buildASTFromCodeWithArgs(
 						fileOracleData, 
 						args, 
-						oracleDir.string() + entry.path().filename().string());
+						oracleDir.string() + entry.path().filename().string()
+					);
 					CAGatherer.setOracleContext(&astOracleUnit->getASTContext());
 					CAGatherer.TraverseDecl(astOracleUnit->getASTContext().getTranslationUnitDecl());
 				}
@@ -87,7 +89,11 @@ class CmdTasker{
 					fileDecomData = file2string(entry.path());
 					mapKey = entry.path().filename().string();
 					
-					auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(fileDecomData, args, mapKey);
+					auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(
+						fileDecomData, 
+						args, 
+						mapKey
+					);
 					CAGatherer.setDecomContext(&astDecomUnit->getASTContext());
 					CAGatherer.TraverseDecl(astDecomUnit->getASTContext().getTranslationUnitDecl());				
 

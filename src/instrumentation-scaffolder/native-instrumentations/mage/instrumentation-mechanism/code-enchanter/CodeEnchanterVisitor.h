@@ -2,6 +2,7 @@
 
 #include "nlohmann/json.hpp"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/Stmt.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -205,15 +206,16 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				if(S->getBeginLoc().isMacroID() || S->getBeginLoc().isInvalid()){return true;}
 				//-- End safety checks;
 				switch (S->getStmtClass()) {
-					case Stmt::CallExprClass: 	processCallExpr(cast<CallExpr>(S)); 	break;
-					case Stmt::CaseStmtClass: 	processCaseStmt(cast<CaseStmt>(S)); 	break;
-					case Stmt::DeclStmtClass: 	processDeclStmt(cast<DeclStmt>(S)); 	break;
-//					case Stmt::DoStmtClass:		processDoStmt(cast<DoStmt>(S));			break;
-					case Stmt::ForStmtClass: 	processForStmt(cast<ForStmt>(S)); 		break;
-					case Stmt::GotoStmtClass: 	processGotoStmt(cast<GotoStmt>(S)); 	break;
-					case Stmt::IfStmtClass: 	processIfStmt(cast<IfStmt>(S)); 		break;
-					case Stmt::SwitchStmtClass: processSwitchStmt(cast<SwitchStmt>(S));break;
-					case Stmt::WhileStmtClass: 	processWhileStmt(cast<WhileStmt>(S)); 	break;
+					case Stmt::CallExprClass: 		processCallExpr(cast<CallExpr>(S)); 					break;
+					case Stmt::CaseStmtClass: 		processCaseStmt(cast<CaseStmt>(S)); 					break;
+					case Stmt::DeclStmtClass: 		processDeclStmt(cast<DeclStmt>(S)); 					break;
+//					case Stmt::DoStmtClass:			processDoStmt(cast<DoStmt>(S));						break;
+					case Stmt::ForStmtClass: 		processForStmt(cast<ForStmt>(S)); 						break;
+					case Stmt::GotoStmtClass: 		processGotoStmt(cast<GotoStmt>(S)); 					break;
+					case Stmt::IfStmtClass: 		processIfStmt(cast<IfStmt>(S)); 						break;
+					case Stmt::SwitchStmtClass: 	processSwitchStmt(cast<SwitchStmt>(S));				break;
+					case Stmt::WhileStmtClass: 		processWhileStmt(cast<WhileStmt>(S)); 					break;
+//					case Stmt::BinaryOperatorClass:	processBinaryOperatorStmt(cast<BinaryOperator>(S)); 	break;
 					default: break;
 				}
 			}
@@ -366,6 +368,22 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		
 		void processGotoStmt(GotoStmt* GS){
 			rewriter.InsertText(GS->getBeginLoc(),
+			synthesizeCallMarkerString(), 
+			false, 
+			true
+			);
+		}
+		
+		void processBinaryOperatorStmt(BinaryOperator* BO){
+			rewriter.InsertText(BO->getBeginLoc(),
+			synthesizeCallMarkerString(), 
+			false, 
+			true
+			);
+		}
+		
+		void processDoStmt(DoStmt* DS){
+			rewriter.InsertText(DS->getBeginLoc(),
 			synthesizeCallMarkerString(), 
 			false, 
 			true

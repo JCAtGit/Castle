@@ -12,8 +12,12 @@ using namespace std;
 
 /**
  *	A Class that is responsible for gathering findings per context independently and storing these in a shared object.
+ * 	Currently parses both ast's without the inclusion of a library.
  *	TODO: 
  *		- Record findings explicitly to dev files.
+ *		- Include library during ast parsing of oracle, however the necessary libraries that need to be included depend on the build target.
+ *			- analyse and/or record build details
+ *			- derive necessary libraries from build details and include them
  */
 class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	private:
@@ -260,7 +264,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	            break;
 	        }
 	        default:
-	            // TODO: report to diagnostics
+	            // TODO: report unhandled case to diagnostics
 	            break;
 	    	}
 		}
@@ -361,7 +365,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 					} else {
 						// TODO: report to diagnostics
 					}
-				break;
+					break;
 				case Stmt::DeclStmtClass:{
 					(*findings)["properties"]["init_types"] = json::array();
 					auto forInitDeclStmt = llvm::cast<DeclStmt>(forInitStmt);

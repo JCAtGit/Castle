@@ -10,8 +10,7 @@ add_executable(MageEval src/eval-scaffolder/native_evaluators/MageEval/main.cpp)
 add_executable(MageEvalAnalyzer src/analysis-scaffolder/native_tools/MageEvalAnalyzer/main.cpp)
 add_executable(MageEvalComparer src/analysis-scaffolder/native_tools/MageEvalComparer/main.cpp)
 
-add_executable(PathParser src/prototype/PathParser/main.cpp)
-
+#add_executable(PathParser src/prototype/PathParser/main.cpp)
 #add_executable(PseudoCVisitor src/prototype/PseudoCVisitor/main.cpp)
 #add_executable(JSONCPP src/prototype/jsoncpp.cpp)
 #add_executable(DirTraversal src/prototype/DirTraverser/DirTraversal.cpp)
