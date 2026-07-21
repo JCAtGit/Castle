@@ -294,7 +294,7 @@ class MageEvalComparer{
 		}
 		
 		/**
-		 * 	Calculates the Z values for each pair per construct from the inputData and stores these in the ZDataMatrix
+		 * 	Calculates the Z values and two-tailed P-values for each pair per construct from the inputData and stores these in the ZDataMatrix
 		 *	@param	iData	Data of input i from inputDirs.
 		 * 	@param	jData	Data of input j from inputDirs.
 		 * 	@param	i		The associated row of calculated pair in the matrix
@@ -367,7 +367,7 @@ class MageEvalComparer{
 		}
 		
 		/**
-		* 	Calculates the Z values for each pair for the overall stats from the inputData and stores these in the ZDataMatrix
+		* 	Calculates the Z values and two-tailed P-values for each pair for the overall stats from the inputData and stores these in the ZDataMatrix
 		*	@param	iData	Data of input i from inputDirs.
 		* 	@param	jData	Data of input j from inputDirs.
 		* 	@param	i		The associated row of calculated pair in the matrix
@@ -407,7 +407,7 @@ class MageEvalComparer{
 		}
 		
 		/**
-		 * 	Calculates the Z values for each pair per construct from the inputData and stores these in the ZDataMatrix
+		 * 	Calculates the Z values and two-tailed P-values for each pair per construct from the inputData and stores these in the ZDataMatrix
 		 *	@param	iData	Data of input i from inputDirs.
 		 * 	@param	jData	Data of input j from inputDirs.
 		 * 	@param	i		The associated row of calculated pair in the matrix
@@ -480,7 +480,7 @@ class MageEvalComparer{
 		}
 		
 		/**
-		* 	Calculates the Z values for each pair for the overall stats from the inputData and stores these in the ZDataMatrix
+		* 	Calculates the unpooled Z values and two-tailed P-values for each pair for the overall stats from the inputData and stores these in the ZDataMatrix
 		*	@param	iData	Data of input i from inputDirs.
 		* 	@param	jData	Data of input j from inputDirs.
 		* 	@param	i		The associated row of calculated pair in the matrix
@@ -508,7 +508,7 @@ class MageEvalComparer{
 			);
 				
 			long double zStat = (piOracle - pjOracle) / unpooledSE;
-			long double pValue =  erfc(abs(zStat) / sqrt(2.0));
+			long double pValue =  erfc(abs(zStat) / sqrt(2.0)); 
 
 			generalZMatrix.at(i,j) = zStat;
 			generalZMatrix.at(j,i) = zStat;

@@ -482,6 +482,10 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 		return false;
 	}
 	
+	/**
+	 * Some properties are only available for cpp, like condition variables.
+	 * For assessment of C, metrics for these can be ignored. 
+	 */
 	bool ifStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<IfStmt>(node);
 		(*findings)["properties"]["has_markee"] = true;

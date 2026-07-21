@@ -42,7 +42,6 @@ class MageEvalAnalyst{
 					if(nodeOracleStats["viableComparisons"].is_null()){
 						nodeOracleStats["viableComparisons"] = 0;
 					}
-					incrementJSONEntry(nodeOracleStats["absentCorrespondingDecomMarker"]);
 					if(recoveredAsMarkee.is_null()){
 						recoveredAsMarkee = json::object();
 					}
@@ -55,7 +54,7 @@ class MageEvalAnalyst{
 						incrementJSONEntry(nodeDecomStats["decomTotal"]);
 						incrementJSONEntry(recoveredAsMarkee[decomData["ASTNode"].get<string>()]);
 						incrementJSONEntry(summary["metadata"]["decomTotal"]);
-						
+
 						incrementJSONEntry(nodeOracleStats["viableComparisons"]);
 						incrementJSONEntry(nodeDecomStats["viableComparisons"]);
 						incrementJSONEntry(summary["metadata"]["viableComparisons"]);

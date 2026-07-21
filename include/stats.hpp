@@ -66,7 +66,7 @@ long double twoProportionsUnpooledSE(long double variance1, long double n1, long
 void calcConfidenceInterval(long double pi, long double pj, int i, int j, long double SE, Matrix<string> &CIMatrix){
 	ostringstream oss0, oss1;
 	oss0 << (pi - pj);
-	oss1 << 1.96 * SE;
+	oss1 << 1.96 * SE; // Z_a / 2 = 1.96 voor alpha = 0.05
 	CIMatrix.at(i, j) = oss0.str() + " +/- " + oss1.str();
 	CIMatrix.at(j, i) = "-" + oss0.str() + " +/- " + oss1.str();
 }
