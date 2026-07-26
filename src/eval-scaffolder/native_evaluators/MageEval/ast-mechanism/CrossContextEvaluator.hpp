@@ -12,7 +12,6 @@ using namespace nlohmann;
 using namespace std;
 
 /**
- *	
  *	Assumes oracle to be free of major errors and to be compilable (but will work with pseudocode oracles)
  */
 
@@ -100,7 +99,6 @@ class CrossContextEvaluator{
 		markerFindingsResult["markee_construct"] = findingsOracle["ASTNode"];
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 		
-//		if(!markerFindingsResult["recovered_construct"]){}
 		return false;
 	}
 	
@@ -109,7 +107,6 @@ class CrossContextEvaluator{
 		markerFindingsResult["recovered_construct"] = (findingsDecom["properties"]["has_markee"] && (findingsDecom["ASTNode"] == findingsOracle["ASTNode"]));
 		
 		if(!markerFindingsResult["recovered_construct"]){
-			// TODO, direct callee is niet vanzelfsprekend maar args kunnen soms nog afgeleid worden
 			markerFindingsResult["name_preserved"] = false;
 			markerFindingsResult["parity_params_count"] = false;
 			markerFindingsResult["parity_param_types"] = false;
@@ -135,6 +132,7 @@ class CrossContextEvaluator{
 			markerFindingsResult["parity_has_callee"] = false;
 		}
 		
+		// Direct callee is niet vanzelfsprekend maar args kunnen nog afgeleid worden
 		markerFindingsResult["name_preserved"] = (findingsOracle["properties"]["name"] == findingsDecom["properties"]["name"]);
 		markerFindingsResult["parity_args_count"] = (findingsOracle["properties"]["num_args"] == findingsDecom["properties"]["num_args"]);
 		sort(findingsOracle["properties"]["arg_types"].begin(),findingsOracle["properties"]["arg_types"].end());

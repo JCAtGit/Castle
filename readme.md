@@ -9,14 +9,28 @@ The setup consists for the following requirements:
 4. Once the binaries are built, additional dependencies are necessary to build the binaries from different codebases to evaluate.
 ```
 
-#### 1. Tool Packages
+#### 1. Tool Packages and codegenerators
 
 ```
 Fedora WS 43:
 sudo dnf install llvm-devel clang-devel mingw64-gcc-c++ mingw32-gcc-c++ automake ninja cmake make boost-devel radare2
 
-Detect It Easy - DIE with make install.
+Detect It Easy - DIE with make install:
 https://github.com/horsicq/Detect-It-Easy/blob/master/docs/BUILD.md
+
+DSmith with seed modification:
+https://github.com/zijiancogito/RandCode
+
+Modification to source.py, add the following lines:
+	
+	if args.seed is not None:
+        random.seed(args.seed)
+   
+   parser.add_argument('--seed', type=int, help="random seed for reproducibility")
+   
+Yarpgen:
+https://github.com/intel/yarpgen
+
 ```
 
 
@@ -80,6 +94,23 @@ pyenv install 3.12.11
 ```
 
 ### Pipeline, tools and their configuration files.
+
 #### Configuration files
-#### Tools
-#### Pipeline
+Pipeline configuration files:
+The CCastle pipeline uses config files to store pipeline transactions/transitions, if the CCastleData dataset is provided then it is located at ".../CCastleData/configs/"
+These configuration files are used primarily by the CmdTasker class.
+
+Marker format configuration file, which contains markernaming and attribute modifications:
+".../CCastleData/configs/CCastlePipeline/formats.json"
+
+#### Tools and scripts
+pipeline tools: 
+- decompilers: Ghidra, Retdec, etc.
+- binary analysers: radare2, DIE.
+
+pipeline scripts:
+- build scripts - contains the instructions for their repositories
+- decompilation scripts - scripts that decompilers like Ghidra require to configure the decompilation procedure
+
+
+

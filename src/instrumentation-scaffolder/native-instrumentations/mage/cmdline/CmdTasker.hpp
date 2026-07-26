@@ -17,7 +17,7 @@ class CmdTasker{
 	filesystem::path 			inputDirs, 
 								outputPath, 
 								mrkrFormatsPath,
-								metadataResultsPath,
+								metadataResultsPath, // experimental
 								inputDir, 
 								outputDir;
 						

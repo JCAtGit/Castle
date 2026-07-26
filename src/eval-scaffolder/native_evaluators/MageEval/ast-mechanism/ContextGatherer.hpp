@@ -335,7 +335,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 					}
 				} 
 			} 
-		} 
+		}
 		
 		// callexpr metrics
 		(*findings)["properties"]["return_type"] = cast_node->getType().getAsString();
