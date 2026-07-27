@@ -35,7 +35,7 @@ class MageEvalAnalyst{
 				auto &nodeOracleStats = summary["constructs"][oracleData["ASTNode"].get<string>()];
 				
 				incrementJSONEntry(nodeOracleStats["oracleTotal"]);
-				statisticizeFindingSpecifics(oracleData["ASTNode"].get<string>(), finding, summary);
+//				statisticizeFindingSpecifics(oracleData["ASTNode"].get<string>(), finding, summary);
 				
 				auto &recoveredAsMarkee= nodeOracleStats["recoveredAsMarkee"];
 				if(finding["decom"].empty()){
@@ -56,7 +56,9 @@ class MageEvalAnalyst{
 						incrementJSONEntry(summary["metadata"]["decomTotal"]);
 
 						incrementJSONEntry(nodeOracleStats["viableComparisons"]);
-						incrementJSONEntry(nodeDecomStats["viableComparisons"]);
+						if(nodeDecomStats["viableComparisons"].is_null()){
+							nodeDecomStats["viableComparisons"] = 0;
+						}
 						incrementJSONEntry(summary["metadata"]["viableComparisons"]);
 					}
 				}
@@ -70,7 +72,6 @@ class MageEvalAnalyst{
 						summary["constructs"][decomData["ASTNode"].get<string>()]["recoveryOfAttr"]["recovered_construct"] = 0;
 					}
 				}
-//				summary["metadata"]["oracleMissingTotal"][markerID] = finding["decom"].size(); // useful for diagnostics?
 			}
 			if(finding["decom"].size() > 1){
 				incrementJSONEntry(summary["metadata"]["markerDuplication"]);
