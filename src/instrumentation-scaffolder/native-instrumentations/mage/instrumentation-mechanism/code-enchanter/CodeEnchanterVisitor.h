@@ -209,6 +209,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 					case Stmt::CallExprClass: 		processCallExpr(cast<CallExpr>(S)); 					break;
 					case Stmt::CaseStmtClass: 		processCaseStmt(cast<CaseStmt>(S)); 					break;
 					case Stmt::DeclStmtClass: 		processDeclStmt(cast<DeclStmt>(S)); 					break;
+//					case Stmt::DefaultStmtClass:	processDefaultStmt(cast<DefaultStmt>(S));				break;
 //					case Stmt::DoStmtClass:			processDoStmt(cast<DoStmt>(S));						break;
 					case Stmt::ForStmtClass: 		processForStmt(cast<ForStmt>(S)); 						break;
 					case Stmt::GotoStmtClass: 		processGotoStmt(cast<GotoStmt>(S)); 					break;
@@ -345,6 +346,15 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		void processCaseStmt(CaseStmt* CS){
 			rewriter.InsertText(
 			CS->getBeginLoc(),
+			synthesizeCallMarkerString(), 
+			false, 
+			true
+			);
+		}
+		
+		void processDefaultStmt(DefaultStmt* DS){
+			rewriter.InsertText(
+			DS->getBeginLoc(),
 			synthesizeCallMarkerString(), 
 			false, 
 			true

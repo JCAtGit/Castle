@@ -31,7 +31,7 @@ class MageEvalAnalyst{
 			if(finding.contains("oracle")){
 				incrementJSONEntry(summary["metadata"]["oracleTotal"]);
 
-				auto &oracleData = finding["oracle"][0]; // we cannot assume this to be always present
+				auto &oracleData = finding["oracle"][0]; // we assume this to be always findable, since we insert these ourselves
 				auto &nodeOracleStats = summary["constructs"][oracleData["ASTNode"].get<string>()];
 				
 				incrementJSONEntry(nodeOracleStats["oracleTotal"]);
@@ -51,15 +51,18 @@ class MageEvalAnalyst{
 				} else {
 					for(const auto& decomData: finding["decom"]){
 						auto &nodeDecomStats = summary["constructs"][decomData["ASTNode"].get<string>()];
+						// update the counts
 						incrementJSONEntry(nodeDecomStats["decomTotal"]);
-						incrementJSONEntry(recoveredAsMarkee[decomData["ASTNode"].get<string>()]);
-						incrementJSONEntry(summary["metadata"]["decomTotal"]);
-
 						incrementJSONEntry(nodeOracleStats["viableComparisons"]);
+						incrementJSONEntry(summary["metadata"]["decomTotal"]);
+						incrementJSONEntry(summary["metadata"]["viableComparisons"]);
+						// record decom recovery instance
+						incrementJSONEntry(recoveredAsMarkee[decomData["ASTNode"].get<string>()]);
+
+						// record decom node existence  if not known yet
 						if(nodeDecomStats["viableComparisons"].is_null()){
 							nodeDecomStats["viableComparisons"] = 0;
 						}
-						incrementJSONEntry(summary["metadata"]["viableComparisons"]);
 					}
 				}
 			} else {

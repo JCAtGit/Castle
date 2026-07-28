@@ -630,8 +630,6 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 		(*findings)["properties"]["switch_cases"] = json::array();
 		if(switchCaseList){
 			(*findings)["properties"]["has_switch_cases"] = true;
-//			hasFallthroughWidth(cast_node, (*findings)["properties"]["switch_cases"]);
-
 			while(switchCaseList != nullptr){
 				json caseInfo = json::object();
 				caseInfo["case_stmt_class"] = switchCaseList->getStmtClassName();
@@ -647,7 +645,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	
 	/* 			Declaration Recorders 			*/
 
-	// TODO: entries should give diagnostic effects, all decls are still WIP.
+	// TODO: entries should give diagnostic effects, decls are still WIP.
 	
 	bool generalDeclRecorder(Decl *node, json *findings){
 		(*findings)["properties"]["TODO"] = true;

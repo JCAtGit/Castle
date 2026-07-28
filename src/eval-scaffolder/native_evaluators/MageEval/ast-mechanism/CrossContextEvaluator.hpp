@@ -522,9 +522,9 @@ class CrossContextEvaluator{
 			markerFindingsResult["parity_cond_stmt_class"] = false;
 			markerFindingsResult["parity_cond_expr_types"] = false;
 		}
-		// deze info is bugged vanuit clang, dus nog niet zo zinvol
-//		markerFindingsResult["parity_has_switch_cases"] = findingsOracle["properties"]["has_switch_cases"] == findingsDecom["properties"]["has_switch_cases"];
-//		markerFindingsResult["parity_switch_cases"] = findingsOracle["properties"]["switch_cases"] == findingsDecom["properties"]["switch_cases"];
+
+		markerFindingsResult["parity_has_switch_cases"] = findingsOracle["properties"]["has_switch_cases"] == findingsDecom["properties"]["has_switch_cases"];
+		markerFindingsResult["parity_switch_cases"] = findingsOracle["properties"]["switch_cases"] == findingsDecom["properties"]["switch_cases"];
 	
 		return false;
 	}
