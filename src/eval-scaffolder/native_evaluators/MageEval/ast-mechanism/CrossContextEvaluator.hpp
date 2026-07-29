@@ -29,6 +29,7 @@ class CrossContextEvaluator{
 		dev_report["generic_eval"] = json::array();
 	}
 	
+	// Switch expects integers or enumerations, this enables direct usage of the statement names.
 	using EvalFnPtr = bool(CrossContextEvaluator::*)(const string &, json &, json &, json &);
 	unordered_map<string, EvalFnPtr> fnSelector = {
 		{"CallExpr", 		&CrossContextEvaluator::processCallExpr},
@@ -60,7 +61,6 @@ class CrossContextEvaluator{
 	
 	void clearEval(){
 		for(auto [markerID, finding] : findings.items()){
-			// TODO: Create dummy fail object, to punish the absence of decom instances in evaluations?
 			if(!finding.contains("oracle")){
 				findings.erase(markerID);
 			} else {

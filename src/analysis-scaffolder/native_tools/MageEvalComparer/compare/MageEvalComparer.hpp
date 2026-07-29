@@ -87,16 +87,17 @@ class MageEvalComparer{
 				diecDataStringHolder = extractDiecJsonOnly(diecDataStringHolder);
 				json dieJSON = json::parse(diecDataStringHolder);
 
-				radareJSON["compiler"] = "";
-				for(auto [bIndex, bFinding]:dieJSON["detects"].items()){
-//					cout << bFinding.dump(2) << "\n";
-					for(auto [vIndex, vFinding]:bFinding["values"].items()){
-						if(vFinding["type"].get<string>() == "compiler"){
-							radareJSON["compiler"] = 
-								radareJSON["compiler"].get<string>() 	+ 
-								vFinding["name"].get<string>() 			+ 
-								vFinding["version"].get<string>() 		+ 
-								" ";
+				if(radareJSON["compiler"].get<string>().empty()){
+					for(auto [bIndex, bFinding]:dieJSON["detects"].items()){
+	//					cout << bFinding.dump(2) << "\n";
+						for(auto [vIndex, vFinding]:bFinding["values"].items()){
+							if(vFinding["type"].get<string>() == "compiler"){
+								radareJSON["compiler"] = 
+									radareJSON["compiler"].get<string>() 	+ 
+									vFinding["name"].get<string>() 			+ 
+									vFinding["version"].get<string>() 		+ 
+									" ";
+							}
 						}
 					}
 				}

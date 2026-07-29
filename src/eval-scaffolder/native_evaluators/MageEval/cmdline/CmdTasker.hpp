@@ -32,7 +32,7 @@ class CmdTasker{
 								&chiralMatching;
 		
 		const vector<string> 	args = {
-							        "-xc++", 			// xc++ recovers nodes that C-mode sometimes discards for C files, but has slight differences in some ast representations.
+							        "-xc", 			// xc++ recovers nodes that C-mode sometimes discards for C files, but has slight differences in some ast representations.
 									"-w",
 						//			"-std=c17", 			// voor c alleen en dus voor -xc flag
 									"-ferror-limit=1"	

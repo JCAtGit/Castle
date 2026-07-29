@@ -8,7 +8,7 @@ set(CMAKE_CXX_COMPILER clang++)
 
 project (
 	CASTLE
-	VERSION 0.8
+	VERSION 1.0
 	DESCRIPTION "C Assisted Source Translation Language Evaluator"
 	)
 
