@@ -216,7 +216,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 					case Stmt::IfStmtClass: 		processIfStmt(cast<IfStmt>(S)); 						break;
 					case Stmt::SwitchStmtClass: 	processSwitchStmt(cast<SwitchStmt>(S));				break;
 					case Stmt::WhileStmtClass: 		processWhileStmt(cast<WhileStmt>(S)); 					break;
-//					case Stmt::BinaryOperatorClass:	processBinaryOperatorStmt(cast<BinaryOperator>(S)); 	break;
+					case Stmt::BinaryOperatorClass:	processBinaryOperatorStmt(cast<BinaryOperator>(S)); 	break;
 					default: break;
 				}
 			}

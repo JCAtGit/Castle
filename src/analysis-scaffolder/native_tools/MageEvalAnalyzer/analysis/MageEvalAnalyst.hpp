@@ -113,7 +113,7 @@ class MageEvalAnalyst{
 					}
 					incrementJSONEntry(summary["metadata"]["deterioratedConstructsTotal"]);
 				}
-				statisticizeEvalSpecifics(evalElement["markee_construct"].get<string>(), evalElement, summary);
+//				statisticizeEvalSpecifics(evalElement["markee_construct"].get<string>(), evalElement, summary);
 			}
 		}
 	}

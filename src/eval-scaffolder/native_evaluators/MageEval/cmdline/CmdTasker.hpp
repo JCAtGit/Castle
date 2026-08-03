@@ -31,7 +31,7 @@ class CmdTasker{
 		bool 					&nameEncodedMarkers,
 								&chiralMatching;
 		
-		const vector<string> 	args = {
+		const vector<string> 	args = {				// https://clang.llvm.org/doxygen/namespaceclang_1_1tooling.html#ac8449f1bfebe034a18b23c9f11efff43
 							        "-xc", 			// xc++ recovers nodes that C-mode sometimes discards for C files, but has slight differences in some ast representations.
 									"-w",
 						//			"-std=c17", 			// voor c alleen en dus voor -xc flag
@@ -89,7 +89,8 @@ class CmdTasker{
 					fileDecomData = file2string(entry.path());
 					mapKey = entry.path().filename().string();
 					
-					auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs(
+					// TODO: implement system libs for deeper semantic analysis
+					auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs( 
 						fileDecomData, 
 						args, 
 						mapKey

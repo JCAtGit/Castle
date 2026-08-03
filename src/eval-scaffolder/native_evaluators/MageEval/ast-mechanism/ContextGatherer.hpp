@@ -202,6 +202,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	void evalSRDeciderP(Stmt *node, json *findings){
 		switch(node->getStmtClass()){
 			default: 						generalStmtRecorder(node, findings); 	break;
+//			case Stmt::CaseStmtClass:		caseStmtRecorder(node, findings);		break;
 			case Stmt::DeclStmtClass: 		declStmtRecorder(node, findings); 		break;
 			case Stmt::RecoveryExprClass: 	recoveryExprRecorder(node, findings); 	break;
 			case Stmt::CallExprClass:		callExprRecorder(node, findings); 		break;
@@ -348,6 +349,23 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 		return false;
 	}
 
+	bool caseStmtRecorder(Stmt *node, json *findings){
+		auto cast_node = llvm::cast<CaseStmt>(node);
+		(*findings)["properties"]["has_markee"] = true;
+		
+		Expr *LHS = cast_node->getLHS();
+		Expr *RHS = cast_node->getRHS();
+		
+		(*findings)["properties"]["sub_stmt_class"] = cast_node->getSubStmt()->getStmtClassName();
+		(*findings)["properties"]["lhs_is_value_dependent"] = LHS->isValueDependent();
+		(*findings)["properties"]["is_gnu_range"] = cast_node->caseStmtIsGNURange();
+		if(cast_node->caseStmtIsGNURange()){
+			(*findings)["properties"]["rhs_is_value_dependent"] = RHS->isValueDependent();
+		}
+		
+		return false;
+	}
+	
 	bool forStmtRecorder(Stmt *node, json *findings){
 		auto cast_node = llvm::cast<ForStmt>(node);
 		(*findings)["properties"]["has_markee"] = true;

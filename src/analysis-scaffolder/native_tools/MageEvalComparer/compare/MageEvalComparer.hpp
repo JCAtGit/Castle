@@ -66,7 +66,7 @@ class MageEvalComparer{
 		}
 	
 		/**
-		 *	
+		 *	Extracts characteristics of the associated binary of some codebase
 		 */
 		void gatherBinaryCharacteristics(){
 			string radareDataStringHolder, diecDataStringHolder;
