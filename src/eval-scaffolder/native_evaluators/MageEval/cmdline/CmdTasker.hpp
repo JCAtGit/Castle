@@ -89,7 +89,7 @@ class CmdTasker{
 					fileDecomData = file2string(entry.path());
 					mapKey = entry.path().filename().string();
 					
-					// TODO: implement system libs for deeper semantic analysis
+					// TODO: implement lib detection for semantic analysis
 					auto astDecomUnit = clang::tooling::buildASTFromCodeWithArgs( 
 						fileDecomData, 
 						args, 

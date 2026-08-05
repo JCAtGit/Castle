@@ -4,6 +4,7 @@ add_executable(DecomScaffolder src/decom-scaffolder/main.cpp)
 add_executable(EvalScaffolder src/eval-scaffolder/main.cpp)
 add_executable(InstrumentationScaffolder src/instrumentation-scaffolder/main.cpp)
 add_executable(AnalysisScaffolder src/analysis-scaffolder/main.cpp)
+add_executable(ValidationScaffolder src/validation-scaffolder/main.cpp)
 
 add_executable(Mage src/instrumentation-scaffolder/native-instrumentations/mage/main.cpp)
 add_executable(MageEval src/eval-scaffolder/native_evaluators/MageEval/main.cpp)

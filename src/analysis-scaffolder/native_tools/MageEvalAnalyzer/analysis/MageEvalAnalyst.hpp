@@ -2,8 +2,6 @@
 #include <string>
 #include "nlohmann/json.hpp"
 #include "json.hpp"
-#include "findings.hpp"
-#include "eval.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -35,8 +33,6 @@ class MageEvalAnalyst{
 				auto &nodeOracleStats = summary["constructs"][oracleData["ASTNode"].get<string>()];
 				
 				incrementJSONEntry(nodeOracleStats["oracleTotal"]);
-//				statisticizeFindingSpecifics(oracleData["ASTNode"].get<string>(), finding, summary);
-				
 				auto &recoveredAsMarkee= nodeOracleStats["recoveredAsMarkee"];
 				if(finding["decom"].empty()){
 					if(nodeOracleStats["viableComparisons"].is_null()){
@@ -113,7 +109,6 @@ class MageEvalAnalyst{
 					}
 					incrementJSONEntry(summary["metadata"]["deterioratedConstructsTotal"]);
 				}
-//				statisticizeEvalSpecifics(evalElement["markee_construct"].get<string>(), evalElement, summary);
 			}
 		}
 	}
@@ -144,14 +139,11 @@ class MageEvalAnalyst{
 				constructData["P(X)"] = 0;
 				constructData["VAR(X)"] = 0;
 			}
-			
-//			stochasticizeFindingSpecifics
 		}
 		if(summary.contains("metadata")){
 			summary["metadata"]["P(X)"] 	= summary["metadata"]["recoveredConstructsTotal"].get<double>() / summary["metadata"]["viableComparisons"].get<double>();
 			summary["metadata"]["VAR(X)"] 	= summary["metadata"]["P(X)"].get<double>() * (1 - summary["metadata"]["P(X)"].get<double>());
 		}
-		
 	}
 };
 
