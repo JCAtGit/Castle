@@ -10,6 +10,8 @@ add_executable(Mage src/instrumentation-scaffolder/native-instrumentations/mage/
 add_executable(MageEval src/eval-scaffolder/native_evaluators/MageEval/main.cpp)
 add_executable(MageEvalAnalyzer src/analysis-scaffolder/native_tools/MageEvalAnalyzer/main.cpp)
 add_executable(MageEvalComparer src/analysis-scaffolder/native_tools/MageEvalComparer/main.cpp)
+add_executable(MageValidator src/instrumentation-scaffolder/native-instrumentations/mage/main.cpp)
+
 
 #add_executable(PathParser src/prototype/PathParser/main.cpp)
 #add_executable(PseudoCVisitor src/prototype/PseudoCVisitor/main.cpp)

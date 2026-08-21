@@ -87,7 +87,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				markerSignature 	= 	markerFormatCfg["paramSignature"].get<string>();
 				headerInclusion 	=   markerFormatCfg["headerInclusionDirective"].get<string>();
 				definitionFilename 	=	markerFormatCfg["definitionFileName"].get<string>();
-				lastStart = idCounter;
+				lastStart 			= 	idCounter;
 			}
 	
 			/**
@@ -144,10 +144,10 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				StringRef FilePath = SM.getFilename(SM.getLocForStartOfFile(SM.getMainFileID()));	
 				if(!filesystem::exists(outputPath)){filesystem::create_directories(outputPath.parent_path());}
 				std::error_code EC;
-				llvm::raw_fd_ostream OutFile(outputPath.string(),EC, llvm::sys::fs::OF_Text);
+				llvm::raw_fd_ostream outFile(outputPath.string(),EC, llvm::sys::fs::OF_Text);
 				if (EC) {llvm::errs() << "commitToSingleFile: error opening output file: " << EC.message() << "\n"; return;}
-				rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(OutFile);
-				OutFile.close();	
+				rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(outFile);
+				outFile.close();	
 			}
 			
 			/**
@@ -170,23 +170,20 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 				filesystem::path outPath = outputDir / filesystem::relative(FilePath.str(), inputDir);
 				if(!filesystem::exists(outPath)){filesystem::create_directories(outPath.parent_path());}
 				std::error_code EC;
-				llvm::raw_fd_ostream OutFile(outPath.string(),EC, llvm::sys::fs::OF_Text);
+				llvm::raw_fd_ostream outFile(outPath.string(),EC, llvm::sys::fs::OF_Text);
 				if (EC) {llvm::errs() << "commitToQueueFile: error opening output file: " << EC.message()<< "\n"; return;}
-				rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(OutFile);
-				OutFile.close();	
+				rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(outFile);
+				outFile.close();	
 			}
 		
 		bool VisitStmt(Stmt *S) {
 			if (SM.isInMainFile(S->getBeginLoc())){				
 				//-- Start marker safety checks
 				if(!stmtHasValidChildCriteria(S)){return true;}
-//				if (macroRecorder->hasOverlap(S->getSourceRange())) {
-//					return true;
-//				}
-				
+
 				unsigned stmtStart = SM.getFileOffset(SM.getSpellingLoc(S->getBeginLoc()));
 				if (macroRecorder->isOffsetInsideMacro(stmtStart)) {
-				    return true;   // cannot inject before – start is inside a macro
+				    return true;   // cannot inject before, because start is inside a macro
 				}
 
 				//-- Clang Macro expansion id check.
@@ -223,16 +220,14 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			return true;
 		}
 
+		
+//------	Declarations	------
 		bool VisitDecl(Decl *D){
 			if (SM.isInMainFile(D->getLocation())){
-				//-- Section: Preprocessor directives check
-//				if (macroRecorder->hasOverlap(D->getSourceRange())) {
-//					return true;
-//				}
-
-				unsigned stmtStart = SM.getFileOffset(SM.getSpellingLoc(D->getBeginLoc()));
-				if (macroRecorder->isOffsetInsideMacro(stmtStart)) {
-				    return true;   // cannot inject before – start is inside a macro
+				unsigned declStart = SM.getFileOffset(SM.getSpellingLoc(D->getBeginLoc()));
+				
+				if (macroRecorder->isOffsetInsideMacro(declStart)) {
+				    return true;   // inside a macro
 				}
 				
 				// Clang Macro expansion id check.
@@ -254,9 +249,6 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			return true;
 		}
 		
-//------	Declarations	------
-		void processDecl(Decl* D) {}
-		
 		/**
 		 * TODO: Safe inline removals:
 		 * https://stackoverflow.com/questions/79589301/will-removal-of-all-inline-keywords-from-my-code-leave-my-c-program-semantical
@@ -265,16 +257,6 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		 * https://clang.llvm.org/docs/AttributeReference.html#optnone
 		 */
 		void processFunctionDecl(FunctionDecl* FD){
-			unsigned fdStart = SM.getFileOffset(SM.getSpellingLoc(FD->getBeginLoc()));
-			if (macroRecorder->isOffsetInsideMacro(fdStart)) {
-			    return;   // cannot inject before – start is inside a macro
-			}
-//			SourceLocation Loc = FD->getBeginLoc();
-//			if (context.getSourceManager().isMacroBodyExpansion(Loc) || 
-//			    context.getSourceManager().isMacroArgExpansion(Loc)) {
-//			    return; // Do not textually modify functions declared via macro trickery
-//			}
-			
 			addOrCreateGNUOptnone(FD, rewriter, SM, CI.getLangOpts());			
 		}
 		
@@ -284,7 +266,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			for (const auto &Parent : Parents) {
 				if (const auto *ParentStmt = Parent.get<Stmt>()) {
 					// If parent node is one of the following, then we skip the marking.
-					// Otherwise we mark the parameters within these constructs, leading to invalid syntax.
+					// Otherwise we wrongly mark the parameters within these constructs, leading to invalid syntax.
 					if(isa<ForStmt>(ParentStmt)){return;} 
 					else if (isa<IfStmt>(ParentStmt)) {return;} 
 					else if (isa<SwitchStmt>(ParentStmt)) {return;} 
@@ -342,6 +324,7 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		
 		/**
 		 * These markers statements are unreachable, but the static analyzer does not signal any breaking errors.
+		 * Compilers can discard these upon assembly generation.
 		 */
 		void processCaseStmt(CaseStmt* CS){
 			rewriter.InsertText(

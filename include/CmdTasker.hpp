@@ -33,15 +33,15 @@ class CmdTasker {
 	 */
 	void loadConfigs(){
 		cout << "Importing JSON configs.\n";
-	   	ifstream bt_config_file(pt_configPath);
-		ifstream bs_config_file(ps_configPath);
-	   	if (!(bt_config_file.is_open() && bs_config_file.is_open())) {
+	   	ifstream pt_config_file(pt_configPath);
+		ifstream ps_config_file(ps_configPath);
+	   	if (!(pt_config_file.is_open() && ps_config_file.is_open())) {
 	    	cerr << "Error: Could not open required config files, see the source json folder for details." << "\n";
 	   		return;
 	   	}
 	   	try {
-	    	pt_configData = json::parse(bt_config_file);
-			ps_config_data = json::parse(bs_config_file);
+	    	pt_configData = json::parse(pt_config_file);
+			ps_config_data = json::parse(ps_config_file);
 	   	} catch (const json::parse_error& e) {
 	    	cerr << "Parse error: " << e.what() << "\n";
 	    	return;
@@ -66,7 +66,7 @@ class CmdTasker {
 	}
 	
 	/**
-	 * Adds config-specified static flags to the pipeline command, appends before first argument.
+	 *  Adds config-specified static flags to the pipeline command, appends before first argument.
 	 *	@param command 			the invoked command by the pipeline
  	 * 	@param dt_config_data	tool config data
 	 */

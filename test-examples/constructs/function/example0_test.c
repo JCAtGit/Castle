@@ -3,13 +3,13 @@
 #include <stdio.h>
 
 // Simple function with a single return
-__attribute__((optnone)) int add(int a, int b) { return a + b; }
+int add(int a, int b) { return a + b; }
 
 // Void function with no return
-__attribute__((optnone)) void print_hello(void) { printf("Hello\n"); }
+void print_hello(void) { printf("Hello\n"); }
 
 // Function with multiple early returns
-__attribute__((optnone)) int max(int a, int b) {
+int max(int a, int b) {
   if (a > b) {
     return a;
   }
@@ -17,7 +17,7 @@ __attribute__((optnone)) int max(int a, int b) {
 }
 
 // Function with a return inside a loop
-__attribute__((optnone)) int sum_to_n(int n) {
+int sum_to_n(int n) {
 
   int total = 0;
   for (int i = 1; i <= n; i++) {
@@ -27,7 +27,7 @@ __attribute__((optnone)) int sum_to_n(int n) {
 }
 
 // Function with a nested block and a return
-__attribute__((optnone)) int factorial(int n) {
+int factorial(int n) {
   if (n <= 1) {
     return 1;
   }
@@ -36,12 +36,12 @@ __attribute__((optnone)) int factorial(int n) {
 }
 
 // Function with a compound statement but single line inside
-__attribute__((optnone)) void do_nothing(void) {
+void do_nothing(void) {
   ; // null statement
 }
 
 // Function with a large compound body (simulated)
-__attribute__((optnone)) void print_multi(int times) {
+void print_multi(int times) {
   for (int i = 0; i < times; i++) {
     printf("%d ", i);
   }
@@ -49,10 +49,10 @@ __attribute__((optnone)) void print_multi(int times) {
 }
 
 // Static inline function (C99 or GNU)
-__attribute__((optnone)) static inline int square(int x) { return x * x; }
+static inline int square(int x) { return x * x; }
 
 // Function with a return statement inside a switch
-__attribute__((optnone)) char *weekday_name(int d) {
+char *weekday_name(int d) {
   switch (d) {
   case 1:
     return "Monday";
@@ -75,7 +75,7 @@ __attribute__((optnone)) char *weekday_name(int d) {
 
 // Function returning void with multiple return statements (C allows void
 // returns)
-__attribute__((optnone)) void check_positive(int x) {
+void check_positive(int x) {
   if (x > 0) {
     printf("positive\n");
     return;
@@ -84,7 +84,7 @@ __attribute__((optnone)) void check_positive(int x) {
 }
 
 // Main function with parameters and return
-__attribute__((optnone)) int main(int argc, char **argv) {
+int main(int argc, char **argv) {
   printf("add(3,4) = %d\n", add(3, 4));
   print_hello();
   printf("max(5,2) = %d\n", max(5, 2));

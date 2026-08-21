@@ -71,7 +71,6 @@ void calcConfidenceInterval(long double pi, long double pj, int i, int j, long d
 	CIMatrix.at(j, i) = "-" + oss0.str() + " +/- " + oss1.str();
 }
 
-
 /**
  *	Calculates the PooledSE for the two proportions test.
  *	Applicable to Bernouilli/Binomial distributions.

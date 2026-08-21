@@ -11,6 +11,8 @@ using namespace clang;
 using namespace std;
 
 /**
+ * 	TODO: Decouple hardcoded attributes enhancements and make flexible for multiple optimization options.
+ *
  *	Checks if a FunctionDecl has conflicting attributes.
  *	If attributes conflicting with directives to promote no optimization are found, the FunctionDecl is left untouched.
  * 	In other cases, the attributes will be added.
