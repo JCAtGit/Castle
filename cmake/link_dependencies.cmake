@@ -45,7 +45,8 @@ link_libraries(
     clang-cpp
     LLVM
     nlohmann_json::nlohmann_json
-	CLI11::CLI11   
+	CLI11::CLI11
+	gtest_main
 )
 
 include_directories(

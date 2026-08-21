@@ -1,0 +1,1 @@
+add_executable(noOptAttributeTests src/instrumentation-scaffolder/native-instrumentations/mage/tests/noOptAttributeTests.cpp)

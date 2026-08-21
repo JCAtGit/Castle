@@ -13,8 +13,9 @@ using namespace nlohmann;
 using namespace std;
 
 /**
- * TODO: Decouple clang-formatting from artifact?
- *
+ * TODO: 
+ *		Decouple clang-formatting from artifact.
+ *		Refactor toolargs to configurable settings format.
  *
  */
 
@@ -38,13 +39,16 @@ class CmdTasker{
 	json 						markerFormatCfg;
 	
 	vector<filesystem::path> 	pathQueue;
-	vector<string> 				toolArgs = {
+	vector<string> 				toolArgs = {	
 									"-xc", 			// Treat the input as C code, can use xc++ for cpp.
 									"-std=c17", 	// https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3176.pdf, depends on source.
 									"-nostdinc",	// Don't search for system headers
 									"-Wno-all",		// Suppress all warnings, W-prefix stands for warning.
 								};
 	
+	/**
+	 *	Loads the marker formats config file to determine marker settings.
+	 */
 	void loadConfigs(){
 		cout << "Importing JSON configs.\n";
 	   	ifstream markerFormatsFile(mrkrFormatsPath);
@@ -60,6 +64,9 @@ class CmdTasker{
 	  	}
 	}
 	
+	/**
+	 *	
+	 */
 	void setupTaskQueue(){
 		cout << "Setup File Queue Start. \n";
 		if(filesystem::is_regular_file(inputDirs)){
@@ -69,6 +76,10 @@ class CmdTasker{
 		}
 	}
 	
+	
+	/**
+	*	
+	*/
 	void enqueueTasks(){
 		for (const auto& entry : filesystem::recursive_directory_iterator(inputDirs)) {
 			if (entry.path().extension() == ".c") {
