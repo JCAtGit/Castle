@@ -19,7 +19,6 @@ using namespace clang;
 using namespace std;
 using namespace nlohmann;
 
-
 class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor> {
 	private:
 	public:
@@ -30,6 +29,7 @@ class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor> {
 		){}
 		
 		bool VisitStmt(Stmt* S){
+			// TODO? check marker count using metadata or unnecessary?
 			return true;
 		}
 		

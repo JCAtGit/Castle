@@ -12,12 +12,12 @@ using namespace clang;
 
 	/**
 	 *	Get previous sibling AST node, if any, within the Clang AST
-	 *	@param S	Current statement node to position against
-	 *	@param Ctx 	ASTContext of statement node
+	 *	@param S		Current statement node to position against
+	 *	@param context 	ASTContext of statement node
 	 */
-	const Stmt *getPreviousSibling(const Stmt *S, ASTContext &Ctx) {
+	const Stmt *getPreviousSibling(const Stmt *S, ASTContext &context) {
 		if (!S) return nullptr;
-	    auto Parents = Ctx.getParents(*S);
+	    auto Parents = context.getParents(*S);
 	    if (Parents.empty()) return nullptr;
 	    const CompoundStmt *Parent = Parents[0].get<CompoundStmt>();
 	    if (!Parent) return nullptr;
@@ -30,11 +30,11 @@ using namespace clang;
 	
 	/**
 	 *	Get next sibling AST node, if any, within the Clang AST
-	 *	@param S	Current statement node to position against
-	 *	@param Ctx 	ASTContext of statement node
+	 *	@param S		Current statement node to position against
+	 *	@param context 	ASTContext of statement node
 	 */
-	const Stmt *getNextSibling(const Stmt *S, ASTContext &Ctx) {
-	    auto Parents = Ctx.getParents(*S);
+	const Stmt *getNextSibling(const Stmt *S, ASTContext &context) {
+	    auto Parents = context.getParents(*S);
 	    if (Parents.empty()) return nullptr;
 	    const CompoundStmt *Parent = Parents[0].get<CompoundStmt>();
 	    if (!Parent) return nullptr;
@@ -48,6 +48,8 @@ using namespace clang;
 	/**
 	 *	Checks if we mark statements that do not disrupt the syntax.
 	 *	Sometimes DeclStmt and such can be present within condition clauses and such, which breaks upon marking.
+	 *	@param S		Current statement node to position against
+	 *	@param context 	ASTContext of statement node
 	 */
 	bool stmtHasValidParentCriteria(Stmt* S, ASTContext &context){
 		DynTypedNodeList Parents = context.getParents(*S);

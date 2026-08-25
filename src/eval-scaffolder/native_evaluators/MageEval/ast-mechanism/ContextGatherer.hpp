@@ -16,7 +16,7 @@ using namespace std;
  *	TODO: 
  *		- Record findings explicitly to dev files.
  *		- Include library during ast parsing of oracle, however the necessary libraries that need to be included depend on the build target.
- *			- analyse and/or record build details
+ *			- analyse and/or record build details instead of binary extraction?
  *			- derive necessary libraries from build details and include them
  */
 class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
@@ -109,8 +109,14 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	}
 	
 	/**
+	 *	TODO: 
+	 *		add detection for when debug information is disabled or absent.
+	 *		decouple nameEncodedMarkers, magestring from function definition.
+	 *
 	 *	Heuristic function to determine the identity of a marker function from a CallExpr.
 	 *	When nameEncodedMarkers are enable, indexes will extracted from the name instead.
+	 *	@param potentialMarker Investigated CallExpr for marker characteristics.
+	 *	@return -1 if unable to be identified as a marker.
 	 */
 	int getMageIndex(CallExpr* potentialMarker){
 		auto DC = potentialMarker->getDirectCallee();
@@ -136,6 +142,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	 *	For a given CallExpr, checks if it is a marker call.
 	 *	If it is found to be a marker, then the potential markee will be fetched.
 	 *	Then based on the type of the markee, the appropriate recorder will be selected.
+	 *	@param CE CallExpr that is selected for procession.
 	 */
 	void indexProcessor(CallExpr *CE){
 		if (selectedSM->isInMainFile(CE->getBeginLoc())){
@@ -173,6 +180,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	 *	The ClangAST parent context mechanism, did not work flawlessly between multiple AST's.
 	 *	The lazy-build mechanism loses its mapping when switching AST's and does not rebuild correctly.
 	 *	Custom parent tracking, embedded in the traversal mechanism ensures alternative access to parent context.
+	 *	@param S Statement that is pushed for tracking traversal heritage.
 	 */
 	bool TraverseStmt(Stmt *S) {
         parentStack.push_back(S);
@@ -184,6 +192,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	/**
 	 *	We expressly handle CallExpr visits, because only these can be potential markers.
 	 *	From there we can derive the markee, if any.
+	 *	@param CE CallExpr to process.
 	 */
 	bool VisitCallExpr(CallExpr *CE){
 		indexProcessor(CE); 
@@ -217,6 +226,10 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	}
 	
 	/* 		Statement Recorders - Non-Expr		*/
+	
+	/**
+	 *	Unhandled statements get generic recordings, could be used for diagnostics and surveying unhandled cases.
+	 */
 	bool generalStmtRecorder(Stmt *node, json *findings){
 		(*findings)["properties"]["has_markee"] = true;
 

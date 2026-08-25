@@ -1,8 +1,9 @@
 
-#include "MageAlpha.h"
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+
+#include "../switchMarkers/MageAlpha.h"
 
 __attribute__ ((
 noinline, used, noipa, optnone, optimize("-O0")
