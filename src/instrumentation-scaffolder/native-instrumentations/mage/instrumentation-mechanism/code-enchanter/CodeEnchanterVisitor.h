@@ -179,19 +179,21 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		bool VisitStmt(Stmt *S) {
 			if (SM.isInMainFile(S->getBeginLoc())){				
 				//-- Start marker safety checks
-				if(!stmtHasValidChildCriteria(S)){return true;}
+				if(!stmtHasValidChildCriteria(S)){return true;} // TODO: might be redundant
 
 				unsigned stmtStart = SM.getFileOffset(SM.getSpellingLoc(S->getBeginLoc()));
 				if (macroRecorder->isOffsetInsideMacro(stmtStart)) {
 				    return true;   // cannot inject before, because start is inside a macro
 				}
 
-				//-- Clang Macro expansion id check.
+				// Clang Macro expansion id check.
+				if(S->getBeginLoc().isMacroID() || S->getBeginLoc().isInvalid()){return true;}
 				DynTypedNodeList Parents = context.getParents(*S); // TODO: migrate to parentStack method?
 				for (const auto &Parent : Parents) {
 					if (Parent.getSourceRange().getBegin().isMacroID()) {return true;}
 				}
-				
+
+				// TODO: we should decouple format mode, thus the remove of this snippet is likely.
 				if(!clangFormatMode){
 					if(Parents.empty()) {
 						return true;
@@ -200,8 +202,8 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 					}
 				}
 				
-				if(S->getBeginLoc().isMacroID() || S->getBeginLoc().isInvalid()){return true;}
 				//-- End safety checks;
+				
 				switch (S->getStmtClass()) {
 					case Stmt::CallExprClass: 		processCallExpr(cast<CallExpr>(S)); 					break;
 					case Stmt::CaseStmtClass: 		processCaseStmt(cast<CaseStmt>(S)); 					break;
@@ -219,7 +221,6 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 			}
 			return true;
 		}
-
 		
 //------	Declarations	------
 		bool VisitDecl(Decl *D){

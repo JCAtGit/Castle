@@ -6,6 +6,7 @@
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <string>
+#include "clang/AST/Attr.h"
 
 #include "../instrumentation-mechanism/preprocessor/MacroExpansionRecorder.hpp"
 #include <filesystem>
@@ -13,12 +14,14 @@
 #include "json.hpp"
 #include "nlohmann/json.hpp"
 #include "paths.hpp"
+#include "../instrumentation-mechanism/preprocessor/attributes.hpp"
 
 using namespace clang;
 using namespace std;
 using namespace nlohmann;
 
 class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor> {
+	private:
 	public:
 		MyASTVisitor(
 			CompilerInstance &CI,
@@ -26,15 +29,13 @@ class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor> {
 			json &markerFormatCfg
 		){}
 		
-		bool VisitCallExpr(CallExpr *CE) {
+		bool VisitFunctionDecl(FunctionDecl *FD){
+			EXPECT_TRUE(!(hasAttrConflictsWithOptNone(FD) && FD->hasAttr<OptimizeNoneAttr>()));
 			return true;
 		}
-	private:
-	    
 };
 
 class MyASTAction: public ASTFrontendAction {
-	
 	private:		
 		MacroExpansionRecorder *macroRecorder = nullptr;
 		
@@ -61,12 +62,6 @@ class MyASTAction: public ASTFrontendAction {
 			
 			ASSERT_TRUE(filesystem::exists(markerFormatCfgPath));
 			loadJSON(markerFormatCfgPath, markerFormatCfg);	
-			
-			
-			
-			// collect instrumentation metadata
-			
-			// test
 			auto visitor = std::make_unique<MyASTVisitor>(CI, macroRecorder, markerFormatCfg);
 			visitor->TraverseDecl(CI.getASTContext().getTranslationUnitDecl());
 		}
@@ -114,6 +109,8 @@ protected:
 };
 
 /**
+ *	Test creation of instrumented file.
+ *	
  * 	Precondition: 
  *  Source codes with various instances of FunctionDecl.
  *	- no attributes
@@ -128,7 +125,6 @@ TEST_F(InstrumentationTest, InstrumentationTest) {
 	string cmdMage = "/home/user/Desktop/CCastle/CCastleRepository/build/cmake.run.linux.x86_64.Local/Mage";
 	string cmdMageGeneralFlags = "--on-copy --name_encoded_marker";
 	string cmdMageOutputFlag = "--output";
-	string cmdMageInstrumentCodeString = file2string(instrumentedDir + compilingTestFileName);
 	string cmdOutput;
 	
 	// compiling source file
@@ -143,10 +139,6 @@ TEST_F(InstrumentationTest, InstrumentationTest) {
 	execCommandAndCaptureOutput(cmdInput, cmdOutput);
 	ASSERT_TRUE(filesystem::exists(instrumentedDir + compilingTestFileName));
 	
-	// 	TODO: Traverse function decl and check attributes for conflicts.
-	//	unique_ptr<ASTFrontendAction> actionCompiles = std::make_unique<MyASTAction>();
-	//	clang::tooling::runToolOnCodeWithArgs(std::move(actionCompiles), cmdMageInstrumentCodeString, toolArgs, compilingTestFileName);
-	
 	// non-compiling source file
 	cmdInput = 
 		cmdMage 								+ " " + 
@@ -158,13 +150,26 @@ TEST_F(InstrumentationTest, InstrumentationTest) {
 	ASSERT_TRUE(filesystem::exists(testFileDir + nonCompilingTestFileName));
 	execCommandAndCaptureOutput(cmdInput, cmdOutput);
 	ASSERT_TRUE(filesystem::exists(instrumentedDir + nonCompilingTestFileName));
-	
-	// 	TODO: Traverse function decl and check attributes for conflicts.
-	//	unique_ptr<ASTFrontendAction> actionNotCompiles = std::make_unique<MyASTAction>();
-	//	clang::tooling::runToolOnCodeWithArgs(std::move(actionNotCompiles), cmdMageInstrumentCodeString, toolArgs, nonCompilingTestFileName);
 }
 
 /**
+ *	Continuation on the instrumentationtest to check for function attribute conflicts.
+ */
+TEST_F(InstrumentationTest, ASTAttrTest) {
+	string cmdMageInstrumentCodeString;
+
+	// Traverse function decl and check attributes for conflicts.
+	unique_ptr<ASTFrontendAction> actionCompiles = std::make_unique<MyASTAction>();
+	cmdMageInstrumentCodeString = file2string(instrumentedDir + compilingTestFileName);
+	clang::tooling::runToolOnCodeWithArgs(std::move(actionCompiles), cmdMageInstrumentCodeString, toolArgs, compilingTestFileName);
+	
+	unique_ptr<ASTFrontendAction> actionNotCompiles = std::make_unique<MyASTAction>();
+	cmdMageInstrumentCodeString = file2string(instrumentedDir + nonCompilingTestFileName);
+	clang::tooling::runToolOnCodeWithArgs(std::move(actionNotCompiles), cmdMageInstrumentCodeString, toolArgs, nonCompilingTestFileName);
+}
+
+/**
+ *	Compilation test:
  *	If the original source compiles, then the instrumented source should compile.
  *	Else if the original does not compile, then the instrumented source should not compile.  
  *

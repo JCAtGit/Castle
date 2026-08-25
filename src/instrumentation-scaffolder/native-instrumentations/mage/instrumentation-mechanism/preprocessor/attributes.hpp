@@ -11,6 +11,27 @@ using namespace clang;
 using namespace std;
 
 /**
+ *	Attribute documentation:
+ *	gcc: 	https://gcc.gnu.org/onlinedocs/gcc-15.1.0/gcc/Common-Function-Attributes.html
+ *	clang:	https://clang.llvm.org/docs/AttributeReference.html#optnone
+ *	msvc:	https://learn.microsoft.com/en-us/cpp/c-language/function-attributes?view=msvc-170
+ * 	
+ *	Some attributes were found through searching the IDE API.
+ */
+
+// Conflict detection with attributes that are incompatible with optnone and similar or already has something like optnone.
+bool hasAttrConflictsWithOptNone(FunctionDecl *FD){
+	return 	FD->hasAttr<MinSizeAttr>() 		||
+			FD->hasAttr<AlwaysInlineAttr>() || 
+			FD->hasAttr<NakedAttr>() 		||
+			FD->hasAttr<WeakAttr>() 		|| 
+			FD->hasAttr<WeakRefAttr>() 		|| 
+			FD->hasAttr<GNUInlineAttr>() 	|| 
+			FD->isInlineSpecified() 		|| 
+			FD->isInlined() 				;
+}
+
+/**
  * 	TODO: Decouple hardcoded attributes enhancements and make flexible for multiple optimization options.
  *
  *	Checks if a FunctionDecl has conflicting attributes.
@@ -23,31 +44,26 @@ void addOrCreateGNUOptnone(
 	const SourceManager &SM, 
 	const LangOptions &LangOpts
 ) {
-    if (
-		// Conflict detection with attributes that are incompatible with optnone.
-		FD->hasAttr<MinSizeAttr>() 		||
-		FD->hasAttr<OptimizeNoneAttr>() || 
-		FD->hasAttr<AlwaysInlineAttr>() || 
-		FD->hasAttr<NakedAttr>() 		||
-		FD->hasAttr<WeakAttr>() 		|| 
-		FD->hasAttr<WeakRefAttr>() 		|| 
-		FD->hasAttr<GNUInlineAttr>() 	|| 
-		FD->isInlineSpecified() 		|| 
-		FD->isInlined() 				||
-		
-		// Only rewrite if this is a function definition (has a body) AND it is at file scope.
+	// non macro checks
+    if (hasAttrConflictsWithOptNone(FD)				||
+		FD->hasAttr<OptimizeNoneAttr>() ||
+
+		// Only rewrite if this is not a function declaration only, so we don't cause unexpected effects with later definitions.
 		!FD->isThisDeclarationADefinition() 				|| 
-		!FD->getLexicalDeclContext()->isFileContext() 		||
 		
-		// Additionally, ensure the source location is in a file with a recognized extension (e.g., .c or .h) but not in a system header.
+		// TODO: misschien is de mainfile check al genoeg, dan kunnen de Filecontext en SM checks weg.
+		// Should be in file scope
+		!FD->getLexicalDeclContext()->isFileContext() 		||
+		// Ensure the source location is not in a system header.
 		SM.isInSystemHeader(FD->getLocation()) 		|| 
+		SM.isInExternCSystemHeader(FD->getLocation())	||
 		
 		// Reject if the declaration is inside a struct/union (shouldn't happen for FunctionDecl, but double-check)
-		SM.isInExternCSystemHeader(FD->getLocation())	||
 		FD->getDeclContext()->isRecord()
 	) {return;}
 	
     // Helper to check if a source location is safe for rewriting (not inside a macro expansion and maps to a file location).
+	// TODO: evaluate if macro checks are still necessary when we do this at the decl traversal level?
     auto isLocationSafe = [&](SourceLocation Loc) -> bool {
         if (Loc.isInvalid()) return false;
         if (Loc.isMacroID()) return false;

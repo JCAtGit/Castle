@@ -1,1 +1,2 @@
 add_executable(noOptAttributeTests src/instrumentation-scaffolder/native-instrumentations/mage/tests/noOptAttributeTests.cpp)
+add_executable(statementTests src/instrumentation-scaffolder/native-instrumentations/mage/tests/statementTests.cpp)

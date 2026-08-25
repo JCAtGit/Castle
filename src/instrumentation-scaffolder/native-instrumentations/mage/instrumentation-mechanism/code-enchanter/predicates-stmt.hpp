@@ -10,6 +10,11 @@
 using namespace std;
 using namespace clang;
 
+	/**
+	 *	Get previous sibling AST node, if any, within the Clang AST
+	 *	@param S	Current statement node to position against
+	 *	@param Ctx 	ASTContext of statement node
+	 */
 	const Stmt *getPreviousSibling(const Stmt *S, ASTContext &Ctx) {
 		if (!S) return nullptr;
 	    auto Parents = Ctx.getParents(*S);
@@ -17,13 +22,17 @@ using namespace clang;
 	    const CompoundStmt *Parent = Parents[0].get<CompoundStmt>();
 	    if (!Parent) return nullptr;
 	
-	    // Use 'auto' to deduce the correct type: ArrayRef<Stmt*>
 	    auto Children = Parent->body();
 	    auto It = llvm::find(Children, S);
 	    if (It == Children.end() || It == Children.begin()) return nullptr;
 	    return *(It - 1);
 	}
 	
+	/**
+	 *	Get next sibling AST node, if any, within the Clang AST
+	 *	@param S	Current statement node to position against
+	 *	@param Ctx 	ASTContext of statement node
+	 */
 	const Stmt *getNextSibling(const Stmt *S, ASTContext &Ctx) {
 	    auto Parents = Ctx.getParents(*S);
 	    if (Parents.empty()) return nullptr;
@@ -36,7 +45,10 @@ using namespace clang;
 	    return *(It + 1);
 	}
 	
-// Implement and replace as extraction for statements
+	/**
+	 *	Checks if we mark statements that do not disrupt the syntax.
+	 *	Sometimes DeclStmt and such can be present within condition clauses and such, which breaks upon marking.
+	 */
 	bool stmtHasValidParentCriteria(Stmt* S, ASTContext &context){
 		DynTypedNodeList Parents = context.getParents(*S);
 		for (const auto &Parent : Parents) {
@@ -50,75 +62,25 @@ using namespace clang;
 				else if (isa<AttributedStmt>(ParentStmt)) {return false;}
 			}
 		}
-		
-		//TODO Check parents until root for recoveryExpr type and ...
 		return true;
 	}
 	
-	// Check DeclRefExpr and recoveryExpr
+	/**
+	 *	TODO: Refactor: maybe existing macro check is enough, making this function redundant, but could be used to check for other cases.
+	 *	Checks if child might contain nodes that could indicate macros or external unresolved dependencies that mess with marking.
+	 */
 	bool stmtHasValidChildCriteria(Stmt* S){
 		auto children = S->children();
-		
 		for(auto child:children){
-			if (child == nullptr) {
-//				llvm::errs() << "Null child in " << S->getStmtClassName() << "\n";
+			if (child == nullptr) { // Null child
 			    continue;
 			}
 //			if(isa<ImplicitCastExpr>(child)){return false;}
 			if(isa<RecoveryExpr>(child)){
-//				cout << S->getStmtClassName() << " TEST \n";
 				return false;
 			}
 //			if(isa<DeclRefExpr>(child)){return false;}
 		}
 		return true;
 	}
-	
-	bool stmtHasValidPrevSibling(Stmt* S, ASTContext &context){
-		const Stmt *prev = getPreviousSibling(S, context);
-		auto children = S->children();
-		if(prev == nullptr){return true;}
-		if(isa<ImplicitCastExpr>(prev)){
-			return false;
-		}
-		
-		for(auto *child:children){
-			if(isa<ImplicitCastExpr>(child)){return false;}
-		}
-		
-		return true;
-	}
-	
-	bool stmtHasValidNextSibling(){
-		return false;
-	}
-	
-	bool stmtHasValidSurroundings(){
-		return false;
-	}
-	
-	bool hasUnsafeAncestor(Stmt *S, ASTContext &Context) {
-	    llvm::SmallVector<DynTypedNode, 8> Stack;
-	    Stack.push_back(DynTypedNode::create(*S));
-	    while (!Stack.empty()) {
-	        DynTypedNode N = Stack.pop_back_val();
-	        // Check this node
-	        if (const Stmt *St = N.get<Stmt>()) {
-	            if (isa<RecoveryExpr>(St) ||
-	                isa<DependentScopeDeclRefExpr>(St) ||
-	                isa<UnresolvedLookupExpr>(St) ||
-	                isa<CXXDependentScopeMemberExpr>(St)) {
-	                return true;
-	            }
-	            if (St->getBeginLoc().isMacroID()) return true;
-	        }
-	        // Add parents to stack
-	        for (const auto &Parent : Context.getParents(N)) {
-	            Stack.push_back(Parent);
-	        }
-	    }
-	    return false;
-	}
-	
-	
 	

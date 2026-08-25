@@ -12,7 +12,6 @@ project (
 	DESCRIPTION "C Assisted Source Translation Language Evaluator"
 	)
 
-	
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
