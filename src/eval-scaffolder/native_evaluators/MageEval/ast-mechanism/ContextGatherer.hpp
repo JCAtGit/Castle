@@ -56,7 +56,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	oracleSM(&oracleAST->getSourceManager()), 
 	decomSM(&decomAST->getSourceManager())
 	{
-		magestring = markerFormat["name"].get<string>();;
+		magestring = markerFormat["name"].get<string>();
 	}
 	
 	ContextGatherer(

@@ -16,7 +16,8 @@ using namespace nlohmann;
  *		Develop function to detect markers without debug information. Probably involves some assumptions.
  */
 
- 
+ using namespace std;
+ using namespace clang;
  
 /**
  *	TODO: 
@@ -28,11 +29,12 @@ using namespace nlohmann;
  *	@param potentialMarker 		Investigated CallExpr for marker characteristics.
  *	@param markerFormatConfig	
  */
-int getMageIndex(CallExpr* potentialMarker, json markerFormatConfig){
+int getMageIndex(CallExpr* potentialMarker, json &markerFormatConfig, bool nameEncodedMarkers = true){
 	auto DC = potentialMarker->getDirectCallee();
 	if (!DC) return -1;
 	string namestring = DC->getNameInfo().getName().getAsString();
-
+	string magestring = markerFormatConfig["name"].get<string>();
+	
 	if (namestring.compare(0, magestring.length(), magestring) != 0){return -1;} 		
 	if (potentialMarker->getNumArgs() > 0 && !nameEncodedMarkers){
 		auto IL = dyn_cast<IntegerLiteral>(potentialMarker->getArg(0)->IgnoreImpCasts());
