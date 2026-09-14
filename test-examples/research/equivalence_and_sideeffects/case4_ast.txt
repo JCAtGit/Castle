@@ -1,0 +1,21 @@
+Dumping main:
+FunctionDecl 0x56270f2664a8 <case4.c:11:1, line:18:1> line:11:5 main 'int ()'
+`-CompoundStmt 0x56270f266850 <col:12, line:18:1>
+  |-DeclStmt 0x56270f2665d0 <line:12:5, col:19>
+  | `-VarDecl 0x56270f266568 <col:5, col:18> col:18 i 'volatile int'
+  |-DeclStmt 0x56270f266668 <line:13:5, col:34>
+  | `-VarDecl 0x56270f266600 <col:5, col:18> col:18 used print_hash_value 'volatile int'
+  |-CallExpr 0x56270f266708 <line:14:5, col:23> 'void'
+  | |-ImplicitCastExpr 0x56270f2666f0 <col:5> 'void (*)(int)' <FunctionToPointerDecay>
+  | | `-DeclRefExpr 0x56270f266680 <col:5> 'void (int)' Function 0x56270f265fa0 'func_sideeffect0' 'void (int)'
+  | `-IntegerLiteral 0x56270f2666a0 <col:22> 'int' 0
+  |-CallExpr 0x56270f266790 <line:15:5, col:23> 'void'
+  | |-ImplicitCastExpr 0x56270f266778 <col:5> 'void (*)(int)' <FunctionToPointerDecay>
+  | | `-DeclRefExpr 0x56270f266738 <col:5> 'void (int)' Function 0x56270f266258 'func_sideeffect1' 'void (int)'
+  | `-IntegerLiteral 0x56270f266758 <col:22> 'int' 1
+  |-BinaryOperator 0x56270f266800 <line:16:5, col:24> 'int' '='
+  | |-DeclRefExpr 0x56270f2667c0 <col:5> 'volatile int' lvalue Var 0x56270f266600 'print_hash_value' 'volatile int'
+  | `-IntegerLiteral 0x56270f2667e0 <col:24> 'int' 0
+  `-ReturnStmt 0x56270f266840 <line:17:5, col:12>
+    `-IntegerLiteral 0x56270f266820 <col:12> 'int' 0
+

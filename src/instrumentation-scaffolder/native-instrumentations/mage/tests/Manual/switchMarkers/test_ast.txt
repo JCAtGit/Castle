@@ -1,0 +1,62 @@
+Dumping __remaining:
+ParmVarDecl 0x55ecbca7bf08 </usr/include/time.h:282:9, col:26> col:26 __remaining 'struct timespec *'
+
+Dumping main:
+FunctionDecl 0x55ecbcacc978 <test.c:32:1, line:48:1> line:34:1 main 'int ()'
+|-CompoundStmt 0x55ecbcacd488 <col:8, line:48:1> MathErrno=1
+| |-CallExpr 0x55ecbcaccca0 <line:35:3, col:19> 'void' MathErrno=1
+| | |-ImplicitCastExpr 0x55ecbcaccc80 <col:3> 'void (*)(unsigned int)' <FunctionToPointerDecay> MathErrno=1
+| | | `-DeclRefExpr 0x55ecbcaccaa0 <col:3> 'void (unsigned int)' Function 0x55ecbcab53f0 'srand' 'void (unsigned int)'
+| | `-ImplicitCastExpr 0x55ecbcacccd8 <col:9, col:18> 'unsigned int' <IntegralCast> MathErrno=1
+| |   `-CallExpr 0x55ecbcaccbf0 <col:9, col:18> 'time_t':'long' MathErrno=1
+| |     |-ImplicitCastExpr 0x55ecbcaccbd0 <col:9> 'time_t (*)(time_t *)' <FunctionToPointerDecay> MathErrno=1
+| |     | `-DeclRefExpr 0x55ecbcaccac0 <col:9> 'time_t (time_t *)' Function 0x55ecbca78dd0 'time' 'time_t (time_t *)'
+| |     `-ImplicitCastExpr 0x55ecbcaccc28 </usr/bin/../lib/clang/21/include/__stddef_null.h:26:14, col:23> 'time_t *' <NullToPointer> MathErrno=1
+| |       `-ParenExpr 0x55ecbcaccb48 <col:14, col:23> 'void *'
+| |         `-CStyleCastExpr 0x55ecbcaccb18 <col:15, col:22> 'void *' <NullToPointer> MathErrno=1
+| |           `-IntegerLiteral 0x55ecbcaccae0 <col:22> 'int' 0
+| |-DeclStmt 0x55ecbcacce20 <test.c:36:3, col:17>
+| | `-VarDecl 0x55ecbcaccd10 <col:3, col:16> col:7 used x 'int' cinit
+| |   `-CallExpr 0x55ecbcaccdf0 <col:11, col:16> 'int' MathErrno=1
+| |     `-ImplicitCastExpr 0x55ecbcaccdd0 <col:11> 'int (*)(void)' <FunctionToPointerDecay> MathErrno=1
+| |       `-DeclRefExpr 0x55ecbcaccd78 <col:11> 'int (void)' Function 0x55ecbcab5248 'rand' 'int (void)'
+| `-SwitchStmt 0x55ecbcacce78 <line:37:3, line:47:3>
+|   |-ImplicitCastExpr 0x55ecbcacce58 <line:37:11> 'int' <LValueToRValue> MathErrno=1
+|   | `-DeclRefExpr 0x55ecbcacce38 <col:11> 'int' lvalue Var 0x55ecbcaccd10 'x' 'int'
+|   `-CompoundStmt 0x55ecbcacd440 <col:14, line:47:3>
+|     |-CallExpr 0x55ecbcaccf30 <line:38:3, col:18> 'void' MathErrno=1
+|     | |-ImplicitCastExpr 0x55ecbcaccf10 <col:3> 'void (*)(int)' <FunctionToPointerDecay> MathErrno=1
+|     | | `-DeclRefExpr 0x55ecbcaccea0 <col:3> 'void (int)' Function 0x55ecbcacb740 'mage_alpha83' 'void (int)'
+|     | `-IntegerLiteral 0x55ecbcaccec0 <col:16> 'int' 83
+|     |-CaseStmt 0x55ecbcaccfa0 <line:39:3, line:40:17>
+|     | |-ConstantExpr 0x55ecbcaccf88 <line:39:8> 'int'
+|     | | `-IntegerLiteral 0x55ecbcaccf68 <col:8> 'int' 1
+|     | `-CallExpr 0x55ecbcacd0b0 <line:40:3, col:17> 'int' MathErrno=1
+|     |   |-ImplicitCastExpr 0x55ecbcacd090 <col:3> 'int (*)(const char *, ...)' <FunctionToPointerDecay> MathErrno=1
+|     |   | `-DeclRefExpr 0x55ecbcaccfc8 <col:3> 'int (const char *, ...)' Function 0x55ecbca49738 'printf' 'int (const char *, ...)'
+|     |   `-ImplicitCastExpr 0x55ecbcacd108 <col:10> 'const char *' <NoOp> MathErrno=1
+|     |     `-ImplicitCastExpr 0x55ecbcacd0e8 <col:10> 'char *' <ArrayToPointerDecay> MathErrno=1
+|     |       `-StringLiteral 0x55ecbcacd020 <col:10> 'char[5]' lvalue "One\n"
+|     |-GotoStmt 0x55ecbcacd178 <line:41:3, col:8> 'label0' 0x55ecbcacd128
+|     |-BreakStmt 0x55ecbcacd190 <line:42:3>
+|     |-CallExpr 0x55ecbcacd1f8 <line:43:3, col:18> 'void' MathErrno=1
+|     | |-ImplicitCastExpr 0x55ecbcacd1d8 <col:3> 'void (*)(int)' <FunctionToPointerDecay> MathErrno=1
+|     | | `-DeclRefExpr 0x55ecbcacd198 <col:3> 'void (int)' Function 0x55ecbcacbc00 'mage_alpha84' 'void (int)'
+|     | `-IntegerLiteral 0x55ecbcacd1b8 <col:16> 'int' 84
+|     |-LabelStmt 0x55ecbcacd388 <line:44:3, line:45:25> 'label0'
+|     | `-CaseStmt 0x55ecbcacd268 <col:3, col:25>
+|     |   |-ConstantExpr 0x55ecbcacd250 <col:8> 'int'
+|     |   | `-IntegerLiteral 0x55ecbcacd230 <col:8> 'int' 2
+|     |   `-CallExpr 0x55ecbcacd310 <col:11, col:25> 'int' MathErrno=1
+|     |     |-ImplicitCastExpr 0x55ecbcacd2f0 <col:11> 'int (*)(const char *, ...)' <FunctionToPointerDecay> MathErrno=1
+|     |     | `-DeclRefExpr 0x55ecbcacd290 <col:11> 'int (const char *, ...)' Function 0x55ecbca49738 'printf' 'int (const char *, ...)'
+|     |     `-ImplicitCastExpr 0x55ecbcacd368 <col:18> 'const char *' <NoOp> MathErrno=1
+|     |       `-ImplicitCastExpr 0x55ecbcacd348 <col:18> 'char *' <ArrayToPointerDecay> MathErrno=1
+|     |         `-StringLiteral 0x55ecbcacd2b0 <col:18> 'char[5]' lvalue "Two\n"
+|     `-CallExpr 0x55ecbcacd408 <line:46:3, col:18> 'void' MathErrno=1
+|       |-ImplicitCastExpr 0x55ecbcacd3e8 <col:3> 'void (*)(int)' <FunctionToPointerDecay> MathErrno=1
+|       | `-DeclRefExpr 0x55ecbcacd3a8 <col:3> 'void (int)' Function 0x55ecbcacc058 'mage_alpha85' 'void (int)'
+|       `-IntegerLiteral 0x55ecbcacd3c8 <col:16> 'int' 85
+|-OptimizeNoneAttr 0x55ecbcacca20 <line:33:32>
+`-NoInlineAttr 0x55ecbcacca78 <./../switchMarkers/MageAlpha.h:3:15> Implicit
+

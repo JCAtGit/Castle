@@ -1,0 +1,19 @@
+Dumping main:
+FunctionDecl 0x55ca5ee9a2a8 <case3.c:11:1, line:17:1> line:11:5 main 'int ()'
+`-CompoundStmt 0x55ca5ee9a610 <col:12, line:17:1>
+  |-CallExpr 0x55ca5ee9a3d8 <line:12:5, col:23> 'void'
+  | |-ImplicitCastExpr 0x55ca5ee9a3c0 <col:5> 'void (*)(int)' <FunctionToPointerDecay>
+  | | `-DeclRefExpr 0x55ca5ee9a350 <col:5> 'void (int)' Function 0x55ca5ee99da0 'func_sideeffect0' 'void (int)'
+  | `-IntegerLiteral 0x55ca5ee9a370 <col:22> 'int' 0
+  |-DeclStmt 0x55ca5ee9a488 <line:13:5, col:19>
+  | `-VarDecl 0x55ca5ee9a420 <col:5, col:18> col:18 i 'volatile int'
+  |-CallExpr 0x55ca5ee9a4f8 <line:14:5, col:23> 'void'
+  | |-ImplicitCastExpr 0x55ca5ee9a4e0 <col:5> 'void (*)(int)' <FunctionToPointerDecay>
+  | | `-DeclRefExpr 0x55ca5ee9a4a0 <col:5> 'void (int)' Function 0x55ca5ee9a058 'func_sideeffect1' 'void (int)'
+  | `-IntegerLiteral 0x55ca5ee9a4c0 <col:22> 'int' 1
+  |-DeclStmt 0x55ca5ee9a5c8 <line:15:5, col:38>
+  | `-VarDecl 0x55ca5ee9a540 <col:5, col:37> col:18 print_hash_value 'volatile int' cinit
+  |   `-IntegerLiteral 0x55ca5ee9a5a8 <col:37> 'int' 0
+  `-ReturnStmt 0x55ca5ee9a600 <line:16:5, col:12>
+    `-IntegerLiteral 0x55ca5ee9a5e0 <col:12> 'int' 0
+

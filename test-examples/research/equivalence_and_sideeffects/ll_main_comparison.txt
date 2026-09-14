@@ -1,0 +1,58 @@
+# Observations
+The first %1 is a reserved register for the return address.
+Virtual registers %2 and %3 are allocated for the local variables.
+The main IR seems to be completely identical, except for the volatile store in 3 and 4 at the end.
+
+## case 1:
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @main() #0 {
+  %1 = alloca i32, align 4
+  %2 = alloca i32, align 4
+  %3 = alloca i32, align 4
+  store i32 0, ptr %1, align 4
+  call void @func_sideeffect0(i32 noundef 0)
+  call void @func_sideeffect1(i32 noundef 1)
+  store i32 0, ptr %3, align 4
+  ret i32 0
+}
+
+
+## case 2:
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @main() #0 {
+  %1 = alloca i32, align 4
+  %2 = alloca i32, align 4
+  %3 = alloca i32, align 4
+  store i32 0, ptr %1, align 4
+  call void @func_sideeffect0(i32 noundef 0)
+  call void @func_sideeffect1(i32 noundef 1)
+  store i32 0, ptr %3, align 4
+  ret i32 0
+}
+
+## case 3:
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @main() #0 {
+  %1 = alloca i32, align 4
+  %2 = alloca i32, align 4
+  %3 = alloca i32, align 4
+  store i32 0, ptr %1, align 4
+  call void @func_sideeffect0(i32 noundef 0)
+  call void @func_sideeffect1(i32 noundef 1)
+  store volatile i32 0, ptr %3, align 4
+  ret i32 0
+}
+
+## case 4:
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @main() #0 {
+  %1 = alloca i32, align 4
+  %2 = alloca i32, align 4
+  %3 = alloca i32, align 4
+  store i32 0, ptr %1, align 4
+  call void @func_sideeffect0(i32 noundef 0)
+  call void @func_sideeffect1(i32 noundef 1)
+  store volatile i32 0, ptr %3, align 4
+  ret i32 0
+}
+

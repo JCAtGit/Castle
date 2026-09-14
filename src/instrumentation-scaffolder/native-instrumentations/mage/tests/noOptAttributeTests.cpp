@@ -174,11 +174,11 @@ TEST_F(InstrumentationTest, ASTAttrTest) {
  *	Else if the original does not compile, then the instrumented source should not compile.  
  *
  *	Precondition:
- *	We have some source files that compile and do not compile.
+ *	We have source files that compile and do not compile.
  *	We only have an instrumented versions of those sources files.
  *
  * 	Postcondition:
- *	We have some source files that compile and do not compile.
+ *	We have source files that compile and do not compile.
  *	We only have an instrumented versions of those sources files.
  * 	Of the files that compile, we also have the binaries of the instrumented files through successful compilation.
  */
@@ -230,6 +230,12 @@ TEST_F(InstrumentationTest, CompileTest) {
 	execCommandAndCaptureOutput(cmdInput, cmdOutput);
 	EXPECT_FALSE(filesystem::exists(compiledDir + nonCompilingTestFileName));
 }
+
+
+/**
+ *	TODO: For future expansions using optimizations.
+ */
+//TEST_F(InstrumentationTest, OptimizationTest) {}
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

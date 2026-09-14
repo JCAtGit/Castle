@@ -1,0 +1,19 @@
+Dumping main:
+FunctionDecl 0x55638154a458 <case1.c:11:1, line:17:1> line:11:5 main 'int ()'
+`-CompoundStmt 0x55638154a7c0 <col:12, line:17:1>
+  |-CallExpr 0x55638154a588 <line:12:5, col:23> 'void'
+  | |-ImplicitCastExpr 0x55638154a570 <col:5> 'void (*)(int)' <FunctionToPointerDecay>
+  | | `-DeclRefExpr 0x55638154a500 <col:5> 'void (int)' Function 0x556381549f50 'func_sideeffect0' 'void (int)'
+  | `-IntegerLiteral 0x55638154a520 <col:22> 'int' 0
+  |-DeclStmt 0x55638154a638 <line:13:5, col:10>
+  | `-VarDecl 0x55638154a5d0 <col:5, col:9> col:9 i 'int'
+  |-CallExpr 0x55638154a6a8 <line:14:5, col:23> 'void'
+  | |-ImplicitCastExpr 0x55638154a690 <col:5> 'void (*)(int)' <FunctionToPointerDecay>
+  | | `-DeclRefExpr 0x55638154a650 <col:5> 'void (int)' Function 0x55638154a208 'func_sideeffect1' 'void (int)'
+  | `-IntegerLiteral 0x55638154a670 <col:22> 'int' 1
+  |-DeclStmt 0x55638154a778 <line:15:5, col:29>
+  | `-VarDecl 0x55638154a6f0 <col:5, col:28> col:9 print_hash_value 'int' cinit
+  |   `-IntegerLiteral 0x55638154a758 <col:28> 'int' 0
+  `-ReturnStmt 0x55638154a7b0 <line:16:5, col:12>
+    `-IntegerLiteral 0x55638154a790 <col:12> 'int' 0
+

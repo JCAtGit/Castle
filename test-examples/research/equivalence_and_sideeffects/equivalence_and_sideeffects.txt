@@ -1,0 +1,28 @@
+# Are the following programs semantically equivalent?
+Introduction of external world into C language makes for messy semantics.
+
+## case 1:
+  func_sideeffect0(0); 
+  int i;
+  func_sideeffect1(1); 
+  int print_hash_value = 0;
+  
+## case 2:
+  int i;
+  int print_hash_value;
+  func_sideeffect0(0);
+  func_sideeffect1(1);
+  print_hash_value = 0;
+
+## case 3:
+  func_sideeffect0(0); 
+  volatile int i;
+  func_sideeffect1(1); 
+  volatile int print_hash_value = 0;
+
+## case 4:
+  volatile int i;
+  volatile int print_hash_value;
+  func_sideeffect0(0);
+  func_sideeffect1(1);
+  print_hash_value = 0;

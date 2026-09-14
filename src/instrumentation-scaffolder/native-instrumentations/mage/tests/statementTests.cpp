@@ -54,8 +54,11 @@ class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor> {
 //		}
 		
 		bool VisitCallExpr(CallExpr* CE){
-			if(getMageIndex(CE, markerFormatCfg) != -1){
-								hasMarkers = true;
+			int indexNameEncoded = getMageIndex(CE, markerFormatCfg, true);
+			int indexArgument = getMageIndex(CE, markerFormatCfg, false);
+			if(indexNameEncoded != -1){
+				EXPECT_EQ(indexNameEncoded, indexArgument);
+				hasMarkers = true;
 			}
 			return true;
 		}
@@ -119,10 +122,11 @@ protected:
 };
 
 /**
- *	Test creation of instrumented file.
+ *	Test creation of instrumented file. (1/2)
  *	
  * 	Precondition: 
  *	Source code is not instrumented
+ 
  *	Postcondition:
  *	Source code is instrumented
  */
@@ -158,7 +162,8 @@ TEST_F(InstrumentationTest, InstrumentationTest) {
 }
 
 /**
- *	Continuation on the instrumentationtest to check for marker presence. 
+ *	Continuation on the instrumentationtest to check for marker presence. (2/2)
+ *	-	Also checks marker indexes.
  */
 TEST_F(InstrumentationTest, MarkerPresenceTest) {
 	string cmdMageInstrumentCodeString;

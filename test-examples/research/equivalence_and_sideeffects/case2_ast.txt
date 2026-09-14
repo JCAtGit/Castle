@@ -1,0 +1,21 @@
+Dumping main:
+FunctionDecl 0x56460d802528 <case2.c:11:1, line:18:1> line:11:5 main 'int ()'
+`-CompoundStmt 0x56460d8028d0 <col:12, line:18:1>
+  |-DeclStmt 0x56460d802650 <line:12:5, col:10>
+  | `-VarDecl 0x56460d8025e8 <col:5, col:9> col:9 i 'int'
+  |-DeclStmt 0x56460d8026e8 <line:13:5, col:25>
+  | `-VarDecl 0x56460d802680 <col:5, col:9> col:9 used print_hash_value 'int'
+  |-CallExpr 0x56460d802788 <line:14:5, col:23> 'void'
+  | |-ImplicitCastExpr 0x56460d802770 <col:5> 'void (*)(int)' <FunctionToPointerDecay>
+  | | `-DeclRefExpr 0x56460d802700 <col:5> 'void (int)' Function 0x56460d802020 'func_sideeffect0' 'void (int)'
+  | `-IntegerLiteral 0x56460d802720 <col:22> 'int' 0
+  |-CallExpr 0x56460d802810 <line:15:5, col:23> 'void'
+  | |-ImplicitCastExpr 0x56460d8027f8 <col:5> 'void (*)(int)' <FunctionToPointerDecay>
+  | | `-DeclRefExpr 0x56460d8027b8 <col:5> 'void (int)' Function 0x56460d8022d8 'func_sideeffect1' 'void (int)'
+  | `-IntegerLiteral 0x56460d8027d8 <col:22> 'int' 1
+  |-BinaryOperator 0x56460d802880 <line:16:5, col:24> 'int' '='
+  | |-DeclRefExpr 0x56460d802840 <col:5> 'int' lvalue Var 0x56460d802680 'print_hash_value' 'int'
+  | `-IntegerLiteral 0x56460d802860 <col:24> 'int' 0
+  `-ReturnStmt 0x56460d8028c0 <line:17:5, col:12>
+    `-IntegerLiteral 0x56460d8028a0 <col:12> 'int' 0
+

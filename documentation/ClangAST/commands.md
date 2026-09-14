@@ -17,7 +17,7 @@ clang -Xclang -ast-dump -fsyntax-only file.cpp
 clang -Xclang -ast-dump -fsyntax-only example0.c -I /usr/include/c++/15/ 
 
 **These commands dump ast to files: ** <br/> 	<-- use this
-clang -w -fno-color-diagnostics -Xclang -ast-dump-filter=main 	-fsyntax-only example0.c > example0_ast.txt
+clang -w -fno-color-diagnostics -Xclang -ast-dump -Xclang -ast-dump-filter=main -fsyntax-only example0.c > example0_ast.txt
 clang -w -fno-color-diagnostics -Xclang -ast-dump -fsyntax-only example0.c > example0_ast.txt
  
 ## Generate visual CFG from c-file, examples
