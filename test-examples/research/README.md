@@ -1,0 +1,1 @@
+Some manual tests are performed here with to goal to investigate the influence of compiler algorithms on decompiler results.
