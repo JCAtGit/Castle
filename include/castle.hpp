@@ -3,8 +3,20 @@
 
 using namespace std;
 
+/*
+* 	Castle formats are required for each name within the pipeline with a predetermined form.
+*	Format: codebase_instrumentation_build_decom_eval_analysis.
+*	
+*	codebase = {dsmith, csmith, radare, sqlite-amalgamation-3530300, radare2-6.1.8, ..., etc.} 	(name can be chosen freely)
+*	instrumentation = {mage}																	
+*	build = {build, clang, win32build, etc.} 													(name can be chosen freely)
+*	decom = {ghidra, etc.} 																		(name can be chosen freely)
+*	eval = {mageEval}
+*	analysis = {MageEvalAnalyzer}
+*/
+
 /**
- *	Castle formats each name within the pipeline with a predetermined format.
+ *	Castle formats are required for each name within the pipeline with a predetermined form.
  *	Format: codebase_instrumentation_build_decom_eval_analysis.
  *		Example A: 
  *			csmith_mage_clang_ghidra, an intermediate format. It stems from the codebase csmith, which then has been altered with mage. 
@@ -36,7 +48,7 @@ string getCastleFormatBuildNameFromAnalysisName(string analysisNameFormatString)
 }
 
 /**
- *	Castle formats each name within the pipeline with a predetermined format.
+ *	Castle formats are required for each name within the pipeline with a predetermined form.
  *	Format: codebase_instrumentation_build_decom_eval_analysis.
  *		Example A: 
  *			csmith_mage, an intermediate format. It stems from the codebase csmith, which then has been altered with mage. 

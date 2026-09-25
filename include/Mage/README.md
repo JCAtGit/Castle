@@ -1,3 +1,3 @@
 #Library for Mage applications.
 
-Currently WIP. 
+Decoupling efforts regarding the mage framework should put extracted functions here.

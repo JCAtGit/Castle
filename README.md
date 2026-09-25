@@ -11,27 +11,28 @@ The setup consists for the following requirements:
 
 ### 1.1. Tool Packages and codegenerators
 
-```
 Fedora WS 43:
+
+```
 sudo dnf install llvm-devel clang-devel mingw64-gcc-c++ mingw32-gcc-c++ automake ninja cmake make boost-devel radare2
+```
 
 Detect It Easy - DIE with make install:
 https://github.com/horsicq/Detect-It-Easy/blob/master/docs/BUILD.md
 
 DSmith with seed modification:
 https://github.com/zijiancogito/RandCode
-
+```
 Modification to source.py, add the following lines:
 	
 	if args.seed is not None:
         random.seed(args.seed)
    
    parser.add_argument('--seed', type=int, help="random seed for reproducibility")
-   
+```
 Yarpgen:
 https://github.com/intel/yarpgen
 
-```
 
 
 ### 1.2. Build from source
@@ -97,17 +98,23 @@ pyenv install 3.12.11
 
 ### 2.1. Configuration files
 Pipeline configuration files:
+
 The CCastle pipeline uses config files to store pipeline transactions/transitions, if the CCastleData dataset is provided then it is located at ".../CCastleData/configs/"
 These configuration files are used primarily by the CmdTasker class.
 
 Marker format configuration file, which contains markernaming and attribute modifications:
+
+``` 
 ".../CCastleData/configs/CCastlePipeline/formats.json"
+```
 
 Task configs, files ending with t_config:
+
 Controls scripts to use with the task and details such as iteration formats and extensions. 
 See ".../CCastleData/README.md" for further details.
 
 Scaffolder configs:
+
 Files ending with s_config, contains details such as output directory for the scaffolder and output ext for non-iterated processes.
 See ".../CCastleData/README.md" for further details.
 
@@ -127,7 +134,7 @@ Castle name format: codebase_instrumentation_build_decom_eval_analysis.
 	Example A: 
 		csmith_mage_clang_ghidra, an intermediate format. It stems from the codebase csmith, which then has been altered with mage. 
 
-For more examples, see existing entries within the scaffolder config files.
+For more examples, see existing entries within the scaffolder config files or the castle header file in the include folder, ".../CCastleRepository/include/".
 
 ### 2.4. Running the (existing) pipeline (requires ccastledata)
 If we look at the configs, for example the first entry in targets from CodeBaseScaffolder/ct_config.json:
@@ -161,10 +168,10 @@ Then we run the binaries for the Scaffolders after each other, for now we should
 
 ### 3. Development
 
-What do you want to?
+What do you want to do?
 - 3.1. Modify the instrumentation mechanism for Mage:
-	".../instrumentation-scaffolder/native-instrumentations/mage"
+	".../instrumentation-scaffolder/native-instrumentations/mage/"
 - 3.2. Modify the evaluation criteria:
-	".../eval-scaffolder/native_evaluators/MageEval"
+	".../eval-scaffolder/native_evaluators/MageEval/"
 - 3.3. Modify the comparison mechanic:
-	".../analysis-scaffolder/native_tools"
+	".../analysis-scaffolder/native_tools/"
