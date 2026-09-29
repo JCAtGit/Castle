@@ -1,6 +1,6 @@
-#include "../MageAlpha.h"
 #include <cstdio>
 #include <cstring>
+#include "../../../research-tests/test-result/MageAlpha.h"
 
 void process(...);
 int matrix[10][10];

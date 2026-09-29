@@ -1,5 +1,5 @@
-#include "../MageAlpha.h"
 #include <stdio.h>
+#include "../../../research-tests/test-result/MageAlpha.h"
 
 int __attribute__((optimize("O0"), optnone)) main(void) {
   // Example 1: Input validation – repeat until the user enters a valid number.

@@ -1,7 +1,5 @@
-#include "../MageAlpha.h"
-// functions_example.c
-
 #include <stdio.h>
+#include "../../../research-tests/test-result/MageAlpha.h"
 
 // Simple function with a single return
 __attribute__((optnone)) int add(int a, int b) { return a + b; }

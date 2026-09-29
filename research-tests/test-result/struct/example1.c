@@ -1,4 +1,4 @@
-#include "../MageAlpha.h"
+#include "../../../research-tests/test-result/MageAlpha.h"
 // demo_struct_decls.cpp
 // Compile: clang++ -c -std=c++17 demo_struct_decls.cpp
 

@@ -1,4 +1,4 @@
-#include "../MageAlpha.h"
+#include "../../../research-tests/test-result/MageAlpha.h"
 struct {
   int x;
   int y;
