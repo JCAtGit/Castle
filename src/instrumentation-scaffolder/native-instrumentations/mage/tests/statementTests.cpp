@@ -162,7 +162,7 @@ TEST_F(InstrumentationTest, InstrumentationTest) {
 }
 
 /**
- *	Continuation on the instrumentationtest to check for marker presence. (2/2)
+ *	Continuation on the instrumentation test to check for marker presence. (2/2)
  *	-	Also checks marker indexes.
  */
 TEST_F(InstrumentationTest, MarkerPresenceTest) {

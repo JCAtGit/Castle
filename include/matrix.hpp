@@ -4,7 +4,6 @@
 
 using namespace std;
 
-
 /**
  *	Row x column matrix datastructure.
  */

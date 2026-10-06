@@ -61,6 +61,7 @@ class MageEvalAnalyst{
 						}
 					}
 				}
+				// A id was found with decom entries but not an oracle entry
 			} else {
 				incrementJSONEntry(summary["metadata"]["oracleMissingTotal"]);
 				for(const auto& decomData: finding["decom"]){

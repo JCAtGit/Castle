@@ -8,6 +8,7 @@
 #include "clang/Tooling/Tooling.h"
 #include "../instrumentation-mechanism/code-enchanter/CodeEnchanterAction.h"
 #include "json.hpp"
+#include "general.hpp"
 
 using namespace nlohmann;
 using namespace std;
@@ -15,8 +16,7 @@ using namespace std;
 /**
  * TODO: 
  *		Decouple clang-formatting from artifact.
- *		Refactor toolargs to configurable settings format.
- *
+ *		Refactor tool args to configurable settings format.
  */
 
 class CmdTasker{
@@ -42,7 +42,7 @@ class CmdTasker{
 	vector<string> 				toolArgs = {	
 									"-xc", 			// Treat the input as C code, can use xc++ for cpp.
 									"-std=c17", 	// https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3176.pdf, depends on source.
-									"-nostdinc",	// Don't search for system headers
+									"-nostdinc",	// Don't search for system headers (adjust as needed)
 									"-Wno-all",		// Suppress all warnings, W-prefix stands for warning.
 								};
 	
@@ -65,7 +65,7 @@ class CmdTasker{
 	}
 	
 	/**
-	 *	
+	 *	Selects the procedure to be carried out based on the type of queue.
 	 */
 	void setupTaskQueue(){
 		cout << "Setup File Queue Start. \n";
@@ -78,8 +78,9 @@ class CmdTasker{
 	
 	
 	/**
-	*	
-	*/
+	 *	Enqueues files to be instrumented, currently targets C files explicitly.
+	 *	TODO: Possible future extensions for .h and other related extensions.
+	 */
 	void enqueueTasks(){
 		for (const auto& entry : filesystem::recursive_directory_iterator(inputDirs)) {
 			if (entry.path().extension() == ".c") {
@@ -99,7 +100,7 @@ class CmdTasker{
 	/**
 	 * 	Preprocesses files before instrumentation, which include:
 	 * 	Fixing dangling statements from constructs by adding the compound statement node brackets where necessary.
-	 *	WARNING: Clang-format does not work perfectly and can break builds.
+	 *	WARNING: Clang-format can break builds.
 	 */
 	void preprocessQueueItem(filesystem::path path2process){
 		if(!clangFormatMode) {return;}
@@ -222,11 +223,11 @@ class CmdTasker{
 			filesystem::copy(inputDirs, outputPath, filesystem::copy_options::recursive);
 		}	
 		if(filesystem::is_regular_file(inputDirs)){
-			inputDir = inputDirs.has_parent_path() ? inputDirs.parent_path() : ".";
+			inputDir  = inputDirs.has_parent_path() ? inputDirs.parent_path() : ".";
 			outputDir = outputPath.has_parent_path() ? outputPath.parent_path() : ".";
 		} else if(filesystem::is_directory(inputDirs)){
-			inputDir= inputDirs;
-			outputDir= outputPath;
+			inputDir  = inputDirs;
+			outputDir = outputPath;
 		} else {
 			cout << "Unknown pathtype \n";
 			return false;
@@ -238,19 +239,40 @@ class CmdTasker{
 	 *	Records the inserted amount of markers directly from the distributor.
 	 */
 	void saveMarkerMetadata(){
+		string metadataResultOutput;
 		cout << "Markers inserted: " << idCounter << "\n";
 		filesystem::create_directory(metadataResultsPath.string());
-		saveJsonToFile(
-			metadataResultsPath.string() + outputPath.parent_path().filename().string(), 
-			json::object({{"MarkersInserted", idCounter} })
-		);
+		
+		cout << outputPath.parent_path().filename().string() << "\n"; 
+		cout << inputDir.parent_path().filename().string() << "\n";
+
+		if(isStringANumber(outputPath.parent_path().filename().string())){
+			metadataResultOutput = metadataResultsPath.string() + outputPath.parent_path().parent_path().filename().string();
+//			cout << metadataResultOutput << "\n";
+			filesystem::create_directory(metadataResultOutput);
+//			cout << outputPath.filename().string() << "\n";
+			saveJsonToFile(
+				metadataResultOutput + "/" + outputPath.filename().string() + outputPath.parent_path().filename().string() + ".json", 
+				json::object({{"MarkersInserted", idCounter} })
+			);
+		} else {
+			metadataResultOutput = metadataResultsPath.string() + outputPath.parent_path().filename().string();
+//			cout << metadataResultOutput << "\n";
+			filesystem::create_directory(metadataResultOutput);
+//			cout << outputPath.filename().string() << "\n";
+
+			saveJsonToFile(
+				metadataResultOutput + "/" + outputPath.filename().string() + ".json", 
+				json::object({{"MarkersInserted", idCounter} })
+			);
+		}
 	}
 	
 	/**
 	 *	Entry function, starts the instrumentation process.
 	 */
 	void insertInstrumentationEnhancement(){
-		if(!preparePaths()){return;	}
+		if(!preparePaths()){return;}
 		if(filesystem::is_regular_file(inputDirs)){
 			processSingle();
 		} else if(filesystem::is_directory(inputDirs)){

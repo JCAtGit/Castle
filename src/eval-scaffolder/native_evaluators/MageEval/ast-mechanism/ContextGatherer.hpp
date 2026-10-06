@@ -211,7 +211,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	void evalSRDeciderP(Stmt *node, json *findings){
 		switch(node->getStmtClass()){
 			default: 						generalStmtRecorder(node, findings); 	break;
-//			case Stmt::CaseStmtClass:		caseStmtRecorder(node, findings);		break;
+//			case Stmt::CaseStmtClass:		caseStmtRecorder(node, findings);		break; // record generics for now
 			case Stmt::DeclStmtClass: 		declStmtRecorder(node, findings); 		break;
 			case Stmt::RecoveryExprClass: 	recoveryExprRecorder(node, findings); 	break;
 			case Stmt::CallExprClass:		callExprRecorder(node, findings); 		break;

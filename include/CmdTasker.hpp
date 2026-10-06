@@ -178,8 +178,9 @@ class CmdTasker {
 			filesystem::create_directories((ps_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>()));
 			cout << toolcfg["name"] << "\n";
 
-			// run_per_file mode and with submodes
+			// run_per_file with submodes, processes files as separate results.
 			if(toolcfg["run_per_file"].get<bool>()){
+				// processes files with an index name, from it_begin until it_end, as separate results.
 				if(toolcfg["run_as_it"].get<bool>()){
 					for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
 						processFile(
@@ -188,31 +189,36 @@ class CmdTasker {
 							toolcfg["it_ext"].get<string>(), 
 							toolcfg);
 					}
-				} else {
+				} 
+				// processes each file found as a separate result
+				else {
 					for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
-						if(toolcfg["continue_checkpoint"].get<bool>()){
-							auto dest2check = 	ps_config_data["outputDir"].get<string>() 	+ 
-												toolcfg["name"].get<string>()  				+
-												"/";
-							if(ps_config_data["output_ext"].empty()){
-								dest2check += entry.path().filename().string();
-							} else {
-								dest2check += entry.path().stem().string() + ps_config_data["output_ext"].get<string>();
-							}
-							if(!filesystem::exists(dest2check)){
-								processFile(entry, toolcfg);
-							}
-							cout << "Checkpoint skip \n";
+						if(!toolcfg["continue_checkpoint"].get<bool>()){
+							processFile(entry, toolcfg);
+							continue;
+						}
+						string dest2check = ps_config_data["outputDir"].get<string>() 	+ 
+											toolcfg["name"].get<string>()  				+
+											"/";
+						if(ps_config_data["output_ext"].empty()){
+							dest2check += entry.path().filename().string();
 						} else {
+							dest2check += entry.path().stem().string() + ps_config_data["output_ext"].get<string>();
+						}
+						if(!filesystem::exists(dest2check)){
 							processFile(entry, toolcfg);
 						}
+						cout << "Checkpoint skip \n";
 					}
 				}
+			// Processes each file in the dir as part of a single result.
 			} else if(toolcfg["run_per_dir"].get<bool>()){
+				// processes files with an index name, from it_begin until it_end.
 				if(toolcfg["run_as_it"].get<bool>()){
 					for(;toolcfg["it_begin"].get<int>() < toolcfg["it_end"].get<int>(); toolcfg["it_begin"] = (toolcfg["it_begin"].get<int>() + 1)){
 						processDir(toolcfg["tgtDir"].get<string>() + to_string(toolcfg["it_begin"].get<int>()), toolcfg);
 					}
+				// processes each file found as part of a single result
 				} else {
 					for (const auto& entry : filesystem::directory_iterator(toolcfg["tgtDir"])) {
 						processDir(entry, toolcfg);

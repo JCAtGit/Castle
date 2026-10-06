@@ -17,7 +17,7 @@ using namespace nlohmann;
 	using StochasticPassFnPtr = void(*)(json &);
 	unordered_map<string, StochasticPassFnPtr> spFnSelector = {
 //		{"CallExpr", 		&MageEvalAnalyst::stochasticizeCallExpr},
-		{"DeclStmt", 		stochasticizeDeclStmt},
+//		{"DeclStmt", 		stochasticizeDeclStmt},
 //		{"IfStmt", 			&MageEvalAnalyst::stochasticizeIfStmt},
 //		{"ForStmt", 		&MageEvalAnalyst::stochasticizeForStmt},
 //		{"WhileStmt", 		&MageEvalAnalyst::stochasticizeWhileStmt},

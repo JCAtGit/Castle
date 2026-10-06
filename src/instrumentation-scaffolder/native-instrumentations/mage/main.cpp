@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 	app.add_flag("-n, --name_encoded_marker",nameEncodedMarker,  "Mark constructs using names instead of indices.");
 	
 	bool clangFormatMode = false;	
-	app.add_flag("-c, --clang_format_mode",clangFormatMode,  "Use clang-format and potentially allow more liberal insertions, warning: clang-format is NOT bugfree!");
+	app.add_flag("-c, --clang_format_mode",clangFormatMode,  "Use clang-format and potentially allow more liberal insertions, warning: clang-format can cause errors!");
 	
 	vector<string> excludeFiles;
 	auto option_excludeFiles = app.add_option("--exclude_files", excludeFiles, "Files to exclude from processing");

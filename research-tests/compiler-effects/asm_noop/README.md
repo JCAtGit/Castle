@@ -1,6 +1,6 @@
 We check if asm statements acting as memory clobbers act as noops when compiled.
 
-Chandler has a video where he demonstrates the use of a clobber as barrier, but his usecase is for performance benchmarking:
+Chandler has a video where he demonstrates the use of a clobber as barrier, but his usecase is for c++ performance benchmarking/tuning:
 
 ``` 
 https://www.youtube.com/watch?v=nXaxk27zwlk 

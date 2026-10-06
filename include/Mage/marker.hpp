@@ -7,13 +7,12 @@
 
 using namespace nlohmann;
 
-
 /**
- *	NOTICE: Work in progress to extract procedures for generalized use of Mage framework.
+ *	NOTICE: Work in progress to extract procedures for more streamlined use through libraries.
  *	Currently unused.
  *	
  *	TODO: 
- *		Develop function to detect markers without debug information. Probably involves some assumptions.
+ *		Develop function to detect markers without debug information.
  */
 
  using namespace std;

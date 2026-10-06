@@ -1,4 +1,4 @@
-# Castle - Code Assisted Source Translation Evaluator.
+# README
 ## 1. Setup 
 The setup consists for the following requirements:
 
@@ -94,7 +94,14 @@ curl https://pyenv.run | bash
 pyenv install 3.12.11
 ```
 
-## 2 Pipeline, tools and their configuration files.
+## 2 Pipeline, tools, conventions and their configuration files.
+
+The pipeline flows as follows:
+
+```
+1. Codebase -> 2. Instrumentation -> 3. Build -> 4. Decompilation -> 5. Evaluation -> 6. Analysis
+
+```
 
 ### 2.1. Configuration files
 Pipeline configuration files:
@@ -164,14 +171,28 @@ If we look at the configs, for example the first entry in targets from CodeBaseS
 
 We can activate the components designated by the "active" key. If we want to run the entire pipeline once with all components, then we set all the entries to true for each codebase we want to include. We repeat this process for different scaffolders if necessary.
 
-Then we run the binaries for the Scaffolders after each other, for now we should only start the next scaffolder if the previous one has finished. 
+Then you can run the binaries (in .../build/...) for the Scaffolders after each other, for now we should only start the next scaffolder if the previous one has finished. 
+
 
 ### 3. Development
 
 What do you want to do?
-- 3.1. Modify the instrumentation mechanism for Mage:
-	".../instrumentation-scaffolder/native-instrumentations/mage/"
-- 3.2. Modify the evaluation criteria:
-	".../eval-scaffolder/native_evaluators/MageEval/"
-- 3.3. Modify the comparison mechanic:
-	".../analysis-scaffolder/native_tools/"
+1. Work on the instrumentation mechanism for Mage:
+- ".../CCastleRepository/instrumentation-scaffolder/native-instrumentations/mage/"
+2. Work on the evaluation criteria:
+- ".../CCastleRepository/eval-scaffolder/native_evaluators/MageEval/"
+3. Work on the comparison mechanic:
+- ".../CCastleRepository/analysis-scaffolder/native_tools/"
+4. Work on marker robustness:
+- ".../CCastleRepository/analysis-scaffolder/native_tools/"
+- ".../CCastleData/AnalysisScaffolder", in particular the metadata entries.
+	
+
+### 4. (Automated) tests
+The automated tests are written with the googletest framework and can be found in the following location:
+- .../src/instrumentation-scaffolder/native-instrumentations/mage/tests/
+
+Manual tests are available at the following locations:
+- .../src/instrumentation-scaffolder/native-instrumentations/mage/tests/manual
+- .../research-tests
+ 

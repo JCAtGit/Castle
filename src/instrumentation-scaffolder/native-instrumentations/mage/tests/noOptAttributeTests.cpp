@@ -232,11 +232,6 @@ TEST_F(InstrumentationTest, CompileTest) {
 }
 
 
-/**
- *	TODO: For future expansions using optimizations.
- */
-//TEST_F(InstrumentationTest, OptimizationTest) {}
-
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
