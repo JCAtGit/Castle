@@ -1,14 +1,14 @@
 #include <CLI/CLI.hpp>
 #include "cmdline/CmdTasker.hpp"
 /**
- *	Castle's native cross set analysis/comparison tool.
+ *	Castle's native cross set comparison tool.
  *  Summarizes over multiple sets and performs statistics over the unified numbers.
  */
 int main(int argc, char **argv) {
 	CLI::App app{"MageEvalComparer"};
 	
 	vector<filesystem::path> inputDirs;
-	app.add_option("inputDirs", inputDirs, "Input directories to aggregate results from.")
+	app.add_option("inputDirs", inputDirs, "Input MageEvalAnalysis-phase directories to aggregate results from.")
 		->required()
 		->expected(-2);
 		

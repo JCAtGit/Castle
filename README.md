@@ -177,15 +177,18 @@ Then you can run the binaries (in .../build/...) for the Scaffolders after each 
 ### 3. Development
 
 What do you want to do?
-1. Work on the instrumentation mechanism for Mage:
-- ".../CCastleRepository/instrumentation-scaffolder/native-instrumentations/mage/"
-2. Work on the evaluation criteria:
-- ".../CCastleRepository/eval-scaffolder/native_evaluators/MageEval/"
-3. Work on the comparison mechanic:
-- ".../CCastleRepository/analysis-scaffolder/native_tools/"
-4. Work on marker robustness:
-- ".../CCastleRepository/analysis-scaffolder/native_tools/"
-- ".../CCastleData/AnalysisScaffolder", in particular the metadata entries.
+- Work on the instrumentation mechanism for Mage:
+    - ".../CCastleRepository/instrumentation-scaffolder/native-instrumentations/mage/"
+
+- Work on the evaluation criteria:
+    - ".../CCastleRepository/eval-scaffolder/native_evaluators/MageEval/"
+
+- Work on the comparison mechanic:
+    - ".../CCastleRepository/analysis-scaffolder/native_tools/"
+
+- Work on marker robustness:
+    - ".../CCastleRepository/analysis-scaffolder/native_tools/"
+    - ".../CCastleData/AnalysisScaffolder", in particular the metadata entries.
 	
 
 ### 4. (Automated) tests

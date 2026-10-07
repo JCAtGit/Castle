@@ -36,11 +36,11 @@ int main(int argc, char **argv) {
 	app.add_option("--it_end", it_end, "Sets end it-counter for index-named files")
 		->needs(option_processMode);
 			
-//	int analysisMode = 0;
-//	app.add_option("-a,--analysisMode", analysisMode, "determines what analysis is performed");
-	
+	string metadataResultsPath = "/home/user/Desktop/CCastle/CCastleData/AnalysisScaffolder/metadata/";
+	app.add_option("--metadata_results_path", metadataResultsPath, "TODO: Path for Storing metadata from the analysis process.");
+
 	CLI11_PARSE(app, argc, argv);
 
-	CmdTasker cmdTskr(inputDir, outputDir, processMode, it_begin, it_end);
+	CmdTasker cmdTskr(inputDir, outputDir, processMode, it_begin, it_end, metadataResultsPath);
 	cmdTskr.startProcesses();
 }

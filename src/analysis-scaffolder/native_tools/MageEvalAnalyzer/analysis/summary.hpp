@@ -7,6 +7,10 @@
 using namespace std;
 using namespace nlohmann;
 
+/**
+ *	Functions to apply specific metrics to selected statements.
+ */
+
 	void stochasticizeDeclStmt(json& summary){
 		// calculate alternative recovery using BinaryOperators of the form "="
 	};

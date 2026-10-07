@@ -23,12 +23,14 @@ class CmdTasker{
 							it_begin, it_end;
 		
 		string 				findingsFolder = "findings/", evalFolder = "eval/", devFolder = "dev/",
-							itEntryExt = ".c.json", summaryFilename = "summary.json";
-		
-		json 				currentJSON, 
-							summaryJSON = json::object();
+							itEntryExt = ".c.json", summaryFilename = "summary.json",
+							metadataResultsPath;
 							
-		MageEvalAnalyst 	MEA;
+		json 				currentJSON, 	// Container structure with data from: findings, eval and optionally dev.
+							summaryJSON = json::object(),
+							metadataJSON;
+							
+		MageEvalAnalyst 	MEA; 			// init with default constructor
 		
 	public:
 	CmdTasker(
@@ -36,13 +38,15 @@ class CmdTasker{
 		filesystem::path outputPath,
 		int processMode, 
 		int it_begin, 
-		int it_end
+		int it_end,
+		string metadataResultsPath
 	) : 
 	inputDirs(inputPath), 
 	outputPath(outputPath), 
 	processMode(processMode), 
 	it_begin(it_begin), 
-	it_end(it_end)
+	it_end(it_end),
+	metadataResultsPath(metadataResultsPath)
 	{
 		findingsFolder 	= inputPath.string() + findingsFolder;
 		evalFolder 		= inputPath.string() + evalFolder;
@@ -57,9 +61,9 @@ class CmdTasker{
 		filesystem::create_directories(outputPath.string());
 		switch (processMode) {
 			default:break;
-			case 0: processDirAsSet(MEA, currentJSON, summaryJSON); 					break;
-			case 1: processAsSeparateEntities(MEA, currentJSON, summaryJSON); 			break;
-			case 2: processAsSeparateIterationEntities(MEA, currentJSON, summaryJSON); break;
+			case 0: processDirAsSet(); 						break;
+			case 1: processAsSeparateEntities(); 			break;
+			case 2: processAsSeparateIterationEntities(); 	break;
 		}
 	}
 	
@@ -69,7 +73,7 @@ class CmdTasker{
 	 * 	@param currentJSON	Structure containing data from: findings, eval and optionally dev.
 	 *	@param summaryJSON	Structure containing end results.
 	 */
-	void processDirAsSet(MageEvalAnalyst& MEA, json& currentJSON, json& summaryJSON){
+	void processDirAsSet(){
 		for(auto entry :filesystem::recursive_directory_iterator(findingsFolder)){
 			loadJSON(entry, currentJSON); // use the names in this dir to fetch related data in corelated directories
 			MEA.statisticizeFindings(currentJSON, summaryJSON);
@@ -91,7 +95,7 @@ class CmdTasker{
 	 * 	@param currentJSON	Structure containing data from: findings, eval and optionally dev.
 	 *	@param summaryJSON	Structure containing end results.
 	 */
-	void processAsSeparateEntities(MageEvalAnalyst& MEA, json& currentJSON, json& summaryJSON){
+	void processAsSeparateEntities(){
 		for(auto entry :filesystem::recursive_directory_iterator(findingsFolder)){
 			loadJSON(entry, currentJSON); // use the names in this dir to fetch related data in corelated directories
 			MEA.statisticizeFindings(currentJSON, summaryJSON);
@@ -115,7 +119,7 @@ class CmdTasker{
 	 * 	@param currentJSON	Structure containing data from: findings, eval and optionally dev.
 	 *	@param summaryJSON	Structure containing end results.
 	 */
-	void processAsSeparateIterationEntities(MageEvalAnalyst& MEA, json& currentJSON, json& summaryJSON){
+	void processAsSeparateIterationEntities(){
 		string filename;
 		for(;it_begin<it_end;it_begin++){
 			filename = to_string(it_begin )+ itEntryExt;

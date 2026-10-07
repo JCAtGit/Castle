@@ -37,6 +37,7 @@ int main(int argc, char **argv) {
 	string metadataResultsPath = "/home/user/Desktop/CCastle/CCastleData/InstrumentationScaffolder/metadata/";
 	app.add_option("--metadata_results_path", metadataResultsPath, "Path for Storing metadata from the instrumentation process.");
 	
+	// Sometimes decompiler, like Ghidra, fail to recover the index of markers but do recover the symbol information (name), this option serves as an robust alternative.
 	bool nameEncodedMarker = false;
 	app.add_flag("-n, --name_encoded_marker",nameEncodedMarker,  "Mark constructs using names instead of indices.");
 	
