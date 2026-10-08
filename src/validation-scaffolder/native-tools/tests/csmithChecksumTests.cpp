@@ -1,21 +1,12 @@
 #include <gtest/gtest.h>
-
 #include <string>
-#include "clang/AST/Attr.h"
-
 #include <filesystem>
 #include "binaries.hpp"
-#include "json.hpp"
-#include "nlohmann/json.hpp"
-#include "paths.hpp"
 
-using namespace clang;
 using namespace std;
-using namespace nlohmann;
 
-static const string csmithDefaultBinariesDir = "/home/user/Desktop/CCastle/CCastleData/BuildScaffolder/csmith_mage_clang";
-static const string csmithInstrumentedBinariesDir = "/home/user/Desktop/CCastle/CCastleData/ValidationScaffolder/csmith_validation-build";
-static const string csmithChecksumVerifierBinPath = "/home/user/Desktop/CCastle/CCastleRepository/build/cmake.run.linux.x86_64.Local/SmithCheckSumVerifier";
+static const string smithDefaultBinariesDir = "/home/user/Desktop/CCastle/CCastleData/ValidationScaffolder/csmith_validation-build";
+static const string smithInstrumentedBinariesDir = "/home/user/Desktop/CCastle/CCastleData/BuildScaffolder/csmith_mage_clang";
 
 class CSmithChecksumTest : public testing::Test {
 protected:
@@ -24,9 +15,7 @@ protected:
 	    // runs once before any test in this suite
 		
 		// setup and check if repositories are present and setup
-		ASSERT_TRUE(filesystem::exists(csmithDefaultBinariesDir));
-		ASSERT_TRUE(filesystem::exists(csmithInstrumentedBinariesDir));
-		ASSERT_TRUE(filesystem::exists(csmithChecksumVerifierBinPath));
+		ASSERT_TRUE(filesystem::exists(smithInstrumentedBinariesDir));
 
 	}
 	static void TearDownTestSuite() {
@@ -42,17 +31,87 @@ protected:
 };
 
 /**
- *	Checks if the default and instrumented binaries of csmith files produce the same checksum.
- *	Uses hardcoded paths for now.
+ *	Checks if the default and instrumented binaries of csmith files produce the same checksum at O0.
+ *	Test can take a while with 1000 files.
  */
-TEST_F(CSmithChecksumTest, checksumTest) {
-	string command = csmithChecksumVerifierBinPath, output;
-	
-	for (const auto& entry : filesystem::directory_iterator()) {
+TEST_F(CSmithChecksumTest, checksumTestO0) {
+	string output0, output1, olevel = "O0";
+	ASSERT_TRUE(filesystem::exists(smithDefaultBinariesDir + olevel));
+
+	for (const auto& entry : filesystem::directory_iterator(smithDefaultBinariesDir + olevel)) {
 		ASSERT_TRUE(filesystem::exists(entry));
-		ASSERT_TRUE(filesystem::exists(csmithInstrumentedBinariesDir / entry.path().filename()));
+		ASSERT_TRUE(filesystem::exists(smithInstrumentedBinariesDir / entry.path().filename()));
 		
-		execCommandAndCaptureOutput(command, output);
+		cout << smithDefaultBinariesDir + olevel + "/" + entry.path().filename().string() << "\n";
+		cout << smithInstrumentedBinariesDir + "/" + entry.path().filename().string() << "\n";
+		
+		execCommandAndCaptureOutput(smithDefaultBinariesDir + olevel + "/" + entry.path().filename().string(), output0);
+		execCommandAndCaptureOutput(smithInstrumentedBinariesDir + "/" + entry.path().filename().string(), output1);
+		EXPECT_TRUE(output0 == output1);
 	}
 }
+
+/**
+ *	Checks if the default and instrumented binaries of csmith files produce the same checksum at O1.
+ *	Test can take a while with 1000 files.
+ */
+TEST_F(CSmithChecksumTest, checksumTestO1) {
+	string output0, output1, olevel = "O1";
+	ASSERT_TRUE(filesystem::exists(smithDefaultBinariesDir + olevel));
+
+	for (const auto& entry : filesystem::directory_iterator(smithDefaultBinariesDir + olevel)) {
+		ASSERT_TRUE(filesystem::exists(entry));
+		ASSERT_TRUE(filesystem::exists(smithInstrumentedBinariesDir / entry.path().filename()));
+		
+		cout << smithDefaultBinariesDir + olevel + "/" + entry.path().filename().string() << "\n";
+		cout << smithInstrumentedBinariesDir + "/" + entry.path().filename().string() << "\n";
+		
+		execCommandAndCaptureOutput(smithDefaultBinariesDir + olevel + "/" + entry.path().filename().string(), output0);
+		execCommandAndCaptureOutput(smithInstrumentedBinariesDir + "/" + entry.path().filename().string(), output1);
+		EXPECT_TRUE(output0 == output1);
+	}
+}
+
+/**
+ *	Checks if the default and instrumented binaries of csmith files produce the same checksum at O2.
+ *	Test can take a while with 1000 files.
+ */
+TEST_F(CSmithChecksumTest, checksumTestO2) {
+	string output0, output1, olevel = "O2";
+	ASSERT_TRUE(filesystem::exists(smithDefaultBinariesDir + olevel));
+
+	for (const auto& entry : filesystem::directory_iterator(smithDefaultBinariesDir + olevel)) {
+		ASSERT_TRUE(filesystem::exists(entry));
+		ASSERT_TRUE(filesystem::exists(smithInstrumentedBinariesDir / entry.path().filename()));
+		
+		cout << smithDefaultBinariesDir + olevel + "/" + entry.path().filename().string() << "\n";
+		cout << smithInstrumentedBinariesDir + "/" + entry.path().filename().string() << "\n";
+		
+		execCommandAndCaptureOutput(smithDefaultBinariesDir + olevel + "/" + entry.path().filename().string(), output0);
+		execCommandAndCaptureOutput(smithInstrumentedBinariesDir + "/" + entry.path().filename().string(), output1);
+		EXPECT_TRUE(output0 == output1);
+	}
+}
+
+/**
+ *	Checks if the default and instrumented binaries of csmith files produce the same checksum at O3.
+ *	Test can take a while with 1000 files.
+ */
+TEST_F(CSmithChecksumTest, checksumTestO3) {
+	string output0, output1, olevel = "O3";
+	ASSERT_TRUE(filesystem::exists(smithDefaultBinariesDir + olevel));
+
+	for (const auto& entry : filesystem::directory_iterator(smithDefaultBinariesDir + olevel)) {
+		ASSERT_TRUE(filesystem::exists(entry));
+		ASSERT_TRUE(filesystem::exists(smithInstrumentedBinariesDir / entry.path().filename()));
+		
+		cout << smithDefaultBinariesDir + olevel + "/" + entry.path().filename().string() << "\n";
+		cout << smithInstrumentedBinariesDir + "/" + entry.path().filename().string() << "\n";
+		
+		execCommandAndCaptureOutput(smithDefaultBinariesDir + olevel + "/" + entry.path().filename().string(), output0);
+		execCommandAndCaptureOutput(smithInstrumentedBinariesDir + "/" + entry.path().filename().string(), output1);
+		EXPECT_TRUE(output0 == output1);
+	}
+}
+
 

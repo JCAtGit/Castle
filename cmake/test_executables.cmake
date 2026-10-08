@@ -4,5 +4,5 @@ add_executable(statementTests src/instrumentation-scaffolder/native-instrumentat
 add_executable(declStmtCasesTests src/instrumentation-scaffolder/native-instrumentations/mage/tests/declStmtCasesTests.cpp)
 
 add_executable(csmithChecksumTests src/validation-scaffolder/native-tools/tests/csmithChecksumTests.cpp)
+add_executable(dsmithChecksumTests src/validation-scaffolder/native-tools/tests/dsmithChecksumTests.cpp)
 
-add_executable(SmithCheckSumVerifier src/validation-scaffolder/native-tools/SmithCheckSumVerifier/main.cpp)

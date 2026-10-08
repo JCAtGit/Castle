@@ -1,4 +1,4 @@
 # The validation scaffolder is setup for future work, currently unused.
 
-Future work:
-1. Robustness Design checksum tests using csmith and dsmith to test for state changes with markers.
+Currently done:
+1. Checksum tests using csmith and dsmith to test for semantic changes with markers.
