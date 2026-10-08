@@ -1,5 +1,6 @@
 #include <CLI/CLI.hpp>
-#include "cmdline/CmdTasker.hpp"
+
+#include "../../native-tools/MageEvalComparer/cmdline/CmdTasker.hpp"
 /**
  *	Castle's native cross set comparison tool.
  *  Summarizes over multiple sets and performs statistics over the unified numbers.

@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "../../../native-tools/MageEvalComparer/compare/export.hpp"
 
 #include "castle.hpp"
 #include "paths.hpp"
@@ -12,7 +13,6 @@
 #include "json.hpp"
 #include "binaries.hpp"
 #include "stats.hpp"
-#include "export.hpp"
 
 using namespace nlohmann;
 using namespace std;

@@ -3,10 +3,10 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include "../../../native-tools/MageEvalAnalyzer/analysis/MageEvalAnalyst.hpp"
 #include "paths.hpp"
 
 #include "json.hpp"
-#include "../analysis/MageEvalAnalyst.hpp"
 
 using namespace nlohmann;
 using namespace std;

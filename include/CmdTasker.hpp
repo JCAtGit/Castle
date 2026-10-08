@@ -197,9 +197,7 @@ class CmdTasker {
 							processFile(entry, toolcfg);
 							continue;
 						}
-						string dest2check = ps_config_data["outputDir"].get<string>() 	+ 
-											toolcfg["name"].get<string>()  				+
-											"/";
+						string dest2check = ps_config_data["outputDir"].get<string>() + toolcfg["name"].get<string>() + "/";
 						if(ps_config_data["output_ext"].empty()){
 							dest2check += entry.path().filename().string();
 						} else {

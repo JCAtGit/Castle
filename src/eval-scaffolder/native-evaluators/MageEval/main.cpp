@@ -1,5 +1,6 @@
 #include <CLI/CLI.hpp>
-#include "cmdline/CmdTasker.hpp"
+
+#include "../../native-evaluators/MageEval/cmdline/CmdTasker.hpp"
 
 /**
  *	Castle's native evaluation tool.

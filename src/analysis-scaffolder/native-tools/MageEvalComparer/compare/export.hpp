@@ -6,7 +6,7 @@
 #include "stats.hpp"
 #include <charconv>
 #include <string_view>
-#include "binaryFingerPrinter.hpp"
+#include "../../../native-tools/MageEvalComparer/compare/binaryFingerPrinter.hpp"
 
 using namespace nlohmann;
 using namespace std;

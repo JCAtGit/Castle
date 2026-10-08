@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <string>
 #include <unordered_map>
-#include "../compare/MageEvalComparer.hpp"
+#include "../../../native-tools/MageEvalComparer/compare/MageEvalComparer.hpp"
 
 using namespace nlohmann;
 using namespace std;
