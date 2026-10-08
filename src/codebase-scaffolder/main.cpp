@@ -5,10 +5,10 @@ int main(int argc, char **argv) {
 	CLI::App app{"CodebaseScaffolder"};
 	
 	string scaffolderConfig = "/home/user/Desktop/CCastle/CCastleData/configs/CodebaseScaffolder/cs_config.json";
-	app.add_option("--scaffolder-config", scaffolderConfig, "Uses the specified config for the scaffolder");
+	app.add_option("--scaffolder-config", scaffolderConfig, "<path-to-config>, uses the specified config for the scaffolder");
 
 	string toolConfig = "/home/user/Desktop/CCastle/CCastleData/configs/CodebaseScaffolder/ct_config.json";
-	app.add_option("--tool-config", toolConfig, "Uses the specified config for the tools within scaffolder.");
+	app.add_option("--tool-config", toolConfig, "<path-to-config>, uses the specified config for the tools within scaffolder.");
 	
 	CLI11_PARSE(app, argc, argv);
 	
