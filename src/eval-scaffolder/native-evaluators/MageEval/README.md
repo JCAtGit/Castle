@@ -1,5 +1,8 @@
 # MAGE Evaluator Documentation.
-### Marker Formats File:
+Gathers information from the instrumented source and instrumented decompilation source.
+The evaluator then outputs findings and eval entries to the specified directory in the configuration files related to the target codebase. 
+
+## Marker Formats File:
 
 ```
 Example file content:
@@ -24,7 +27,7 @@ Example file content:
 }
 
 ```
-### Usage
+## Usage
 
 ```
 Example, evaluating a single file with name-encoded markers :

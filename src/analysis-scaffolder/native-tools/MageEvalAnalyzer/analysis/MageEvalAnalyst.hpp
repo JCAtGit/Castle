@@ -21,10 +21,6 @@ class MageEvalAnalyst{
 	public:
 	MageEvalAnalyst(){}
 	
-	void setCurrntJSON(){}
-	void setSummaryJSON();
-	void setMetadataJSON();
-	
 	/**
 	 *	Aggregates stats from the findings data.
 	 *
