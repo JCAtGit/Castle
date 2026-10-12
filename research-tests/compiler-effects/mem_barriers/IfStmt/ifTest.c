@@ -14,3 +14,11 @@ int with_barrier(void) {
         return 1;
     return 0;
 }
+
+int with_barrier_g_after(void) {
+    __asm__ __volatile__("" ::: "memory");   /* memory might change */
+    g = 0;
+	if (g)          /* must reload g, cannot fold */
+        return 1;
+    return 0;
+}

@@ -21,6 +21,13 @@ define dso_local range(i32 0, 2) i32 @with_barrier() local_unnamed_addr #1 {
   ret i32 %3
 }
 
+; Function Attrs: nounwind uwtable
+define dso_local noundef i32 @with_barrier_g_after() local_unnamed_addr #1 {
+  tail call void asm sideeffect "", "~{memory},~{dirflag},~{fpsr},~{flags}"() #2, !srcloc !8
+  store i32 0, ptr @g, align 4, !tbaa !3
+  ret i32 0
+}
+
 attributes #0 = { mustprogress nofree norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none) uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #2 = { nounwind }
@@ -36,3 +43,4 @@ attributes #2 = { nounwind }
 !5 = !{!"omnipotent char", !6, i64 0}
 !6 = !{!"Simple C/C++ TBAA"}
 !7 = !{i64 200}
+!8 = !{i64 392}

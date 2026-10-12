@@ -251,10 +251,13 @@ class CodeEnchanterVisitor: public RecursiveASTVisitor<CodeEnchanterVisitor> {
 		}
 		
 		/**
+		 * Add attributes to instruct the compiler on optimization.
+		 * Attribute declaration for optimization takes precedence over preprocessor directives.
+		 * 
 		 * TODO: 
 		 * - Safe inline removals: https://stackoverflow.com/questions/79589301/will-removal-of-all-inline-keywords-from-my-code-leave-my-c-program-semantical
 		 * - Make function attributes optional, because headers macro's might already be enough for optimization control.
-		 *
+		 * 
 		 * Useful info:
 		 * https://clang.llvm.org/docs/AttributeReference.html#optnone
 		 */

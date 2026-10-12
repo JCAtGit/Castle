@@ -1,36 +1,6 @@
 # MageEvalAnalyzer Documentation.
 The MageEvalAnalyzer gathers the data from the EvalScaffolder and aggregates these into statistics.
 
-(Unfinished/future work) statistical testing:
-We can measure that a decompiler algorithm "recovers" a certain set of statements under some context and has a binary outcome, e.g. recovered/lost. 
-If we assume that such recovery is independent, then we can approximate the variance with a bernouilli distribution and perform statistical tests.
-However this assumption is rather bold, so the VAR(X) property can be ignored for now.
-
-TODO: 
-	- Investigate context assumption does, then refine.
-
-## Scaffolder format Usage
-
-```
-{
-			"name":"radare2-6.1.8_mage_build_ghidra_mageEval_MageEvalAnalyzer",
-			"tgtDir":"/home/user/Desktop/CCastle/CCastleData/EvalScaffolder/radare2-6.1.8_mage_build_ghidra_mageEval/",
-			"binPath":"/home/user/Desktop/CCastle/CCastleRepository/build/cmake.run.linux.x86_64.Local/MageEvalAnalyzer",
-			"run_bin_as_shell":false,
-			"static_pre_flags":[],
-			"static_options":[
-				{"--processMode":"0"}
-			],
-			"redirectNull": true,
-			"outputFlag":"-o",
-			"active":true,
-			"continue_checkpoint":false,
-			"run_per_file":false,
-			"run_per_dir":false,
-			"run_as_it": false
-		},
-```
-
 ## Summary format
 Each summary can contain two top entries: constructs and metadata.
 
@@ -154,3 +124,14 @@ For each such statement we have the following measured properties:
   }
 }
 ```
+
+## Future work
+
+(Unfinished/future work) statistical testing:
+We can measure that a decompiler algorithm "recovers" a certain set of statements under some context and has a binary outcome, e.g. recovered/lost. 
+If we assume that such recovery is independent, then we can approximate the variance with a bernouilli distribution and perform statistical tests.
+However this assumption is rather bold, so the VAR(X) property can be ignored for now.
+
+TODO: 
+	- Investigate context assumption does, then refine.
+	- Aggregation of data over files can include duplicates, this needs refinement.
