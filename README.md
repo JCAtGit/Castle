@@ -143,7 +143,7 @@ Castle name format: codebase_instrumentation_build_decom_eval_analysis.
 
 For more examples, see existing entries within the scaffolder config files or the castle header file in the include folder, ".../CCastleRepository/include/".
 
-### 2.4. Running the (existing) pipeline (requires ccastledata)
+### 2.4. DEMO: Running the (existing) pipeline (requires ccastledata)
 If we look at the configs, for example the first entry in targets from CodeBaseScaffolder/ct_config.json:
 
 ```
@@ -173,7 +173,6 @@ We can activate the components designated by the "active" key. If we want to run
 
 Then you can run the binaries (in .../build/...) for the Scaffolders after each other, for now we should only start the next scaffolder if the previous one has finished. 
 
-
 ### 3. Development
 
 What do you want to do?
@@ -194,8 +193,9 @@ What do you want to do?
 ### 4. (Automated) tests
 The automated tests are written with the googletest framework and can be found in the following location:
 - .../src/instrumentation-scaffolder/native-instrumentations/mage/tests/
+- .../src/validation-scaffolder/native-tools/tests/
 
 Manual tests are available at the following locations:
-- .../src/instrumentation-scaffolder/native-instrumentations/mage/tests/manual
-- .../research-tests
+- .../src/instrumentation-scaffolder/native-instrumentations/mage/tests/manual/
+- .../research-tests/
  

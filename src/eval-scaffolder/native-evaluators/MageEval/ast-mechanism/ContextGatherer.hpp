@@ -14,7 +14,7 @@ using namespace std;
  *	A Class that is responsible for gathering findings per context independently and storing these in a shared object.
  * 	Currently parses both ast's without the inclusion of a library.
  *	TODO: 
- *		- Record findings explicitly to dev files.
+ *		- Record meta findings explicitly to dev files.
  *		- Include library during ast parsing of oracle, however the necessary libraries that need to be included depend on the build target.
  *			- analyse and/or record build details instead of binary extraction?
  *			- derive necessary libraries from build details and include them
@@ -142,6 +142,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	 *	For a given CallExpr, checks if it is a marker call.
 	 *	If it is found to be a marker, then the potential markee will be fetched.
 	 *	Then based on the type of the markee, the appropriate recorder will be selected.
+	 *	Currently limits traversal to translation unit.
 	 *	@param CE CallExpr that is selected for procession.
 	 */
 	void indexProcessor(CallExpr *CE){
