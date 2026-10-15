@@ -119,12 +119,12 @@ Marker format configuration file, which contains markernaming and attribute modi
 Task configs, files ending with t_config:
 
 Controls scripts to use with the task and details such as iteration formats and extensions. 
-See ".../CCastleData/README.md" for further details.
+See ".../CCastleData/README.md" or ".../include/README.md" for further details.
 
 Scaffolder configs:
 
 Files ending with s_config, contains details such as output directory for the scaffolder and output ext for non-iterated processes.
-See ".../CCastleData/README.md" for further details.
+See ".../CCastleData/README.md" or ".../include/README.md" for further details.
 
 ### 2.2. Tools and scripts
 pipeline tools: 
