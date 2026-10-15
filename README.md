@@ -201,4 +201,5 @@ Manual tests are available at the following locations:
 - .../research-tests/
 
 ### 5. Complete demo
-Magnet link: magnet:?xt=urn:btih:30755fe765db68e9088b31b692e086ca5c629440&dn=Demo.7z&xl=44092057785
+1. https://zenodo.org/records/23343576
+2. Magnet link: magnet:?xt=urn:btih:30755fe765db68e9088b31b692e086ca5c629440&dn=Demo.7z&xl=44092057785
