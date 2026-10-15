@@ -7,6 +7,7 @@ The setup consists for the following requirements:
 2. Build from source.
 3. (Optional, Eclipse) making the source code indexable for development.
 4. Once the binaries are built, additional dependencies are necessary to build the binaries from different codebases to evaluate.
+5. Demo files containing the entire setup and pipeline items, i.e. CCastle + CCastleData, for the Mage Framework.
 ```
 
 ### 1.1. Tool Packages and codegenerators
@@ -198,4 +199,6 @@ The automated tests are written with the googletest framework and can be found i
 Manual tests are available at the following locations:
 - .../src/instrumentation-scaffolder/native-instrumentations/mage/tests/manual/
 - .../research-tests/
- 
+
+### 5. Complete Demo
+Magnet link: magnet:?xt=urn:btih:30755fe765db68e9088b31b692e086ca5c629440&dn=Demo.7z&xl=44092057785
