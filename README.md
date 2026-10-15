@@ -200,5 +200,5 @@ Manual tests are available at the following locations:
 - .../src/instrumentation-scaffolder/native-instrumentations/mage/tests/manual/
 - .../research-tests/
 
-### 5. Complete Demo
+### 5. Complete demo
 Magnet link: magnet:?xt=urn:btih:30755fe765db68e9088b31b692e086ca5c629440&dn=Demo.7z&xl=44092057785
