@@ -194,7 +194,7 @@ What do you want to do?
 ### 4. (Automated) tests
 The automated tests are written with the googletest framework and can be found in the following location:
 - .../src/instrumentation-scaffolder/native-instrumentations/mage/tests/
-- .../src/validation-scaffolder/native-tools/tests/
+- .../src/validation-scaffolder/native-tools/tests/ (requires demo files) 
 
 Manual tests are available at the following locations:
 - .../src/instrumentation-scaffolder/native-instrumentations/mage/tests/manual/
