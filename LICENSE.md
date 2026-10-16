@@ -1,7 +1,5 @@
 ## License
+Creative Commons Attribution 4.0 International
+This license requires that reusers give credit to the creator. It allows reusers to distribute, remix, adapt, and build upon the material in any medium or format, even for commercial purposes.
 
-Copyright (c) 2026 [John Chen]. All rights reserved. 
-
-This project is currently "Source Available" for viewing and educational purposes only. 
-No open-source license is granted at this time. You may not modify, distribute, or use 
-this code in commercial or proprietary projects without explicit permission.
+Credit must be given to the creator, John Chen.
