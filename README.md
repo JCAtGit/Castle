@@ -153,20 +153,20 @@ If we look at the configs, for example the first entry in targets from CodeBaseS
 			"run_bin_as_shell":true,            
             "name": "dsmith",
             "outputFlag": "-o",
-			"static_pre_flags":[],
-			"static_options":[],
-			"redirectNull": false,
+            "static_pre_flags":[],
+            "static_options":[],
+            "redirectNull": false,
             "seedFlag": "--seed",
             "timestamp": 1777658365,
-			"active": false,
-			"continue_checkpoint":true,
-			"run_per_file":true,
-			"run_per_dir":false,
-			"run_as_it": true,
-			"it_begin": 0,
+            "active": false,
+            "continue_checkpoint":true,
+            "run_per_file":true,
+            "run_per_dir":false,
+            "run_as_it": true,
+            "it_begin": 0,
             "it_end": 1000,
-			"it_ext":".c",
-			"output_arg":true
+            "it_ext":".c",
+            "output_arg":true
 }, ...
 ```
 
