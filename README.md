@@ -143,6 +143,7 @@ Castle name format: codebase_instrumentation_build_decom_eval_analysis.
 		csmith_mage_clang_ghidra, an intermediate format. It stems from the codebase csmith, which then has been altered with mage. 
 
 For more examples, see existing entries within the scaffolder config files or the castle header file in the include folder, ".../CCastleRepository/include/".
+See also https://github.com/JCAtGit/CastleConfigs
 
 ### 2.4. DEMO: Running the (existing) pipeline (requires ccastledata)
 If we look at the configs, for example the first entry in targets from CodeBaseScaffolder/ct_config.json:
