@@ -13,6 +13,10 @@ using namespace clang;
 using namespace nlohmann;
 using namespace std;
 
+/**
+ * Director of activities.	
+ * Sets up preprocessor tracking, initiates AST traversal + instrumentation and commits instrumentation results to file.
+ */
 class CodeEnchanterAction: public ASTFrontendAction {
 	private:
 		filesystem::path 			inputPath, 	inputDir,
