@@ -1,11 +1,11 @@
 
 #include <stdio.h>
 
-int __attribute__((optnone)) testExpr(){
+int testExpr(){
     return 11;
 }
 
-int __attribute__((optnone)) main()
+int main()
 {
     if(testExpr() == 11){
         printf("Hello World");
