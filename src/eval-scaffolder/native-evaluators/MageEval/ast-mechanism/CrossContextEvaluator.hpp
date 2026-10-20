@@ -12,6 +12,7 @@ using namespace nlohmann;
 using namespace std;
 
 /**
+ *	Performs evaluations on markees from the oracle and the decom. 
  *	Assumes oracle to be free of major errors and to be compilable (but will work with pseudocode oracles)
  */
 
