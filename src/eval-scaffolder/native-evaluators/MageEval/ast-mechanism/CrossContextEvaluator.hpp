@@ -27,7 +27,7 @@ class CrossContextEvaluator{
 	{
 		dev_report["missing"] = json::array();		// marker indexes that are not present
 		dev_report["incomplete"] = json::array();	// marker finding pairs that contain only either the oracle or decom entry
-		dev_report["generic_eval"] = json::array();
+		dev_report["generic_eval"] = json::array(); // counts marker findings not having targeted methods, defaulting to generic evaluation.
 	}
 	
 	// Switch expects integers or enumerations, this enables direct usage of the statement names.
