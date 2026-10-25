@@ -25,8 +25,8 @@ class CrossContextEvaluator{
 		filesystem::path &outputPath
 	): findings(findings), findings_eval(findings_eval), dev_report(dev_report), outputPath(outputPath)
 	{
-		dev_report["missing"] = json::array();
-		dev_report["incomplete"] = json::array();
+		dev_report["missing"] = json::array();		// marker indexes that are not present
+		dev_report["incomplete"] = json::array();	// marker finding pairs that contain only either the oracle or decom entry
 		dev_report["generic_eval"] = json::array();
 	}
 	
