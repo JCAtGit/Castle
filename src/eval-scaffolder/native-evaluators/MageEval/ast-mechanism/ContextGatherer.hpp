@@ -151,9 +151,7 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 			if(mageIndex == -1){return;}
 			if (parentStack.size() < 2) {return;}
 
-//			(*selectedMarkerMap)[mageIndex] = CE;			
 		    Stmt *parent = parentStack[parentStack.size() - 2];  // immediate parent, size-1 is the statement itself.
-//		    (*selectedMarkerParentMap)[mageIndex] = parent;
 			auto siblings = getChildrenNodes(parent);
 			auto CESibIndex = findNodeSiblingIndex(siblings, DynTypedNode::create(*CE));
 			auto CEMarkee = getNextSiblingFromList(siblings, CESibIndex);
@@ -166,7 +164,6 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 					selectedSM->getFilename(CE->getBeginLoc()).str() 					+ " (" + 
 					to_string(selectedSM->getSpellingLineNumber(CE->getBeginLoc()))		+ ", "+
 				 	to_string(selectedSM->getSpellingColumnNumber(CE->getBeginLoc()))		+ ") " ;
-//				markerFinding["children"] = json::array(); // wordt nu niks mee gedaan
 				markerFinding["properties"] = json::object();
 				
 				evalSRDeciderP(const_cast<Stmt*>(CEMarkee->get<Stmt>()), &markerFinding);
@@ -233,11 +230,6 @@ class ContextGatherer: public RecursiveASTVisitor<ContextGatherer> {
 	 */
 	bool generalStmtRecorder(Stmt *node, json *findings){
 		(*findings)["properties"]["has_markee"] = true;
-
-//		if (!isa<Expr>(node)) {
-//			auto cast_node = llvm::cast<Expr>(node);
-//			(*findings)["properties"]["contains_errors"] = cast_node->containsErrors();
-//		}
 		return false;
 	}
 	
