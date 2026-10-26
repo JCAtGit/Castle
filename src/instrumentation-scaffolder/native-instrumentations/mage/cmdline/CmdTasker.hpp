@@ -14,7 +14,9 @@ using namespace nlohmann;
 using namespace std;
 
 /**
- * TODO: 
+ *	Handles which files are selected for instrumentation.
+ *
+ * 	TODO: 
  *		Decouple clang-formatting from artifact.
  *		Refactor tool args to configurable settings format.
  */
