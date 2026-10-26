@@ -6,6 +6,10 @@
 using namespace nlohmann;
 using namespace std;
 
+/**
+ * 	Schedules the tasks necessary for comparison.
+ *
+ */
 class CmdTasker{
 	private:		
 		vector<filesystem::path> 	&inputDirs;
