@@ -1,4 +1,7 @@
 # README
+Contains an code-agnostic (by design) instrumentation framework and a proof-of-concept diagnostic benchmarker evaluating on O0. 
+See thesis.pdf for more information.
+
 ## 1. Setup 
 The setup consists for the following requirements:
 
