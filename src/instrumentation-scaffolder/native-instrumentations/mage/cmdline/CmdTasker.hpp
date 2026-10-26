@@ -250,18 +250,14 @@ class CmdTasker{
 
 		if(isStringANumber(outputPath.parent_path().filename().string())){
 			metadataResultOutput = metadataResultsPath.string() + outputPath.parent_path().parent_path().filename().string();
-//			cout << metadataResultOutput << "\n";
 			filesystem::create_directory(metadataResultOutput);
-//			cout << outputPath.filename().string() << "\n";
 			saveJsonToFile(
 				metadataResultOutput + "/" + outputPath.filename().string() + outputPath.parent_path().filename().string() + ".json", 
 				json::object({{"MarkersInserted", idCounter} })
 			);
 		} else {
 			metadataResultOutput = metadataResultsPath.string() + outputPath.parent_path().filename().string();
-//			cout << metadataResultOutput << "\n";
 			filesystem::create_directory(metadataResultOutput);
-//			cout << outputPath.filename().string() << "\n";
 
 			saveJsonToFile(
 				metadataResultOutput + "/" + outputPath.filename().string() + ".json", 
