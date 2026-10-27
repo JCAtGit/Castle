@@ -129,12 +129,12 @@ Scaffolder configs:
 Files ending with s_config, contains details such as output directory for the scaffolder and output ext for non-iterated processes.
 See ".../CCastleData/README.md" or ".../include/README.md" for further details.
 
-### 2.2. Tools and scripts
+### 2.2. Tools and scripts (only included in the demo)
 pipeline tools: 
 - decompilers: Ghidra, Retdec, etc.
 - binary analysers: radare2, DIE.
 
-pipeline scripts (concrete instances available in demo):
+pipeline scripts:
 - build scripts - contains the instructions for their repositories
 - decompilation scripts - scripts that decompilers like Ghidra require to configure the decompilation procedure
 
