@@ -134,7 +134,7 @@ pipeline tools:
 - decompilers: Ghidra, Retdec, etc.
 - binary analysers: radare2, DIE.
 
-pipeline scripts:
+pipeline scripts (concrete instances available in demo):
 - build scripts - contains the instructions for their repositories
 - decompilation scripts - scripts that decompilers like Ghidra require to configure the decompilation procedure
 
