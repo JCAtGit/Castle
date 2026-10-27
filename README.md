@@ -107,7 +107,7 @@ The pipeline flows as follows:
 
 ```
 
-### 2.1. Configuration files
+### 2.1. Configuration files (only included in the demo)
 Pipeline configuration files:
 
 The CCastle pipeline uses config files to store pipeline transactions/transitions, if the CCastleData dataset is provided then it is located at ".../CCastleData/configs/"
