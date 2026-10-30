@@ -59,7 +59,4 @@ Example, start the build process:
 		
 - Calling the binary.
 BuildScaffolder --scaffolder-config /path/to/scaffolder/config --tool-config /path/to/tool/config
-
-- Result.
-TODO
 ```
